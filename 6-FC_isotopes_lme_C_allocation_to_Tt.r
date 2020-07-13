@@ -3,7 +3,7 @@
 # Using an LME framework to more rigorously calculate how C allocation ratios
 # to Tt shifted with competitive context
 
-setwd("~/Documents/2018-2019/Fungal competition/fungal-competition2019/")
+setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Load required packages
 require(cowplot)
@@ -11,7 +11,7 @@ require(tidyverse)
 require(lmerTest)
 
 # Loading required data
-together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+together = read_csv("FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 
 # Declare constants:
 smallconstant = 0.000473 # Need to add this to all C values to get around a negative value below.
