@@ -169,29 +169,51 @@ write_csv(together, "./FCdata/isotope_and_plant_metadata_with_competition_coded_
 
 ### Making data frame for N15 analyses ###
 
-exchangerates = subset(together, received15N == "Y" & Batch != "NA" & mycorrhizas.APE13C != "NA" & mycorrhizas.APE15N != "NA")
-
+nitrogeninfo = subset(together, received15N == "Y" & Batch != "NA" & mycorrhizas.APE13C != "NA" & mycorrhizas.APE15N != "NA")
+nitrogeninfo = subset(nitrogeninfo, compartment_fungus != "MIXED" &
+                        compartment_fungus != "OTHER")
 # Figure out how many N15 enrichment failures we got
 
-sum(exchangerates$mycoN15ppmexcess < 0) # hoo boy, this is a bummer.
-# I've got 16 values here that have less than zero N15 enrichment.
+sum(nitrogeninfo$mycoN15ppmexcess < 0) # hoo boy, this is a bummer.
+# I've got 14 values here that have less than zero N15 enrichment.
 # I think it is reasonable to exclude these entries from analyses where I need to know
 # what the N15 is doing, but it makes me sad.
 # On the other hand -- these could very well be true 0s, e.g.
 # mycorrhizas that were not sending any labeled N to the plant EVEN THOUGH
 # the fungi had found the N patch.
-sum(exchangerates$nmN15ppmexcess < 0) # okay, it's fine if the NM roots never got the 15N label.
+sum(nitrogeninfo$nmN15ppmexcess < 0) # okay, it's fine if the NM roots never got the 15N label.
 
-
-exchangerates$mycoC13forN15 = exchangerates$mycoC13ppmexcess/exchangerates$mycoN15ppmexcess
-exchangerates$mycoC13forN15[exchangerates$mycoN15ppmexcess <=0] = "NA"
-
-write_csv(exchangerates, "./FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
+# 
+# exchangerates$mycoC13forN15 = exchangerates$mycoC13ppmexcess/exchangerates$mycoN15ppmexcess
+# exchangerates$mycoC13forN15[exchangerates$mycoN15ppmexcess <=0] = "NA"
+# 
+# write_csv(exchangerates, "./FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
 # I seem to have lost two Sp high N mycorrhiza samples somehow -- I experimented
 # with subsetting away any negative N15 values, and now I can't get them 
 # back in my plot in script 7. Find these again! 7/2/2020
 # a = exchangerates[exchangerates$compartment_fungus == "Sp" & exchangerates$N_level == "High",]
+
+# In order to understand these data, I'm very likely to need to 
+# log transform my N enrichment data (there's a lot of variation in extent of enrichment)
+# For log transformation, I'll need a predictor axis that is 
+# all positive values. Since the "0" point for enrichment is arbitrarily
+# determined by the 15N concentration in atmosphere, it shouldn't make
+# a difference in my analyses to add a constant to my 15N values.
+forcefactor_myco = -min(nitrogeninfo$mycoN15ppmexcess) # this is 7.4476 ppm
+forcefactor_uncolroots = -min(nitrogeninfo$nmN15ppmexcess) # this one is 18.32042 ppm
+# Use uncol value, then, as the linear transformation.
+nitrogeninfo$forced.uncolonized.N15ppmexcess = nitrogeninfo$nmN15ppmexcess + forcefactor_uncolroots + 0.000001 # Prevent ratios with zero in denominator
+nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + forcefactor_uncolroots + 0.000001 # Prevent ratios with zero in denominator
+nitrogeninfo$forced.mycoC13forN15 = nitrogeninfo$mycoC13ppmexcess/nitrogeninfo$forced.mycorrhizas.N15ppmexcess
+nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$forced.uncolonized.N15ppmexcess
+
+write_csv(nitrogeninfo, "./FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
+
+
+
+
+
 
 #### OBSOLETE SECTION Checking replication so I can reanalyze samples ####
 
