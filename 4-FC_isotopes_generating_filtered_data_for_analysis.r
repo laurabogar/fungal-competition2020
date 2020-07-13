@@ -1,4 +1,5 @@
-# FC isotope analyses cleaner
+# Generating filtered data for FC (fungal competition) project
+# Updated July 2020
 
 setwd("~/Documents/2018-2019/Fungal competition/fungal-competition2019/")
 
@@ -176,6 +177,9 @@ sum(exchangerates$mycoN15ppmexcess < 0) # hoo boy, this is a bummer.
 # I've got 16 values here that have less than zero N15 enrichment.
 # I think it is reasonable to exclude these entries from analyses where I need to know
 # what the N15 is doing, but it makes me sad.
+# On the other hand -- these could very well be true 0s, e.g.
+# mycorrhizas that were not sending any labeled N to the plant EVEN THOUGH
+# the fungi had found the N patch.
 sum(exchangerates$nmN15ppmexcess < 0) # okay, it's fine if the NM roots never got the 15N label.
 
 
