@@ -1,7 +1,7 @@
 # Generating filtered data for FC (fungal competition) project
 # Updated July 2020
 
-setwd("~/Documents/2018-2019/Fungal competition/fungal-competition2019/")
+setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 require(tidyverse)
 require(cowplot)
@@ -9,14 +9,14 @@ require(cowplot)
 require(agricolae) # for automatic Tukey labels
 
 # allisotopes = read_csv("isotope_data_two_rows_per_plant.csv")
-allisotopes = read_csv("./FCdata/isotope_data_two_rows_per_plant_July.csv")
+allisotopes = read_csv("FCdata/isotope_data_two_rows_per_plant_July.csv")
 # correcting a spreadsheet error
 allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6033] = "SUIPU/SUIPU"
 
-isotopes_forN = read_csv("./FCdata/isotope_data_one_row_per_plant_July.csv")
-minimally_processed_isotopes = read_csv("./FCdata/Cleaned_processed_FC_isotope_data_July.csv")
-percent_col = read_csv("./FCdata/percent_colonization_and_mass_data_by_compartment.csv")
-metadata_byplant = read_csv("./FCdata/percent_col_and_mass_data_by_plant.csv")
+isotopes_forN = read_csv("FCdata/isotope_data_one_row_per_plant_July.csv")
+minimally_processed_isotopes = read_csv("FCdata/Cleaned_processed_FC_isotope_data_July.csv")
+percent_col = read_csv("FCdata/percent_colonization_and_mass_data_by_compartment.csv")
+metadata_byplant = read_csv("FCdata/percent_col_and_mass_data_by_plant.csv")
 
 allisotopes = rename(allisotopes, compartment_fungus = Actual_fungus_by_compartment)
 allisotopes = select(allisotopes, everything(), -tissue)
@@ -51,8 +51,6 @@ together$mycofungus = recode(together$mycofungus,
                                      "NM" = "None",
                                      "SUIPU" = "Sp",
                                      "THETE" = "Tt")
-
-write_csv(together, "isotopes_together_as_analyzed.csv") # this used to feed into the next script
 
 batchtomerge = select(metadata_byplant, Plant, Batch)
 
@@ -115,7 +113,7 @@ together = together[together$enriched != 0,] # just using enriched plants from n
 min(together$mycoC13ppmexcess[!is.na(together$mycoC13ppmexcess)])
 min(together$nmC13ppmexcess[!is.na(together$nmC13ppmexcess)])
 
-together$transmycoC13 = (log(together$mycoC13ppmexcess))
+together$mycologC13 = (log(together$mycoC13ppmexcess))
 together$nmlogC13 = log(together$nmC13ppmexcess)
 # Note: It doesn't make sense to log transform
 # ALL the N15 values, because half of these come from root compartments
@@ -165,41 +163,21 @@ for (i in 1:nrow(together)){
 }
 
 
-write_csv(together, "./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+write_csv(together, "FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 
 ### Making data frame for N15 analyses ###
 
 nitrogeninfo = subset(together, received15N == "Y" & Batch != "NA" & mycorrhizas.APE13C != "NA" & mycorrhizas.APE15N != "NA")
 nitrogeninfo = subset(nitrogeninfo, compartment_fungus != "MIXED" &
                         compartment_fungus != "OTHER")
-# Figure out how many N15 enrichment failures we got
 
-sum(nitrogeninfo$mycoN15ppmexcess < 0) # hoo boy, this is a bummer.
-# I've got 14 values here that have less than zero N15 enrichment.
-# I think it is reasonable to exclude these entries from analyses where I need to know
-# what the N15 is doing, but it makes me sad.
-# On the other hand -- these could very well be true 0s, e.g.
-# mycorrhizas that were not sending any labeled N to the plant EVEN THOUGH
-# the fungi had found the N patch.
-sum(nitrogeninfo$nmN15ppmexcess < 0) # okay, it's fine if the NM roots never got the 15N label.
-
-# 
-# exchangerates$mycoC13forN15 = exchangerates$mycoC13ppmexcess/exchangerates$mycoN15ppmexcess
-# exchangerates$mycoC13forN15[exchangerates$mycoN15ppmexcess <=0] = "NA"
-# 
-# write_csv(exchangerates, "./FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
-
-# I seem to have lost two Sp high N mycorrhiza samples somehow -- I experimented
-# with subsetting away any negative N15 values, and now I can't get them 
-# back in my plot in script 7. Find these again! 7/2/2020
-# a = exchangerates[exchangerates$compartment_fungus == "Sp" & exchangerates$N_level == "High",]
-
-# In order to understand these data, I'm very likely to need to 
+# In order to understand these data, I'm going to need to 
 # log transform my N enrichment data (there's a lot of variation in extent of enrichment)
-# For log transformation, I'll need a predictor axis that is 
-# all positive values. Since the "0" point for enrichment is arbitrarily
+# AND use it as a denominator in C for N exchange rate calculations.
+# Both of these applications require positive values.
+# Since the "0" point for enrichment is arbitrarily
 # determined by the 15N concentration in atmosphere, it shouldn't make
-# a difference in my analyses to add a constant to my 15N values.
+# a difference in my relativized analyses to add a constant to my 15N values.
 forcefactor_myco = -min(nitrogeninfo$mycoN15ppmexcess) # this is 7.4476 ppm
 forcefactor_uncolroots = -min(nitrogeninfo$nmN15ppmexcess) # this one is 18.32042 ppm
 # Use uncol value, then, as the linear transformation.
@@ -208,254 +186,7 @@ nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + f
 nitrogeninfo$forced.mycoC13forN15 = nitrogeninfo$mycoC13ppmexcess/nitrogeninfo$forced.mycorrhizas.N15ppmexcess
 nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$forced.uncolonized.N15ppmexcess
 
-write_csv(nitrogeninfo, "./FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
-
-
-
-
-
-
-#### OBSOLETE SECTION Checking replication so I can reanalyze samples ####
-
-# Any plant which doesn't have at least an NM root sample
-# on both sides is missing something.
-# Also, any compartment that is Sp or Tt and doesn't
-# have myco data is missing something.
-
-
-
-formissing = subset(together, compartment_fungus != "OTHER" & compartment_fungus != "MIXED")
-checkingcompleteness = as.data.frame(table(formissing$Plant))
-checkingcompleteness = rename(checkingcompleteness, Plant = Var1, numbercompartments = Freq)
-
-checkingcompleteness$incomp = checkingcompleteness$numbercompartments < 2
-myincompletes = checkingcompleteness[checkingcompleteness$incomp == TRUE,]
-
-fullincompletes = formissing[formissing$Plant %in% myincompletes$Plant,]
-fullincompletes = select(fullincompletes, Plant, Side, N_level, Fungi, compartment_fungus, mycorrhizas.APE13C, uncolonized_roots.APE13C)
-fullincompletes = left_join(fullincompletes, select(metadata_byplant, Plant, Batch))
-fullincompletes = select(fullincompletes, Batch, everything())
-
-
-# write_csv(fullincompletes, "plants_needing_other_side.csv")
-
-missingnm = formissing[is.na(formissing$uncolonized_roots.APE13C),]
-missingnm$missing = "uncolonized"
-missingmyco = subset(formissing, compartment_fungus == "Tt" | compartment_fungus == "Sp")
-missingmyco = missingmyco[is.na(missingmyco$mycorrhizas.APE13C),]
-missingmyco$missing = "myco"
-missingsomething = full_join(missingnm, missingmyco)
-
-tosearch = select(missingsomething, Plant, Side, Fungi, N_level, compartment_fungus, missing)
-
-batchinfo = left_join(tosearch, select(metadata_byplant, Plant, Batch))
-batchinfo = select(batchinfo, Batch, everything())
-
-# write_csv(batchinfo, "samples_to_tin_and_submit.csv")
-
-notmissing = formissing[!formissing$Plant %in% batchinfo$Plant,]
-notmissing = notmissing[!duplicated(notmissing$Plant),]
-# 64 complete plants?
-
-currentreplication = notmissing %>% group_by(Fungi, N_level) %>% summarize(totalreps = n())
-# write_csv(currentreplication, "isotope_replication_summary_July.csv")
-
-#### How much did the N-15 label leak across mesh panels? ####
-
-unenriched = subset(minimally_processed_isotopes, enriched == 0 & 
-                      (tissue == "uncolonized_roots"|tissue == "mycorrhizas"))
-
-nmunenriched = subset(unenriched, tissue == "uncolonized_roots")
-
-mean(unenriched$APE15N)
-sd(unenriched$APE15N)
-
-# How were unenriched plants distributed across treatments?
-
-formerge = select(metadata_byplant, Plant, N_level)
-unwithn = left_join(unenriched, formerge)
-unwithn_nodup = unwithn[!duplicated(unwithn$Plant),]
-
-unwithn_nodup %>% group_by(Actual_fungi_at_harvest, N_level) %>% summarize(total = n())
-# Oh gosh, I've only got three of these. Shouldn't matter a 
-# lot, though, since they're just a baseline -- as long
-# as all plants have the SAME baseline for this study, it's
-# low stakes.
-
-unwithn %>% group_by(tissue, N_level) %>% summarize(total = n())
-
-
-# How many unenriched plants did I have overall?
-summary(as.factor(metadata_byplant$Batch))
-# Okay, this is still just three. I have more in my plant spreadsheet.
-
-nm15N = subset(minimally_processed_isotopes, 
-               compartment_fungus == "NM" &
-                 `Receives 15N label?` == "Y")
-
-mean(nm15N$APE15N)
-sd(nm15N$APE15N)
-
-
-t.test(nm15N$APE15N, unenriched$APE15N)
-
-
-# This is encouraging:
-# > t.test(nm15N$APE15N, unenriched$APE15N)
-# 
-# Welch Two Sample t-test
-# 
-# data:  nm15N$APE15N and unenriched$APE15N
-# t = -1.0766, df = 8.9805, p-value = 0.3097
-# alternative hypothesis: true difference in means is not equal to 0
-# 95 percent confidence interval:
-#   -0.0016680643  0.0005925751
-# sample estimates:
-#   mean of x     mean of y 
-# -5.377446e-04  1.850373e-17 
-
-#### Creating subsetted data without low APE 15N values ####
-
-# I am a bit concerned about my very low APE 15N values.
-# I think they represent situations in which
-# the fungus may not have found our label at all.
-
-maxunenriched = max(unenriched$APE15N)
-
-onlyhigh15N = subset(together, 
-                     mycorrhizas.APE15N > maxunenriched)
-
-# forplot = as_tibble(rbind(nm15N, unenriched))
-# forplot$enriched = as.factor(forplot$enriched)
-# leakagecheck = ggplot(data = forplot) +
-#   geom_boxplot(aes(x = enriched, y = APE15N)) +
-#   geom_point(aes(x = enriched, y = APE15N)) +
-#   ylab(expression("Atom percent excess "^15*N))+
-#   scale_x_discrete(name = "Treatment",
-#                    breaks = c(0, 1),
-#                    labels = c("Unenriched roots\nand mycorrhizas", "Uncolonized roots from\nN-15-receiving no-fungus compartments"))
-# 
-# pdf("plots/No_15N_leakage_boxplot.pdf", width = 5, height = 3)
-# leakagecheck
-# dev.off()
-
-#### Investigating the outlier ####
-
-# Dealing with compartment 6041b, the consistent outlier:
-# My harvest note for this plant
-# indicate that it was supposed to be
-# SUIPU/NM, and ended up SUIPU/THETE.
-# Furthermore, on the THETE side, for which
-# we have the labeling data, my notes say
-# "not much fungus; looks young/new."
-# I could make an argument that this
-# sample appears to represent a very different,
-# metabolically active developmental stage,
-# and exclude it from analysis for now.
-
-outlier = percent_col[percent_col$Plant == 6041,]
-# Very low colonization on the side receiving the label,
-# but took up a ton.
-# I think this fungus was ACTIVELY growing and courting the plant.
-# It was new on that side (should have been NM).
-# Including it makes it a lot harder to understand anything about
-# what is happening with the rest of the plants.
-# Exclude for now.
-
-
-#### How well did root N track myco N? ####
-
-nitrogeninfo = subset(together, compartment_fungus != "None" &
-                        compartment_fungus != "MIXED" &
-                        compartment_fungus != "OTHER" &
-                        received15N == "Y")
-looktheseup = (together[together$compartment_fungus == "MIXED" & together$received15N == "Y",])
-
-nitrogeninfo = nitrogeninfo[!is.na(nitrogeninfo$mycorrhizas.APE15N),]
-nitrogeninfo = nitrogeninfo[!is.na(nitrogeninfo$uncolonized_roots.APE15N),]
-
-# For log transformation, need predictor axis that is 
-# all positive values.
-forcefactor = -min(nitrogeninfo$mycorrhizas.APE15N) # small negative: - 0.007
-nitrogeninfo$forced.mycorrhizas.APE15N = nitrogeninfo$mycorrhizas.APE15N + forcefactor + 0.000001 # Prevent ratios with zero in denominator
-
-forcefactor_uncolroots = -min(nitrogeninfo$uncolonized_roots.APE15N) # small negative (-0.002), but not as much as mycos.
-# Use myco value, then, as the linear transformation.
-nitrogeninfo$forced.uncolonized.APE15N = nitrogeninfo$uncolonized_roots.APE15N + forcefactor_uncolroots + 0.000001 # Prevent ratios with zero in denominator
-
-nitrogeninfo_nooutlier = subset(nitrogeninfo,
-                                Plant != 6041)
-
-
-rootNformycoN_plot = ggplot(data = nitrogeninfo_nooutlier) +
-  geom_point(aes(x = mycorrhizas.APE15N,
-                 y = uncolonized_roots.APE15N, 
-                 color = N_level,
-                 shape = mycofungus)) +
-  geom_smooth(method = "lm",
-              aes(x = mycorrhizas.APE15N,
-                  y = uncolonized_roots.APE15N),
-              color = "black",
-              size = 0.5) +
-  scale_color_manual(values = c("steelblue4", "steelblue1"),
-                     name = "N level") +
-  scale_shape_manual(values = c(17, 15),
-                     name = "Fungus") +
-  ylab(bquote(atop("Uncolonized roots "^15*N, "(atom percent excess)"))) +
-  xlab(expression("Mycorrhizal "^15*"N (atom percent excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
-
-# STATS FOR PAPER: Root N correlates with mycorrhiza N
-rootNformycoN_linear = lm(uncolonized_roots.APE15N ~ mycorrhizas.APE15N, data = nitrogeninfo_nooutlier)
-plot(rootNformycoN_linear)
-summary(rootNformycoN_linear)
-
-save_plot("plots/Regression_root_N_for_myco_N.pdf", 
-          rootNformycoN_plot, 
-          base_aspect_ratio = 1.4)
-
-nitrogeninfo[nitrogeninfo$mycorrhizas.APE15N == max(nitrogeninfo$mycorrhizas.APE15N),]
-# Plant 6041b is being weird AGAIN. Got a TON of C
-# in the hyphae, and a TON of N at the myco.
-
-rootNformycoN_log = glm(forced.uncolonized.APE15N ~ log(forced.mycorrhizas.APE15N), data = nitrogeninfo)
-plot(rootNformycoN_log) # very hump-shaped residuals
-
-# INCLUDING OUTLIER:
-
-rootNformycoN_plot_withoutlier = ggplot(data = nitrogeninfo) +
-  geom_point(aes(x = mycorrhizas.APE15N,
-                 y = uncolonized_roots.APE15N, 
-                 color = N_level,
-                 shape =compartment_fungus)) +
-  geom_smooth(method = "lm",
-              aes(x = mycorrhizas.APE15N,
-                  y = uncolonized_roots.APE15N),
-              color = "black",
-              size = 0.5) +
-  scale_color_manual(values = c("steelblue4", "steelblue1"),
-                     name = "N level") +
-  scale_shape_manual(values = c(17, 15),
-                     name = "Fungus") +
-  ylab(bquote(atop("Uncolonized roots "^15*N, "(atom percent excess)"))) +
-  xlab(expression("Mycorrhizal "^15*"N (atom percent excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
-
-# STATS FOR PAPER: root N corresponds to myco N including outlier
-
-rootNformycoN_linear_withoutlier = lm(uncolonized_roots.APE15N ~ mycorrhizas.APE15N, data = nitrogeninfo)
-plot(rootNformycoN_linear_withoutlier)
-summary(rootNformycoN_linear_withoutlier)
-
-rootNformycoN_log_withoutlier = lm(uncolonized_roots.APE15N ~ log(forced.mycorrhizas.APE15N), data = nitrogeninfo)
-plot(rootNformycoN_log_withoutlier) # not as good as linear
-summary(rootNformycoN_log_withoutlier) # also not as good as linear
-
-save_plot("plots/Regression_root_N_for_myco_N_with_outlier.pdf", 
-          rootNformycoN_plot_withoutlier, 
-          base_aspect_ratio = 1.4)
+write_csv(nitrogeninfo, "FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
 
 #### How well did hyphal C track myco C? ####
