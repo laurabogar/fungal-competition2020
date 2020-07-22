@@ -13,10 +13,10 @@
 setwd("~/Documents/2018-2019/Fungal competition/fungal-competition2019/")
 
 # Libraries needed:
-require(cowplot)
-require(tidyverse)
-require(lme4)
-require(lmerTest)
+library(cowplot)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
 
 # Data:
 together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
@@ -109,7 +109,7 @@ summary(nmvsmycos)
 anova(nmvsmycos) # I do NOT know how to understand this in
 # the context of my plot. Let's go simpler.
 
-require(stargazer)
+library(stargazer)
 nmvsmycos = lm(transmycoC13 ~ nmlogC13, data = excluding_mixed) # I don't have any random effects here that I don't think I need
 stargazer(nmvsmycos, type = "text",
           digits = 3,

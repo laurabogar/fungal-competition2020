@@ -2,8 +2,10 @@
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
-require(tidyverse)
-require(cowplot)
+library(cowplot)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
 
 together = read_csv("FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 
@@ -24,8 +26,7 @@ carboninfo = carboninfo[!is.na(carboninfo$mycorrhizas.APE13C),]
 
 justTt = subset(carboninfo, compartment_fungus == "Tt")
 
-carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b
-
+carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b, which is 1216.8 ppm excess 13C
 
 hyphalCformycoC_plot = ggplot(data = carboninfo_nooutlier) +
   geom_point(aes(x = mycorrhizas.APE13C,
@@ -77,10 +78,18 @@ hyphalCformycoC_plot_withoutlier = ggplot(data = carboninfo) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
-
+# Stats with outlier
 myhyphaelm_withoutlier = lm((hyphae.APE13C) ~ mycorrhizas.APE13C, data = carboninfo)
 plot(myhyphaelm_withoutlier)
 summary(myhyphaelm_withoutlier)
+
+hyphaelme_withoutlier = lmer(hyphae.APE13C ~ mycorrhizas.APE13C + (1|Batch), data = carboninfo)
+# boundary (singular) fit. Maybe not a problem?
+plot(hyphaelme_withoutlier) #outlier is very clear
+summary(hyphaelme_withoutlier)
+
+hyphaelme_withoutlier
+
 
 save_plot("plots/Regression_hyphal_C_for_myco_C_with_outlier.pdf", 
           hyphalCformycoC_plot_withoutlier,
