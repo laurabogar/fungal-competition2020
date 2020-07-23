@@ -2,9 +2,11 @@
 
 # setwd("~/Documents/2018-2019/Fungal competition/")
 
-require(tidyverse)
-require(cowplot)
-require(agricolae)
+library(tidyverse)
+library(cowplot)
+library(agricolae)
+library(knitr)
+
 
 ### Need to change fungi codes to match Tt/Sp from manuscript
 
@@ -347,6 +349,36 @@ write.csv(coltukey$N_level, "Statistical_tables/Colonization_Tukey_output_Nlevel
 write.csv(coltukey$Fungi, "Statistical_tables/Colonization_Tukey_output_Fungi.csv")
 write.csv(coltukey$`N_level:Fungi`, "Statistical_tables/Colonization_Tukey_output_Nlevel-Fungi.csv")
 
+
+#### Bringing together colonization and biomass in linear model ####
+
+responselm = lm(plant_response ~ N_level * Fungi * percent_col, data = colforplot)
+summary(responselm)
+forsupp = anova(responselm)
+# According to this ANOVA, percent colonization
+# is NOT a significant predictor of plant response
+# to colonization. Probably because it's not that variable.
+# In light of this info, I think my original ANOVA/Tukey
+# approach was perfectly fine.
+
+library(stargazer)
+stargazer(responselm, type = "text",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "")
+# library(kableExtra)
+kable(forsupp, digits = 3)
+# I think I'd need to be working with a markdown
+# file for this to come out looking REALLY pretty
+
+
+biomasslm = lm(total_biomass ~ N_level * Fungi * percent_col, data = alldata)
+summary(biomasslm)
+bioanova = anova(biomasslm)
+
+kable(bioanova, digits = 3)
+
+
 # So, colonization rates aren't that interesting
 # unto themselves... but I think they could
 # have important bearing on N uptake
@@ -493,7 +525,7 @@ summary(massbycol)
 plot(massbycol)
 # It is better when I log transform percent col, for sure
 
-## EXCLUDING OUTLIER FOR TAD ##
+#### EXCLUDING OUTLIER FOR TAD ####
 alldata[alldata$percent_col == max(alldata$percent_col),] # plant 6040 is one Tad suggests might be an outlier
 noout_alldata = subset(alldata, percent_col < 60)
 
@@ -553,7 +585,7 @@ respbycol_plot = ggplot(data = nonm) +
   
   # geom_hline(yintercept = 0, linetype = "dashed", size = 0.5)
 
-## REMOVING EXTREME VALUE FOR TAD ##
+#### REMOVING EXTREME VALUE FOR TAD ####
 noout_nonm = subset(noout_alldata, Fungi != "None/None")
 respbycol_nonm = lm(plant_response ~ log(percent_col + 1), data = noout_nonm)
 plot(respbycol_nonm) # I am not sure the log transformation improves this
