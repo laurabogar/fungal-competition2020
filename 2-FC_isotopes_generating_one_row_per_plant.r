@@ -59,7 +59,7 @@ min(mydata$APE15N)
 
 # 1) Calculate this per-plant metric
 
-onerowperplant = select(mydata, Plant, Side, tissue,
+onerowperplant = select(mydata, Plant, Side, tissue, enriched,
                         received15N, N_level, Failed_split, Actual_fungi_at_harvest,
                         Actual_fungus_by_compartment, mycofungus, APE13C,
                         APE15N, pctC, pctN, CNratio)

@@ -1,0 +1,12 @@
+
+	Welch Two Sample t-test
+
+data:  nm15N$APE15N and unenriched$APE15N
+t = -1.1281, df = 9.3342, p-value = 0.2874
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -0.0017046817  0.0005660773
+sample estimates:
+    mean of x     mean of y 
+-5.693022e-04  1.850373e-17 
+
