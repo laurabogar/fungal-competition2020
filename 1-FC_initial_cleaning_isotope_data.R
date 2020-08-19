@@ -1,6 +1,7 @@
 # Taking a first look at the Fungal Competition Isotope Data.
 
-setwd("~/Documents/2018-2019/Fungal competition/")
+# setwd("~/Documents/2018-2019/Fungal competition/")
+setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 require(tidyverse)
 
@@ -8,8 +9,8 @@ R13C = 0.0112372 # Slater et al. 2011
 R15N = 0.0036765 # Slater et al. 2011
 
 # fcdata = read_csv("FC_isotope_data_from_UCSC.csv") # to revert to old analysis, uncomment
-fcdata = read_csv("FC_isotope_data_from_UCSC_July.csv")
-metadata = read_csv("Fungal_competition_plant_tracking.csv")
+fcdata = read_csv("rawdata/FC_isotope_data_from_UCSC_July.csv")
+metadata = read_csv("rawdata/Fungal_competition_plant_tracking.csv")
 
 head(metadata)
 colnames(fcdata)
@@ -132,7 +133,7 @@ for (i in 1:nrow(isowithmeta)) {
 }
 
 # write_csv(isowithmeta, "Cleaned_processed_FC_isotope_data.csv")
-write_csv(isowithmeta, "Cleaned_processed_FC_isotope_data_July.csv")
+write_csv(isowithmeta, "processeddata/Cleaned_processed_FC_isotope_data_July.csv")
 
 #### EVERYTHING FROM HERE DOWN IS NOT USED IN DOWNSTREAM PIPELINE ####
 

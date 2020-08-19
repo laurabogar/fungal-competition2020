@@ -1,6 +1,7 @@
 # Analyzing FC biomass and colonization data
 
 # setwd("~/Documents/2018-2019/Fungal competition/")
+setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(tidyverse)
 library(cowplot)
@@ -10,8 +11,8 @@ library(knitr)
 
 ### Need to change fungi codes to match Tt/Sp from manuscript
 
-fungcomp = read_csv("./FCdata/Fungal_competition_FC_seedling_masses_final.csv")
-metadata = read_csv("./FCdata/Fungal_competition_plant_tracking.csv")
+fungcomp = read_csv("rawdata/Fungal_competition_FC_seedling_masses_final.csv")
+metadata = read_csv("rawdata/Fungal_competition_plant_tracking.csv")
 
 fungcomp = select(fungcomp, Page:Notes2)
 

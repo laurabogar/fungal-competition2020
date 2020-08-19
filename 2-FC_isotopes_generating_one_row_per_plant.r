@@ -1,13 +1,14 @@
 # Fungal competition project: Isotope data analysis
 
-setwd("~/Documents/2018-2019/Fungal competition/")
+# setwd("~/Documents/2018-2019/Fungal competition/")
+setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 require(tidyverse)
 require(cowplot)
 
 # isotopes = read_csv("Cleaned_processed_FC_isotope_data.csv")
-isotopes = read_csv("Cleaned_processed_FC_isotope_data_July.csv")
-percent_col = read_csv("percent_colonization_and_mass_data_by_compartment.csv")
+isotopes = read_csv("processeddata/Cleaned_processed_FC_isotope_data_July.csv")
+percent_col = read_csv("rawdata/percent_colonization_and_mass_data_by_compartment.csv")
 
 # evencleaner = isotopes[!isotopes$Failed_split == "Y",] # This is a mistake? because I need one of these as a baseline plant.
 evencleaner = subset(isotopes, is.na(Plant) == FALSE)
@@ -63,7 +64,7 @@ onerowperplant = select(mydata, Plant, Side, tissue,
                         Actual_fungus_by_compartment, mycofungus, APE13C,
                         APE15N, pctC, pctN, CNratio)
 # write_csv(onerowperplant, "minimally_processed_isotope_data.csv")
-write_csv(onerowperplant, "minimally_processed_isotope_data_July.csv")
+write_csv(onerowperplant, "processeddata/minimally_processed_isotope_data_July.csv")
 
 carbon = select(onerowperplant, Plant, Side, tissue, mycofungus, APE13C)
 carbonspread = carbon %>% spread(tissue, APE13C)
@@ -107,7 +108,7 @@ shouldbeunique = paste(everything$Plant, everything$Side, everything$mycofungus)
 everything = everything[!duplicated(shouldbeunique),]
 
 # write_csv(everything, "isotopes_one_row_per_plant_including_unenriched.csv")
-write_csv(everything, "isotopes_one_row_per_plant_including_unenriched_July.csv")
+write_csv(everything, "processeddata/isotopes_one_row_per_plant_including_unenriched_July.csv")
 
 # UPDATE the below is great for N analyses and C for N,
 # but actually I don't need that side to have received 15N
@@ -162,12 +163,12 @@ for (i in 1:nrow(allCforNs)) {
 allCforNs$mycoC13forN15 = allCforNs$mycorrhizas.APE13C/allCforNs$mycorrhizas.APE15N
 
 # write_csv(allCforNs, "isotopwrite_csv(allCforNs, "isotope_data_two_rows_per_plant.csv")
-write_csv(allCforNs, "isotope_data_two_rows_per_plant_July.csv")
+write_csv(allCforNs, "processeddata/isotope_data_two_rows_per_plant_July.csv")
 
 forNanalysis = subset(allCforNs, received15N == "Y")
 
 # write_csv(forNanalysis, "isotope_data_one_row_per_plant.csv")
-write_csv(forNanalysis, "isotope_data_one_row_per_plant_July.csv")
+write_csv(forNanalysis, "processeddata/isotope_data_one_row_per_plant_July.csv")
 
 #### JUST EXPLORATORY PLOTS FROM HERE ON OUT ####
 
