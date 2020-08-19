@@ -139,7 +139,114 @@ plantleveldata$Fungi = recode(plantleveldata$Fungi,
                "THETE/NM" = "Tt/None",
                "THETE/THETE" = "Tt/Tt")
 
+write_csv(plantleveldata, "processeddata/plant_level_biomass_colonization_data.csv")
 
+
+
+#### COLONIZATION ####
+
+
+protocol = select(fungcomp, Plant_number, coded_tissue, Mass_g, for_percent_col)
+protocol = subset(protocol, for_percent_col == 1)
+
+oneentrypertissue = protocol %>% group_by(Plant_number, coded_tissue) %>% summarize(mass = sum(Mass_g, na.rm = TRUE))
+
+widedata = oneentrypertissue %>% spread(coded_tissue, mass)
+
+widedata$mycorrhizas[is.na(widedata$mycorrhizas)] = 0 # if na, there were no mycorrhizas
+
+# widedata$percentcoldenom = sum(widedata$mycorrhizas, widedata$roots, widedata$other, na.rm = TRUE)
+
+widedata$percent_col = numeric(nrow(widedata))
+for (i in 1:nrow(widedata)) {
+    percentcoldenom = sum(widedata$mycorrhizas[i], widedata$roots[i], widedata$other[i], na.rm = TRUE)
+    widedata$percent_col[i] = 100*(widedata$mycorrhizas[i]/percentcoldenom)
+}
+
+widedata = rename(widedata, Plant = Plant_number)
+
+alldata = left_join(plantleveldata, widedata)
+
+alldata$Fungus = recode(alldata$Fungi,
+                        "None/None" = "None",
+                        "Sp/None" = "Sp",
+                        "Sp/Sp" = "Sp",
+                        "Tt/Sp" = "Tt/Sp",
+                        "Tt/None" = "Tt",
+                        "Tt/Tt" = "Tt")
+
+write_csv(alldata, "processeddata/percent_col_and_mass_data_by_plant.csv")
+
+
+### Analyses ###
+
+
+colforplot = subset(alldata, Fungi != "None/None")
+labels = c(High = "High N", Low = "Low N")
+
+tx = with(colforplot, interaction(N_level, Fungi))
+anovaforplot = aov(percent_col ~ tx, data = colforplot)
+
+# from "agricolae" package
+mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
+
+# anothertry = data.frame(x = c((1:6), (1:6)),
+#                         y = c(4, 4, 4, 6, 6, 7.5, 5, 4, 5, 4, 4, 4),
+#                         N_level = c(rep("High", 6), rep("Low", 6)),
+#                         labs = c(paste(c("c", "c", "c", "b", "b", "a")), paste(c("bc", "c", "bc", "c", "c", "c"))))
+
+# Okay, actually there are no significant pairwise differences here.
+# Maybe no need for the Tukey labels.
+
+
+collabels = data.frame(N_level = c("High", "Low"),
+                       x1 = c(1, 1), x2 = c(5, 5), y1 = c(80, 50), y2 = c(81, 51), 
+                       xstar = c(3, 3), ystar = c(88, 58), 
+                       lab = c("a", "b"))
+
+
+colplot = ggplot(data = colforplot) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = Fungi, y = percent_col)) +
+  geom_jitter(width = 0.20,
+              aes(x = Fungi, y = percent_col)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Percent fungal colonization of\nroot system (by mass)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungal treatment") +
+  geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
+  geom_segment(data = collabels, aes(x = x1, xend = x2, 
+                                y = y2, yend = y2),
+               colour = "black")
+
+
+pdf("plots/Colonization_boxplot.pdf", width = 7, height = 5)
+colplot
+dev.off()
+
+plot_grid(massplot, responseplot, colplot, ncol = 3, align = "h")
+
+Figure2 = plot_grid(massplot, colplot, ncol = 2, align = "h",
+                    labels = c("A", "B"))
+save_plot("plots/MAIN_Mass_and_colonization_two_panel_boxplot.pdf", 
+          Figure2, ncol = 2)
+
+colanova = aov(percent_col ~ N_level * Fungi, data = colforplot)
+coloutput = summary(colanova) # N level v. significant, fungi only marginal
+coltukey = TukeyHSD(colanova)
+
+high = subset(colforplot, N_level == "High")
+low = subset(colforplot, N_level == "Low")
+median(high$percent_col)
+median(low$percent_col)
+
+
+write.csv(coltukey$N_level, "Statistical_tables/Colonization_Tukey_output_Nlevel.csv")
+write.csv(coltukey$Fungi, "Statistical_tables/Colonization_Tukey_output_Fungi.csv")
+write.csv(coltukey$`N_level:Fungi`, "Statistical_tables/Colonization_Tukey_output_Nlevel-Fungi.csv")
+
+### Analyses ###
 #### REPLICATION SUMMARY ####
 summarytable = plantleveldata %>% group_by(Fungi, N_level, enriched) %>% summarize(count = n())
 # write_csv(summarytable, "harvest_replication_summary.csv")
@@ -147,6 +254,7 @@ nrow(plantleveldata)
 nrow(plantleveldata[plantleveldata$N_level == "High",])
 nrow(plantleveldata[plantleveldata$N_level == "Low",])
 nrow(plantleveldata[plantleveldata$enriched == 1,])
+
 
 #### PLANT RESPONSE TO COLONIZATION ####
 
@@ -160,9 +268,9 @@ anovaforplot = aov(plant_response ~ tx, data = forplot)
 mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
 
 annotations = data.frame(x = c((1:5), (1:5)),
-                        y = c(1, 1, 1.3, 1.3, 1.7, 1, 1, 1, 1, 1),
-                        N_level = c(rep("High", 5), rep("Low", 5)),
-                        labs = c(paste(c("bc", "abc", "ab", "bc", "a")), paste(c("c", "bc", "bc", "bc", "bc"))))
+                         y = c(1, 1, 1.3, 1.3, 1.7, 1, 1, 1, 1, 1),
+                         N_level = c(rep("High", 5), rep("Low", 5)),
+                         labs = c(paste(c("bc", "abc", "ab", "bc", "a")), paste(c("c", "bc", "bc", "bc", "bc"))))
 
 
 labels = c(High = "High N", Low = "Low N")
@@ -239,7 +347,7 @@ massplot = ggplot(data = plantleveldata) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = Fungi, y = total_biomass)) +
   geom_jitter(width = 0.20,
-             aes(x = Fungi, y = total_biomass)) +
+              aes(x = Fungi, y = total_biomass)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Total plant biomass (g)") +
@@ -261,96 +369,6 @@ write.csv(biomassTukey$`N_level:Fungi`, "Statistical_tables/Biomass_Tukey_Nlevel
 
 
 
-#### COLONIZATION ####
-
-
-protocol = select(fungcomp, Plant_number, coded_tissue, Mass_g, for_percent_col)
-protocol = subset(protocol, for_percent_col == 1)
-
-oneentrypertissue = protocol %>% group_by(Plant_number, coded_tissue) %>% summarize(mass = sum(Mass_g, na.rm = TRUE))
-
-widedata = oneentrypertissue %>% spread(coded_tissue, mass)
-
-widedata$mycorrhizas[is.na(widedata$mycorrhizas)] = 0 # if na, there were no mycorrhizas
-
-# widedata$percentcoldenom = sum(widedata$mycorrhizas, widedata$roots, widedata$other, na.rm = TRUE)
-
-widedata$percent_col = numeric(nrow(widedata))
-for (i in 1:nrow(widedata)) {
-    percentcoldenom = sum(widedata$mycorrhizas[i], widedata$roots[i], widedata$other[i], na.rm = TRUE)
-    widedata$percent_col[i] = 100*(widedata$mycorrhizas[i]/percentcoldenom)
-}
-
-widedata = rename(widedata, Plant = Plant_number)
-
-alldata = left_join(plantleveldata, widedata)
-
-colforplot = subset(alldata, Fungi != "None/None")
-labels = c(High = "High N", Low = "Low N")
-
-tx = with(colforplot, interaction(N_level, Fungi))
-anovaforplot = aov(percent_col ~ tx, data = colforplot)
-
-# from "agricolae" package
-mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
-
-# anothertry = data.frame(x = c((1:6), (1:6)),
-#                         y = c(4, 4, 4, 6, 6, 7.5, 5, 4, 5, 4, 4, 4),
-#                         N_level = c(rep("High", 6), rep("Low", 6)),
-#                         labs = c(paste(c("c", "c", "c", "b", "b", "a")), paste(c("bc", "c", "bc", "c", "c", "c"))))
-
-# Okay, actually there are no significant pairwise differences here.
-# Maybe no need for the Tukey labels.
-
-
-collabels = data.frame(N_level = c("High", "Low"),
-                       x1 = c(1, 1), x2 = c(5, 5), y1 = c(80, 50), y2 = c(81, 51), 
-                       xstar = c(3, 3), ystar = c(88, 58), 
-                       lab = c("a", "b"))
-
-
-colplot = ggplot(data = colforplot) +
-  geom_boxplot(outlier.alpha = 0,
-               aes(x = Fungi, y = percent_col)) +
-  geom_jitter(width = 0.20,
-              aes(x = Fungi, y = percent_col)) +
-  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  ylab("Percent fungal colonization of\nroot system (by mass)") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungal treatment") +
-  geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
-  geom_segment(data = collabels, aes(x = x1, xend = x2, 
-                                y = y2, yend = y2),
-               colour = "black")
-
-
-pdf("plots/Colonization_boxplot.pdf", width = 7, height = 5)
-colplot
-dev.off()
-
-plot_grid(massplot, responseplot, colplot, ncol = 3, align = "h")
-
-Figure2 = plot_grid(massplot, colplot, ncol = 2, align = "h",
-                    labels = c("A", "B"))
-save_plot("plots/MAIN_Mass_and_colonization_two_panel_boxplot.pdf", 
-          Figure2, ncol = 2)
-
-colanova = aov(percent_col ~ N_level * Fungi, data = colforplot)
-coloutput = summary(colanova) # N level v. significant, fungi only marginal
-coltukey = TukeyHSD(colanova)
-
-high = subset(colforplot, N_level == "High")
-low = subset(colforplot, N_level == "Low")
-median(high$percent_col)
-median(low$percent_col)
-
-
-write.csv(coltukey$N_level, "Statistical_tables/Colonization_Tukey_output_Nlevel.csv")
-write.csv(coltukey$Fungi, "Statistical_tables/Colonization_Tukey_output_Fungi.csv")
-write.csv(coltukey$`N_level:Fungi`, "Statistical_tables/Colonization_Tukey_output_Nlevel-Fungi.csv")
-
-
 #### Bringing together colonization and biomass in linear model ####
 
 responselm = lm(plant_response ~ N_level * Fungi * percent_col, data = colforplot)
@@ -360,7 +378,7 @@ forsupp = anova(responselm)
 # is NOT a significant predictor of plant response
 # to colonization. Probably because it's not that variable.
 # In light of this info, I think my original ANOVA/Tukey
-# approach was perfectly fine.
+# approach was probably fine.
 
 library(stargazer)
 stargazer(responselm, type = "text",
@@ -408,7 +426,7 @@ tomerge = select(metadata, Plant, Side, N_level, Batch, compartment_fungus = Act
 
 wide_bycompt = left_join(wide_bycompt, tomerge)
 
-write_csv(wide_bycompt, "./FCdata/percent_colonization_and_mass_data_by_compartment.csv")
+write_csv(wide_bycompt, "processeddata/percent_colonization_and_mass_data_by_compartment.csv")
 
 #### Did plant repress colonization by less helpful fungus? ####
 
@@ -489,15 +507,6 @@ t.test(diff ~ N_level, TtSp_compare)
 
 #### Does colonization predict biomass? ####
 
-alldata$Fungus = recode(alldata$Fungi,
-                        "None/None" = "None",
-                        "Sp/None" = "Sp",
-                        "Sp/Sp" = "Sp",
-                        "Tt/Sp" = "Tt/Sp",
-                        "Tt/None" = "Tt",
-                        "Tt/Tt" = "Tt")
-
-write_csv(alldata, "percent_col_and_mass_data_by_plant.csv")
 
 
 massbycol_plot = ggplot(data = alldata) +
