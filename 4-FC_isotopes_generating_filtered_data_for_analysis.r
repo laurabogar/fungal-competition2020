@@ -163,7 +163,7 @@ for (i in 1:nrow(together)){
 }
 
 
-write_csv(together, "FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 
 ### Making data frame for N15 analyses ###
 
@@ -186,7 +186,7 @@ nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + f
 nitrogeninfo$forced.mycoC13forN15 = nitrogeninfo$mycoC13ppmexcess/nitrogeninfo$forced.mycorrhizas.N15ppmexcess
 nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$forced.uncolonized.N15ppmexcess
 
-write_csv(nitrogeninfo, "FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
+write_csv(nitrogeninfo, "processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
 
 

@@ -176,65 +176,6 @@ write_csv(forNanalysis, "processeddata/isotope_data_one_row_per_plant_July.csv")
 
 allCforNs_noNM = subset(allCforNs, Actual_fungus_by_compartment != "NM")
 
-# unenriched = subset(mydata, enriched == 0 & 
-#                       (tissue == "uncolonized_roots"|tissue == "mycorrhizas"))
-# 
-# nmunenriched = subset(unenriched, tissue == "uncolonized_roots")
-# 
-# nm15N = subset(mydata, 
-#                Actual_fungus_by_compartment == "NM" &
-#                  received15N == "Y")
-# 
-# t.test(nm15N$APE15N, unenriched$APE15N)
-# 
-# 
-# # This is encouraging:
-# # > t.test(nm15N$APE15N, unenriched$APE15N)
-# # 
-# # Welch Two Sample t-test
-# # 
-# # data:  nm15N$APE15N and unenriched$APE15N
-# # t = -0.82533, df = 6.5977, p-value = 0.438
-# # alternative hypothesis: true difference in means is not equal to 0
-# # 95 percent confidence interval:
-# #   -0.002070264  0.001008829
-# # sample estimates:
-# #   mean of x   mean of y 
-# # 0.001740926 0.002271643 
-# 
-# 
-# t.test(nm15N$APE15N, nmunenriched$APE15N)
-# 
-# # Not quite as good, but maybe still okay?
-# # > t.test(nm15N$APE15N, nmunenriched$APE15N)
-# # 
-# # Welch Two Sample t-test
-# # 
-# # data:  nm15N$APE15N and nmunenriched$APE15N
-# # t = 1.5748, df = 5.0848, p-value = 0.1752
-# # alternative hypothesis: true difference in means is not equal to 0
-# # 95 percent confidence interval:
-# #   -0.0002790415  0.0011731714
-# # sample estimates:
-# #   mean of x   mean of y 
-# # 0.001740926 0.001293861 
-# 
-# forplot = as_tibble(rbind(nm15N, unenriched))
-# forplot$enriched = as.factor(forplot$enriched)
-# leakagecheck = ggplot(data = forplot) +
-#   geom_boxplot(aes(x = enriched, y = APE15N)) +
-#   geom_point(aes(x = enriched, y = APE15N)) +
-#   ylab(expression("Atom percent excess "^15*N))+
-#   scale_x_discrete(name = "Treatment",
-#                    breaks = c(0, 1),
-#                    labels = c("Unenriched roots\nand mycorrhizas", "Uncolonized roots from\nN-15-receiving no-fungus compartments"))
-# 
-# pdf("plots/No_15N_leakage_boxplot.pdf", width = 5, height = 3)
-# leakagecheck
-# dev.off()
-# 
-
-
 ggplot(data = allCforNs) +
   geom_boxplot(aes(x = Actual_fungi_at_harvest, y = (CforN))) +
   geom_jitter(aes(x = Actual_fungi_at_harvest, 

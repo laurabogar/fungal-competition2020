@@ -1,4 +1,6 @@
 # Trying to analyze FC isotopes in a more cohesive way
+# This is NOT currently one of my central scripts 8/19/2020
+
 # Attempting a linear mixed model a la Argüello et al. 2016
 # August 2019/June 2020
 
@@ -10,7 +12,7 @@
 # 3) Call "anova()" on that model to get a normal looking ANOVA table
 # with significance labels.
 
-setwd("~/Documents/2018-2019/Fungal competition/fungal-competition2019/")
+setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Libraries needed:
 library(cowplot)
@@ -58,20 +60,20 @@ excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
 
 
 
-c13.full = lmer(transmycoC13 ~ compartment_fungus * versus * N_level + (1|Batch/Plant), 
+c13.full = lmer(mycologC13 ~ compartment_fungus * versus * N_level + (1|Batch/Plant), 
                 data = excluding_mixed) # I don't have any random effects here that I don't think I need
 
+summary(c13.full)
 
-anova(c13.full)
+anovaresults = anova(c13.full)
 
-stargazer(test, type = "text",
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "")
 
-# OH THANK GOD This is the tool I've been looking for this whole time.
-# Some p values next to my factors.
-# Done!!!
+sink("stats_tables/C_by_fungus_competition_N_lme_results.txt")
+
+anovaresults
+
+sink()
+
 
 # Significant factors: fungal identity (compartment fungus),
 # N level, and the interaction between fungal identity and N level.
@@ -80,7 +82,7 @@ stargazer(test, type = "text",
 # interaction between fungal identity and competitior identity (interesting!),
 # three way interaction between fungal identity and competitor identity and N level.
 
-
+#### Plot ####
 labels = c(High = "High N", Low = "Low N")
 ggplot(data = excluding_mixed) +
   geom_boxplot(outlier.alpha = 0,
@@ -96,13 +98,13 @@ ggplot(data = excluding_mixed) +
 # How well does 13C in mycos correspond to 13C in adjacent fine roots?
 
 ggplot(data = excluding_mixed) +
-  geom_point(aes(x = nmlogC13, y = transmycoC13, shape = compartment_fungus, color = N_level)) +
+  geom_point(aes(x = nmlogC13, y = mycologC13, shape = compartment_fungus, color = N_level)) +
   ylab("Plant C in mycorrhizas (log ppm excess)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Plant C in NM roots (log ppm excess)") +
-  geom_smooth(method = lm, aes(x = nmlogC13, y = transmycoC13))
+  geom_smooth(method = lm, aes(x = nmlogC13, y = mycologC13))
 
-nmvsmycos = lmer(transmycoC13 ~ nmlogC13 * versus * N_level + (1|Batch/Plant), 
+nmvsmycos = lmer(mycologC13 ~ nmlogC13 * versus * N_level + (1|Batch/Plant), 
                                 data = excluding_mixed) # I don't have any random effects here that I don't think I need
 
 summary(nmvsmycos)

@@ -1,4 +1,4 @@
-# FC - hyphal 13C tracks myco 13C
+# 5-1-FC_hyphal_vs_myco_13C_withoutlier_statsandplot
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
@@ -11,55 +11,18 @@ together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_c
 
 
 #### How well did hyphal C track myco C? ####
+# For any analysis involving ONLY C, it makes sense to include
+# 1) carbon data from root compartments that
+# didn't necessarily receive N label (20 of these, 22 labeled compartments here with hyphal C info), and
+# 2) data from plants with failed splits (two of these, 40 successfully split)
+
 carboninfo = subset(together, compartment_fungus != "None" &
                       compartment_fungus != "MIXED" &
                       compartment_fungus != "OTHER")
 
 carboninfo = carboninfo[!is.na(carboninfo$hyphae.APE13C),]
 carboninfo = carboninfo[!is.na(carboninfo$mycorrhizas.APE13C),]
-# For any analysis involving ONLY C, it makes sense to include
-# 1) carbon data from root compartments that
-# didn't necessarily receive N label (20 of these, 22 labeled compartments here with hyphal C info), and
-# 2) data from plants with failed splits (two of these, 40 successfully split)
-
 carboninfo$hyphae.ppm13Cexcessexcess = carboninfo$hyphae.APE13C*(10^4)
-
-
-justTt = subset(carboninfo, compartment_fungus == "Tt")
-
-carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b, which is 1216.8 ppm excess 13C
-
-hyphalCformycoC_plot = ggplot(data = carboninfo_nooutlier) +
-  geom_point(aes(x = mycoC13ppmexcess,
-                 y = hyphae.ppm13Cexcess, 
-                 color = N_level,
-                 shape =compartment_fungus)) +
-  geom_smooth(method = "lm", aes(x = mycoC13ppmexcess,
-                                 y = hyphae.ppm13Cexcess),
-              color = "black",
-              size = 0.5) +
-  scale_color_manual(values = c("steelblue4", "steelblue1"),
-                     name = "N level") +
-  scale_shape_manual(values = c(17, 15),
-                     name = "Fungus") +
-  ylab(expression("Hyphal "^13*"C (ppm excess)")) +
-  xlab(expression("Mycorrhizal "^13*"C (ppm excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
-
-# STATS for supplement: hyphae C tracks myco C, excluding outlier  
-myhyphaelm = lm((hyphae.ppm13Cexcess) ~ mycoC13ppmexcess, data = carboninfo_nooutlier)
-plot(myhyphaelm)
-summary(myhyphaelm)
-
-save_plot("plots/Regression_hyphal_C_for_myco_C.pdf", 
-          hyphalCformycoC_plot,
-          ncol = 1,
-          base_aspect_ratio = 1.4)
-
-# Doing this with just Tt yields almost exactly the same result.
-
-# INCLUDING OUTLIER
 
 hyphalCformycoC_plot_withoutlier = ggplot(data = carboninfo) +
   geom_point(aes(x = mycorrhizas.APE13C,
@@ -79,7 +42,17 @@ hyphalCformycoC_plot_withoutlier = ggplot(data = carboninfo) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
-# Stats with outlier
+save_plot("plots/Regression_hyphal_C_for_myco_C_with_outlier.pdf", 
+          hyphalCformycoC_plot_withoutlier,
+          ncol = 1,
+          base_aspect_ratio = 1.4)
+
+ggsave("plots/Regression_hyphal_C_for_myco_C_with_outlier.jpeg", 
+       plot = hyphalCformycoC_plot_withoutlier,
+       device = "jpeg",
+       width = 7, height = 5, units = "in")
+
+### Stats with outlier ###
 myhyphaelm_withoutlier = lm((hyphae.ppm13Cexcess) ~ mycoC13ppmexcess, data = carboninfo)
 plot(myhyphaelm_withoutlier)
 summary(myhyphaelm_withoutlier)
@@ -98,10 +71,3 @@ stargazer(myhyphaelm_withoutlier, type = "html",
           summary = FALSE)
 
 sink()
-
-
-
-save_plot("plots/Regression_hyphal_C_for_myco_C_with_outlier.pdf", 
-          hyphalCformycoC_plot_withoutlier,
-          ncol = 1,
-          base_aspect_ratio = 1.4)
