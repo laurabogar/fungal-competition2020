@@ -1,4 +1,4 @@
-# 5-1-FC_hyphal_vs_myco_13C_withoutlier_statsandplot
+#5-4-FC_hyphal_vs_myco_13C_without_outlier_stats
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 

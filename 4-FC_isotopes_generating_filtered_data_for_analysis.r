@@ -165,6 +165,23 @@ for (i in 1:nrow(together)){
 
 write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 
+# For any analysis involving ONLY C, it makes sense to include
+# 1) carbon data from root compartments that
+# didn't necessarily receive N label (20 of these, 22 labeled compartments here with hyphal C info), and
+# 2) data from plants with failed splits (two of these, 40 successfully split)
+# So I'll subset to ONLY exclude compartments with no fungi, compartments
+# with mixed fungi, or compartments with something else weird going on.
+carboninfo = subset(together, compartment_fungus != "None" &
+                      compartment_fungus != "MIXED" &
+                      compartment_fungus != "OTHER")
+
+carboninfo = carboninfo[!is.na(carboninfo$hyphae.APE13C),]
+carboninfo = carboninfo[!is.na(carboninfo$mycorrhizas.APE13C),]
+
+carboninfo$hyphae.ppm13Cexcess = carboninfo$hyphae.APE13C*(10^4)
+
+write_csv(carboninfo, "processeddata/data_for_carbon_only_analyses.csv")
+
 ### Making data frame for N15 analyses ###
 
 nitrogeninfo = subset(together, received15N == "Y" & Batch != "NA" & mycorrhizas.APE13C != "NA" & mycorrhizas.APE15N != "NA")
@@ -185,6 +202,8 @@ nitrogeninfo$forced.uncolonized.N15ppmexcess = nitrogeninfo$nmN15ppmexcess + for
 nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + forcefactor_uncolroots + 0.000001 # Prevent ratios with zero in denominator
 nitrogeninfo$forced.mycoC13forN15 = nitrogeninfo$mycoC13ppmexcess/nitrogeninfo$forced.mycorrhizas.N15ppmexcess
 nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$forced.uncolonized.N15ppmexcess
+nitrogeninfo$mycoN15ppmexcess = nitrogeninfo$mycorrhizas.APE15N*(10^4)
+nitrogeninfo$uncolN15ppmexcess = nitrogeninfo$uncolonized_roots.APE15N*(10^4)
 
 write_csv(nitrogeninfo, "processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 

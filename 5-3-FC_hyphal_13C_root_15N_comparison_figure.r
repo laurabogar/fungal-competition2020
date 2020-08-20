@@ -1,4 +1,4 @@
-# FC - hyphal 13C tracks myco 13C
+#5-3-FC_hyphal_13C_root_15N_myco_comparison_figure
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
@@ -7,16 +7,13 @@ library(tidyverse)
 library(lme4)
 library(lmerTest)
 
-together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+carboninfo = read_csv("processeddata/data_for_carbon_only_analyses.csv")
+nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
 
-#### How well did hyphal C track myco C? ####
+#### Carbon panel: How well did hyphal C track myco C? ####
 
-justTt = subset(carboninfo, compartment_fungus == "Tt")
-
-carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b, which is 1216.8 ppm excess 13C
-
-hyphalCformycoC_plot = ggplot(data = carboninfo_nooutlier) +
+hyphalCformycoC_plot_withoutlier = ggplot(data = carboninfo) +
   geom_point(aes(x = mycoC13ppmexcess,
                  y = hyphae.ppm13Cexcess, 
                  color = N_level,
@@ -34,44 +31,49 @@ hyphalCformycoC_plot = ggplot(data = carboninfo_nooutlier) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
-# STATS for supplement: hyphae C tracks myco C, excluding outlier  
-myhyphaelm = lm((hyphae.ppm13Cexcess) ~ mycoC13ppmexcess, data = carboninfo_nooutlier)
-plot(myhyphaelm)
-summary(myhyphaelm)
-
-save_plot("plots/Regression_hyphal_C_for_myco_C.pdf", 
-          hyphalCformycoC_plot,
+save_plot("plots/Regression_hyphal_C_for_myco_C_with_outlier.pdf", 
+          hyphalCformycoC_plot_withoutlier,
           ncol = 1,
           base_aspect_ratio = 1.4)
 
-# Doing this with just Tt yields almost exactly the same result.
+ggsave("plots/Regression_hyphal_C_for_myco_C_with_outlier.jpeg", 
+       plot = hyphalCformycoC_plot_withoutlier,
+       device = "jpeg",
+       width = 7, height = 5, units = "in")
 
-# INCLUDING OUTLIER
-
-hyphalCformycoC_plot_withoutlier = ggplot(data = carboninfo) +
-  geom_point(aes(x = mycorrhizas.APE13C,
-                 y = hyphae.APE13C, 
+### Nitrogen panel ####
+rootNformycoN_plot = ggplot(data = nitrogeninfo) +
+  geom_point(aes(x = mycorrhizas.APE15N,
+                 y = uncolonized_roots.APE15N, 
                  color = N_level,
-                 shape =compartment_fungus)) +
-  geom_smooth(method = "lm", aes(x = mycorrhizas.APE13C,
-                                 y = hyphae.APE13C),
+                 shape = mycofungus)) +
+  geom_smooth(method = "lm",
+              aes(x = mycorrhizas.APE15N,
+                  y = uncolonized_roots.APE15N),
               color = "black",
               size = 0.5) +
   scale_color_manual(values = c("steelblue4", "steelblue1"),
                      name = "N level") +
   scale_shape_manual(values = c(17, 15),
                      name = "Fungus") +
-  ylab(expression("Hyphal "^13*"C (atom percent excess)")) +
-  xlab(expression("Mycorrhizal "^13*"C (atom percent excess)")) +
+  ylab(bquote(atop("Uncolonized roots "^15*N, "(atom percent excess)"))) +
+  xlab(expression("Mycorrhizal "^15*"N (atom percent excess)")) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
-# Stats with outlier
+
+
+### Stats with outlier ###
 myhyphaelm_withoutlier = lm((hyphae.ppm13Cexcess) ~ mycoC13ppmexcess, data = carboninfo)
 plot(myhyphaelm_withoutlier)
 summary(myhyphaelm_withoutlier)
 
-# hyphaelme_withoutlier = lmer(hyphae.APE13C ~ mycorrhizas.APE13C + (1|Batch), data = carboninfo)
+# LME approach: NOT using this because pairing hyphae
+# with mycos in the same compartment controls for batch and
+# plant effects in itself -- there's no need to also
+# include this as a random effect separately.
+
+# hyphaelme_withoutlier = lmer(hyphae.ppm13Cexcess ~ mycoC13ppmexcess + (1|Batch), data = carboninfo)
 # # boundary (singular) fit. Maybe not a problem?
 # plot(hyphaelme_withoutlier) #outlier is very clear
 # summary(hyphaelme_withoutlier)
@@ -85,10 +87,3 @@ stargazer(myhyphaelm_withoutlier, type = "html",
           summary = FALSE)
 
 sink()
-
-
-
-save_plot("plots/Regression_hyphal_C_for_myco_C_with_outlier.pdf", 
-          hyphalCformycoC_plot_withoutlier,
-          ncol = 1,
-          base_aspect_ratio = 1.4)
