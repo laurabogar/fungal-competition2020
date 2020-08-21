@@ -2,8 +2,6 @@
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
-library(cowplot)
-library(tidyverse)
 library(lme4)
 library(lmerTest)
 
@@ -11,8 +9,6 @@ together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_c
 
 
 #### How well did hyphal C track myco C? ####
-
-justTt = subset(carboninfo, compartment_fungus == "Tt")
 
 carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b, which is 1216.8 ppm excess 13C
 
