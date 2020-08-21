@@ -64,21 +64,6 @@ rootNformycoN_plot = ggplot(data = nitrogeninfo) +
 rootNformycoN_plot_nolegend = rootNformycoN_plot +
   theme(legend.position = "none")
 
-NforNandCforC = plot_grid(rootNformycoN_plot_nolegend, hyphalCformycoC_plot,
-                          labels = c("A", "B"),
-                          align = "h",
-                          rel_widths = c(1, 1.15))
-
-# save_plot("plots/Multipanel_regressions_NforN_and_CforC.pdf",
-#           NforNandCforC,
-#           ncol = 2,
-#           base_aspect_ratio = 1.4)
-# 
-# save_plot("plots/Multipanel_regressions_NforN_and_CforC.jpeg",
-#           NforNandCforC,
-#           ncol = 2,
-#           base_aspect_ratio = 1.4)
-
 # When considering N and C together, I need the dataset 
 # that only includes plants/compartments that received nitrogen label.
 
@@ -104,15 +89,16 @@ mycoCforN = ggplot(data = nitrogeninfo) +
 threepanels = plot_grid(rootNformycoN_plot_nolegend, 
                         hyphalCformycoC_plot_nolegend,
                         mycoCforN,
-                          labels = c("A", "B", "C"),
-                          align = "h",
-                          rel_widths = c(1, 1, 1.15))
+                        labels = c("A", "B", "C"),
+                        align = "h",
+                        nrow = 1,
+                        ncol = 3,
+                        rel_widths = c(1, 1, 1.15))
 
 save_plot("plots/Multipanel_regressions_myco_N_and_C.jpeg",
           threepanels,
-          ncol = 3,
-          base_aspect_ratio = 1.4)
+          base_aspect_ratio = 3.6)
 
 save_plot("plots/Multipanel_regressions_myco_N_and_C.pdf",
           threepanels,
-          ncol = 3)
+          base_aspect_ratio = 3.6)
