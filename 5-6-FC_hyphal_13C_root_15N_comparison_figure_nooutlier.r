@@ -1,4 +1,4 @@
-#5-3-FC_hyphal_13C_root_15N_myco_comparison_figure
+#5-6-FC_hyphal_13C_root_15N_comparison_figure_nooutlier.r
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
@@ -8,10 +8,12 @@ library(tidyverse)
 carboninfo = read_csv("processeddata/data_for_carbon_only_analyses.csv")
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
+nitrogeninfo_nooutlier = subset(nitrogeninfo, Plant != 6041)
+carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b
 
 #### Carbon panel: How well did hyphal C track myco C? ####
 
-hyphalCformycoC_plot = ggplot(data = carboninfo) +
+hyphalCformycoC_plot_nooutlier = ggplot(data = carboninfo_nooutlier) +
   geom_point(aes(x = mycoC13ppmexcess,
                  y = hyphae.ppm13Cexcess, 
                  color = N_level,
@@ -29,20 +31,11 @@ hyphalCformycoC_plot = ggplot(data = carboninfo) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
-hyphalCformycoC_plot_nolegend = hyphalCformycoC_plot +
+hyphalCformycoC_plot_nolegend = hyphalCformycoC_plot_nooutlier +
   theme(legend.position = "none")
-# save_plot("plots/Regression_hyphal_C_for_myco_C_with_outlier.pdf", 
-#           hyphalCformycoC_plot_withoutlier,
-#           ncol = 1,
-#           base_aspect_ratio = 1.4)
-# 
-# ggsave("plots/Regression_hyphal_C_for_myco_C_with_outlier.jpeg", 
-#        plot = hyphalCformycoC_plot_withoutlier,
-#        device = "jpeg",
-#        width = 7, height = 5, units = "in")
 
 ### Nitrogen panel ####
-rootNformycoN_plot = ggplot(data = nitrogeninfo) +
+rootNformycoN_plot_nooutlier = ggplot(data = nitrogeninfo_nooutlier) +
   geom_point(aes(x = mycoN15ppmexcess,
                  y = uncolN15ppmexcess, 
                  color = N_level,
@@ -61,13 +54,13 @@ rootNformycoN_plot = ggplot(data = nitrogeninfo) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
-rootNformycoN_plot_nolegend = rootNformycoN_plot +
+rootNformycoN_plot_nolegend = rootNformycoN_plot_nooutlier +
   theme(legend.position = "none")
 
 # When considering N and C together, I need the dataset 
 # that only includes plants/compartments that received nitrogen label.
 
-mycoCforN = ggplot(data = nitrogeninfo) +
+mycoCforN = ggplot(data = nitrogeninfo_nooutlier) +
   geom_point(aes(x = mycoN15ppmexcess,
                  y = mycoC13ppmexcess, 
                  color = N_level,
@@ -95,24 +88,23 @@ threepanels = plot_grid(rootNformycoN_plot_nolegend,
                         ncol = 3,
                         rel_widths = c(1, 1, 1.15))
 
-save_plot("plots/Multipanel_regressions_myco_N_and_C.jpeg",
+save_plot("plots/Multipanel_regressions_myco_N_and_C_NOOUTLIER.jpeg",
           threepanels,
           base_aspect_ratio = 3.6)
 
-save_plot("plots/Multipanel_regressions_myco_N_and_C.pdf",
+save_plot("plots/Multipanel_regressions_myco_N_and_C_NOOUTLIER.pdf",
           threepanels,
           base_aspect_ratio = 3.6)
 
-### Stats ###
-CforNlm = lm((mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo)
-plot(CforNlm)
-summary(CforNlm)
+CforNlm_nooutlier = lm((mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo_nooutlier)
+plot(CforNlm_nooutlier)
+summary(CforNlm_nooutlier)
 
 
 
-sink("stats_tables/myco13C_vs_myco_15N_lm_results.html")
+sink("stats_tables/myco13C_vs_myco_15N_lm_results_NOOUTLIER.html")
 
-stargazer(CforNlm, type = "html",
+stargazer(CforNlm_nooutlier, type = "html",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
           digit.separator = "",
