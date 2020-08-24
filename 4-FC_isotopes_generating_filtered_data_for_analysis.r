@@ -198,8 +198,8 @@ nitrogeninfo = subset(nitrogeninfo, compartment_fungus != "MIXED" &
 forcefactor_myco = -min(nitrogeninfo$mycoN15ppmexcess) # this is 7.4476 ppm
 forcefactor_uncolroots = -min(nitrogeninfo$nmN15ppmexcess) # this one is 18.32042 ppm
 # Use uncol value, then, as the linear transformation.
-nitrogeninfo$forced.uncolonized.N15ppmexcess = nitrogeninfo$nmN15ppmexcess + forcefactor_uncolroots + 0.000001 # Prevent ratios with zero in denominator
-nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + forcefactor_uncolroots + 0.000001 # Prevent ratios with zero in denominator
+nitrogeninfo$forced.uncolonized.N15ppmexcess = nitrogeninfo$nmN15ppmexcess + forcefactor_uncolroots + 1 # Prevent ratios with zero in denominator
+nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + forcefactor_uncolroots + 1 # Prevent ratios with zero in denominator
 nitrogeninfo$forced.mycoC13forN15 = nitrogeninfo$mycoC13ppmexcess/nitrogeninfo$forced.mycorrhizas.N15ppmexcess
 nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$forced.uncolonized.N15ppmexcess
 nitrogeninfo$mycoN15ppmexcess = nitrogeninfo$mycorrhizas.APE15N*(10^4)

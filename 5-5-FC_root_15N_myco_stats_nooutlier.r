@@ -7,12 +7,23 @@ library(tidyverse)
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
 nitrogeninfo_nooutlier = subset(nitrogeninfo, Plant != 6041)
-
+nitrogeninfo_nooutlier$forced.uncolonized.N15ppmexcess[nitrogeninfo_nooutlier$Plant == 6078] = 1
+#was too close to zero for graphing
 
 # STATS FOR PAPER: Root N correlates with mycorrhiza N
 rootNformycoN_linear = lm(nmN15ppmexcess ~ mycoN15ppmexcess, data = nitrogeninfo_nooutlier)
 plot(rootNformycoN_linear) # Looks kinda weird, we'll see how this goes.
 summary(rootNformycoN_linear)
+
+rootNformycoN_log_linear = lm(nmN15ppmexcess ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo_nooutlier)
+plot(rootNformycoN_log_linear) 
+summary(rootNformycoN_linear)
+
+rootNformycoN_loglog_linear = lm(log(forced.uncolonized.N15ppmexcess) ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo_nooutlier)
+plot(rootNformycoN_loglog_linear) # data point 45 looks really weird here.
+summary(rootNformycoN_linear)
+
+a = nitrogeninfo_nooutlier[45,] # This one looks weird because it has basically no 15N in the uncolonized roots.
 
 sink("stats_tables/root15N_vs_myco15N_lm_results_NOOUTLIER.html")
 

@@ -4,6 +4,7 @@ setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(cowplot)
 library(tidyverse)
+library(stargazer)
 
 carboninfo = read_csv("processeddata/data_for_carbon_only_analyses.csv")
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
@@ -105,10 +106,12 @@ save_plot("plots/Multipanel_regressions_myco_N_and_C.pdf",
 
 ### Stats ###
 CforNlm = lm((mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo)
-plot(CforNlm)
+plot(CforNlm) # seems okay
 summary(CforNlm)
 
-
+ClogforNlm = lm(log(mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo)
+plot(ClogforNlm) # worse
+summary(CforNlm)
 
 sink("stats_tables/myco13C_vs_myco_15N_lm_results.html")
 
@@ -117,5 +120,41 @@ stargazer(CforNlm, type = "html",
           star.cutoffs = c(0.05, 0.01, 0.001),
           digit.separator = "",
           summary = FALSE)
+
+sink()
+
+
+# Use N15 values forced positive with linear transformation
+# so you can try a log fit.
+CforNlm_log = lm((mycoC13ppmexcess) ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo)
+plot(CforNlm_log) # Kinda weird, esp point 25.
+summary(CforNlm_log) # Adj R^2 = 0.4287
+
+CforNlm_loglog = lm(log(mycoC13ppmexcess) ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo)
+plot(CforNlm_loglog) # Better
+summary(CforNlm_loglog) # Adj R^2 = 0.4644
+
+
+summary(CforNlm) # Adj R^2 = 0.5285 -- this one is still the best
+
+sink("stats_tables/myco13C_vs_myco_15N_lm_logresults.html")
+
+stargazer(CforNlm_log, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE)
+
+sink()
+
+sink("stats_tables/myco13C_vs_myco_15N_comparingthreemodels.html")
+
+stargazer(CforNlm, CforNlm_log, CforNlm_loglog, 
+          type = "html",
+          align = TRUE,
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          no.space = TRUE)
 
 sink()
