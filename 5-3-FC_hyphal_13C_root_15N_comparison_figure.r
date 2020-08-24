@@ -13,22 +13,22 @@ nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES
 #### Carbon panel: How well did hyphal C track myco C? ####
 
 hyphalCformycoC_plot = ggplot(data = carboninfo) +
-  geom_point(aes(x = mycoC13ppmexcess,
-                 y = hyphae.ppm13Cexcess, 
+  geom_point(aes(x = log(mycoC13ppmexcess),
+                 y = log(hyphae.ppm13Cexcess), 
                  color = N_level,
                  shape =compartment_fungus)) +
-  geom_smooth(method = "lm", aes(x = mycoC13ppmexcess,
-                                 y = hyphae.ppm13Cexcess),
+  geom_smooth(method = "lm", aes(x = log(mycoC13ppmexcess),
+                                 y = log(hyphae.ppm13Cexcess)),
               color = "black",
               size = 0.5) +
   scale_color_manual(values = c("steelblue4", "steelblue1"),
                      name = "N level") +
   scale_shape_manual(values = c(17, 15),
                      name = "Fungus") +
-  ylab(expression("Hyphal "^13*"C (ppm excess)")) +
-  xlab(expression("Mycorrhizal "^13*"C (ppm excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
+  ylab(expression("Hyphal "^13*"C (ln ppm excess)")) +
+  xlab(expression("Mycorrhizal "^13*"C (ln ppm excess)")) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
 hyphalCformycoC_plot_nolegend = hyphalCformycoC_plot +
   theme(legend.position = "none")
@@ -44,23 +44,23 @@ hyphalCformycoC_plot_nolegend = hyphalCformycoC_plot +
 
 ### Nitrogen panel ####
 rootNformycoN_plot = ggplot(data = nitrogeninfo) +
-  geom_point(aes(x = mycoN15ppmexcess,
-                 y = uncolN15ppmexcess, 
+  geom_point(aes(x = log(forced.mycorrhizas.N15ppmexcess),
+                 y = log(forced.uncolonized.N15ppmexcess), 
                  color = N_level,
                  shape = mycofungus)) +
   geom_smooth(method = "lm",
-              aes(x = mycoN15ppmexcess,
-                  y = uncolN15ppmexcess),
+              aes(x = log(forced.mycorrhizas.N15ppmexcess),
+                  y = log(forced.uncolonized.N15ppmexcess)),
               color = "black",
               size = 0.5) +
   scale_color_manual(values = c("steelblue4", "steelblue1"),
                      name = "N level") +
   scale_shape_manual(values = c(17, 15),
                      name = "Fungus") +
-  ylab(bquote(atop("Uncolonized roots "^15*N, "(ppm excess)"))) +
-  xlab(expression("Mycorrhizal "^15*"N (ppm excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
+  ylab(bquote(atop("Uncolonized roots "^15*N, "(ln ppm excess)"))) +
+  xlab(expression("Mycorrhizal "^15*"N (ln ppm excess)")) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
 rootNformycoN_plot_nolegend = rootNformycoN_plot +
   theme(legend.position = "none")
@@ -69,18 +69,18 @@ rootNformycoN_plot_nolegend = rootNformycoN_plot +
 # that only includes plants/compartments that received nitrogen label.
 
 mycoCforN = ggplot(data = nitrogeninfo) +
-  geom_point(aes(x = mycoN15ppmexcess,
-                 y = mycoC13ppmexcess, 
+  geom_point(aes(x = log(forced.mycorrhizas.N15ppmexcess),
+                 y = log(mycoC13ppmexcess), 
                  color = N_level,
                  shape = compartment_fungus)) +
   geom_smooth(method = "lm", 
               formula = y ~ x, 
-              aes(x = mycoN15ppmexcess,
-                  y = mycoC13ppmexcess),
+              aes(x = log(forced.mycorrhizas.N15ppmexcess),
+                  y = log(mycoC13ppmexcess)),
               color = "black",
               size = 0.5) +
-  ylab(bquote(atop("Mycorrhizal "^13*"C", "(ppm excess)"))) +
-  xlab(bquote(atop("Mycorrhizal "^15*"N (ppm excess)"))) +
+  ylab(bquote(atop("Mycorrhizal "^13*"C", "(ln ppm excess)"))) +
+  xlab(bquote(atop("Mycorrhizal "^15*"N (ln ppm excess)"))) +
   scale_color_manual(values = c("steelblue4", "steelblue1"),
                      name = "N level") +
   scale_shape_manual(values = c(17, 15),
@@ -109,21 +109,6 @@ CforNlm = lm((mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo)
 plot(CforNlm) # seems okay
 summary(CforNlm)
 
-ClogforNlm = lm(log(mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo)
-plot(ClogforNlm) # worse
-summary(CforNlm)
-
-sink("stats_tables/myco13C_vs_myco_15N_lm_results.html")
-
-stargazer(CforNlm, type = "html",
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "",
-          summary = FALSE)
-
-sink()
-
-
 # Use N15 values forced positive with linear transformation
 # so you can try a log fit.
 CforNlm_log = lm((mycoC13ppmexcess) ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo)
@@ -137,13 +122,14 @@ summary(CforNlm_loglog) # Adj R^2 = 0.4644
 
 summary(CforNlm) # Adj R^2 = 0.5285 -- this one is still the best
 
-sink("stats_tables/myco13C_vs_myco_15N_lm_logresults.html")
+sink("stats_tables/myco13C_vs_myco_15N_lm_loglogresults.html")
 
-stargazer(CforNlm_log, type = "html",
+stargazer(CforNlm_loglog, type = "html",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
           digit.separator = "",
-          summary = FALSE)
+          summary = FALSE,
+          no.space = TRUE)
 
 sink()
 

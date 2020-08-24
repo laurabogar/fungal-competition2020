@@ -29,8 +29,8 @@ hyphalCformycoC_plot_nooutlier = ggplot(data = carboninfo_nooutlier) +
                      name = "Fungus") +
   ylab(expression("Hyphal "^13*"C (ln ppm excess)")) +
   xlab(expression("Mycorrhizal "^13*"C (ln ppm excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) 
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
 hyphalCformycoC_plot_nolegend = hyphalCformycoC_plot_nooutlier +
   theme(legend.position = "none")
@@ -52,28 +52,8 @@ rootNformycoN_plot_nooutlier = ggplot(data = nitrogeninfo_nooutlier) +
                      name = "Fungus") +
   ylab(bquote(atop("Uncolonized roots "^15*N, "(ln ppm excess)"))) +
   xlab(expression("Mycorrhizal "^15*"N (ln ppm excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
-
-rootNformycoN_plot_nooutlier = ggplot(data = nitrogeninfo_nooutlier) +
-  geom_point(aes(x = mycoN15ppmexcess,
-                 y = uncolN15ppmexcess, 
-                 color = N_level,
-                 shape = mycofungus)) +
-  geom_smooth(method = "lm",
-              aes(x = mycoN15ppmexcess,
-                  y = uncolN15ppmexcess),
-              color = "black",
-              size = 0.5) +
-  scale_color_manual(values = c("steelblue4", "steelblue1"),
-                     name = "N level") +
-  scale_shape_manual(values = c(17, 15),
-                     name = "Fungus") +
-  ylab(bquote(atop("Uncolonized roots "^15*N, "(ppm excess)"))) +
-  xlab(expression("Mycorrhizal "^15*"N (ppm excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed")
-
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) 
+  # geom_abline(intercept = 0, slope = 1, linetype = "dashed")
 
 rootNformycoN_plot_nolegend = rootNformycoN_plot_nooutlier +
   theme(legend.position = "none")

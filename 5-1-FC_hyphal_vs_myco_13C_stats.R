@@ -8,7 +8,7 @@ carboninfo = read_csv("processeddata/data_for_carbon_only_analyses.csv")
 
 #### How well did hyphal C track myco C? ####
 
-myhyphaelm_withoutlier = lm((hyphae.ppm13Cexcess) ~ mycoC13ppmexcess, data = carboninfo)
+myhyphaelm_withoutlier = lm(log(hyphae.ppm13Cexcess) ~ log(mycoC13ppmexcess), data = carboninfo)
 plot(myhyphaelm_withoutlier)
 summary(myhyphaelm_withoutlier)
 
@@ -22,12 +22,13 @@ summary(myhyphaelm_withoutlier)
 # plot(hyphaelme_withoutlier) #outlier is very clear
 # summary(hyphaelme_withoutlier)
 
-sink("stats_tables/hyphae13C_vs_myco13C_withoutlier_lm_results.html")
+sink("stats_tables/hyphae13C_vs_myco13C_lm_results.html")
 
 stargazer(myhyphaelm_withoutlier, type = "html",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
           digit.separator = "",
-          summary = FALSE)
+          summary = FALSE,
+          no.space = TRUE)
 
 sink()
