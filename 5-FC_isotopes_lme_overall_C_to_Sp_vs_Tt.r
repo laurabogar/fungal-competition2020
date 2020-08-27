@@ -19,6 +19,7 @@ library(cowplot)
 library(tidyverse)
 library(lme4)
 library(lmerTest)
+library(stargazer)
 
 # Data:
 together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
@@ -68,9 +69,25 @@ summary(c13.full)
 anovaresults = anova(c13.full)
 
 
-sink("stats_tables/C_by_fungus_competition_N_lme_results.txt")
+sink("stats_tables/C_by_fungus_competition_N_lme_results.html")
 
-anovaresults
+stargazer(anovaresults, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/C_by_fungus_competition_N_lme_results_noanova.html")
+
+stargazer(c13.full, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = TRUE,
+          no.space = TRUE)
 
 sink()
 
@@ -84,16 +101,23 @@ sink()
 
 #### Plot ####
 labels = c(High = "High N", Low = "Low N")
-ggplot(data = excluding_mixed) +
+carboncomparison = ggplot(data = excluding_mixed) +
   geom_boxplot(outlier.alpha = 0,
-               aes(x = compartment_fungus, y = transmycoC13)) +
+               aes(x = compartment_fungus, y = mycologC13)) +
   geom_jitter(width = 0.20,
-              aes(x = compartment_fungus, y = transmycoC13)) +
+              aes(x = compartment_fungus, 
+                  y = mycologC13)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  ylab("Plant C in mycorrhizas (log ppm excess)") +
+  ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungal treatment")
+  xlab("Fungus")
+
+save_plot("plots/Sp_gets_more_C_than_Tt_in_low_N.pdf",
+          carboncomparison)
+
+save_plot("plots/Sp_gets_more_C_than_Tt_in_low_N.jpeg",
+          carboncomparison)
 
 # How well does 13C in mycos correspond to 13C in adjacent fine roots?
 
@@ -111,8 +135,7 @@ summary(nmvsmycos)
 anova(nmvsmycos) # I do NOT know how to understand this in
 # the context of my plot. Let's go simpler.
 
-library(stargazer)
-nmvsmycos = lm(transmycoC13 ~ nmlogC13, data = excluding_mixed) # I don't have any random effects here that I don't think I need
+nmvsmycos = lm(mycologC13 ~ nmlogC13, data = excluding_mixed) # I don't have any random effects here that I don't think I need
 stargazer(nmvsmycos, type = "text",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
@@ -125,13 +148,13 @@ stargazer(nmvsmycos, type = "text",
 # (Like Bogar et al. 2019?)
 
 ggplot(data = excluding_mixed) +
-  geom_point(aes(x = pctN, y = transmycoC13, shape = compartment_fungus, color = N_level)) +
+  geom_point(aes(x = pctN, y = mycologC13, shape = compartment_fungus, color = N_level)) +
   ylab("Plant C in mycorrhizas (log ppm excess)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Percent N") +
-  geom_smooth(method = lm, aes(x = pctN, y = transmycoC13))
+  geom_smooth(method = lm, aes(x = pctN, y = mycologC13))
 
-CvspctN = lm(transmycoC13 ~ pctN, data = excluding_mixed)
+CvspctN = lm(mycologC13 ~ pctN, data = excluding_mixed)
 stargazer(CvspctN, type = "text",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
