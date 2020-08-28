@@ -1,4 +1,4 @@
-# 7 - FC_isotopes_lme_C_allocation_to_Tt
+# 6 - FC_isotopes_lme_C_allocation_to_Tt
 # June 2020
 # Using an LME framework to more rigorously calculate how C allocation ratios
 # to Tt shifted with competitive context
@@ -6,16 +6,17 @@
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Load required packages
-library(agricolae)
-library(cowplot)
-library(emmeans)
-library(tidyverse)
-library(lmerTest)
-library(stargazer)
+require(cowplot)
+require(tidyverse)
+require(lmerTest)
 
 # Loading required data
 together = read_csv("FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 
+# Declare constants:
+smallconstant = 0.000473 # Need to add this to all C values to get around a negative value below.
+artificial_minimum_alloc_ratio = 0.07 # minimum allocation ratio OBSERVED, besides 0, was 0.1428159.
+# I'll add 0.07, half this value, to everything that is zero so it can be logged.
 
 #### How does the allocation ratio to Tt change with competition? ####
 # Hypothesis: Relative allocation to Tt should
@@ -25,9 +26,8 @@ together = read_csv("FCdata/isotope_and_plant_metadata_with_competition_coded_cl
 allocratios = together[-grep("MIXED", together$Fungi),]
 allocratios = allocratios[-grep("Mixed", allocratios$versus),]
 
-allocratios$allocratio = rep(NA, nrow(allocratios))
-
-# allocratios$mycorrhizas.APE13C = allocratios$mycorrhizas.APE13C + smallconstant
+allocratios$allocratio = numeric(nrow(allocratios))
+allocratios$mycorrhizas.APE13C = allocratios$mycorrhizas.APE13C + smallconstant
 
 for (i in 1:nrow(allocratios)) {
   for (j in 1:nrow(allocratios)) {
@@ -52,17 +52,25 @@ for (i in 1:nrow(allocratios)) {
   }
 }
 
-summary(allocratios$allocratio)
-
 spalloc = allocratios[grep("Sp", allocratios$compartment_fungus),]
 spalloc = spalloc[!is.na(spalloc$allocratio),]
-spalloc$logallocratio = log(spalloc$allocratio)
+spalloc$logallocratio = log(spalloc$allocratio + artificial_minimum_alloc_ratio)
 
 allocratios = allocratios[grep("Tt", allocratios$compartment_fungus),]
 allocratios = allocratios[!is.na(allocratios$allocratio),]
 
-allocratios$logallocratio = log(allocratios$allocratio)
+# allocratios$logallocratio = log(allocratios$allocratio + artificial_minimum_alloc_ratio) 
+# whoops though! also have a negative value.
+# It's a Tt/Tt plant. 6073. I guess at least
+# one side wasn't really enriched for C?
+# just6073 = together[together$Plant == 6073,]
+# That value is -0.0004728348.
+# Let's just add 0.000473 to everything upstream.
 
+
+allocratios$logallocratio = log(allocratios$allocratio + artificial_minimum_alloc_ratio) 
+
+labels = c(High = "High N", Low = "Low N")
 
 
 ### Statistical test with lmerTest ###
@@ -71,43 +79,35 @@ allocation_ratio.full = lmer(logallocratio ~ versus * N_level + (1|Batch),
 
 # Boundary(singular) fit... but may not be wrong.
 
-allocanova = anova(allocation_ratio.full)
-allocposthoc = emmeans(allocation_ratio.full, list(pairwise ~ versus*N_level), adjust = "tukey")
+anova(allocation_ratio.full)
 
-sink("stats_tables/Relative_C_allocation_anova.html")
+### A series of t tests to see if any of these distributions differ from null expectation ###
 
-stargazer(allocanova, type = "html",
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "",
-          summary = FALSE,
-          no.space = TRUE)
+# I expect that, if the plant had NO preference, each of these distributions 
+# would be centered around zero (the dashed line in my plot).
+# Because of this expectation, I feel okay with using a t test to see 
+# if any of these are actually different from zero. 
 
-sink()
+# I hypothesize that the log allocation ratio to Tt will be 
+# significantly greater than zero when the plant prefers Tt,
+# which in this experiment appears to be the High N conditions.
 
-sink("stats_tables/Relative_C_allocation_anova_posthoc.txt")
-
-allocposthoc
-
-sink()
-
-tx = with(allocratios, interaction(versus, N_level))
-forlabels = aov(logallocratio~tx, data = allocratios)
-mylabels = HSD.test(forlabels, "tx", group = TRUE)
-# although the agricolae labels use a less sophisticated
-# anova, the suggested letters match what I would
-# need to describe my post-hoc emmeans results. Much
-# easier to double check this outcome than try to 
-# come up with the significance labels on my own!
+nonehigh = subset(allocratios, versus == "None" & N_level == "High")
+t.test(nonehigh$logallocratio) # marginal: p = 0.06
+otherhigh = subset(allocratios, versus == "Sp" & N_level == "High")
+t.test(otherhigh$logallocratio) # marginal: p = 0.09
+selfhigh = subset(allocratios, versus == "Tt" & N_level == "High")
+t.test(selfhigh$logallocratio) # NS: p = 0.4899
+nonelow = subset(allocratios, versus == "None" & N_level == "Low")
+t.test(nonelow$logallocratio) # NS: p = 0.6373
+otherlow = subset(allocratios, versus == "Sp" & N_level == "Low")
+t.test(otherlow$logallocratio) # significant: p = 0.02295
+selflow = subset(allocratios, versus == "Tt" & N_level == "Low")
+t.test(selflow$logallocratio) # NS: p = 0.9918
 
 ### Plot ###
-labels = c(High = "High N", Low = "Low N")
-annotations = data.frame(x = c((1:3), (1:3)),
-                         y = c(2.1, 2.1, 2.1, 1.6, 1.1, 2.1),
-                         N_level = c(rep("High", 3), rep("Low", 3)),
-                         labs = c(paste(c("a", "a", "a")), paste(c("ab", "b", "a"))))
 
-myplot = ggplot(data = allocratios) +
+ggplot(data = allocratios) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = versus, y = logallocratio)) +
   geom_jitter(aes(x = versus, y = logallocratio),
@@ -116,26 +116,21 @@ myplot = ggplot(data = allocratios) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   ylab("Log C allocation ratio to Tt") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Competitor") +
-  geom_text(data = annotations, aes(x, y, label = labs))
+  xlab("Competitor")
 
-save_plot("plots/Relative_C_allocation_to_Tt.pdf", 
-          myplot,
-          ncol = 1,
-          base_aspect_ratio = 1.8)
-save_plot("plots/Relative_C_allocation_to_Tt.jpeg", 
-          myplot,
-          ncol = 1,
-          base_aspect_ratio = 1.8)
+# ggplot(data = spalloc) +
+#   geom_boxplot(outlier.alpha = 0,
+#                aes(x = competition_treatment, y = logallocratio)) +
+#   geom_jitter(aes(x = competition_treatment, y = logallocratio),
+#               width = 0.25) +
+#   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+#   facet_grid(. ~ N_level, labeller = labeller(N_level = labels))
 
 # VERY interesting.
 # Tt gets more C relative to Sp under high N;
 # basically same amount vs itself.
 # Tt gets LESS N relative to Sp under low N,
 # basically same amount vs itself.
-
-
-#### OLD AND IRRELEVANT FROM HERE ON. ####
 
 justvsmycos = subset(allocratios, competition_treatment != "None")
 

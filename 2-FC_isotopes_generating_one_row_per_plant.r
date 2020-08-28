@@ -63,19 +63,25 @@ onerowperplant = select(mydata, Plant, Side, tissue, enriched,
                         received15N, N_level, Failed_split, Actual_fungi_at_harvest,
                         Actual_fungus_by_compartment, mycofungus, APE13C,
                         APE15N, pctC, pctN, CNratio)
+
+onerowperplant$mycofungus[onerowperplant$mycofungus == "MIXED"] = "NM"
+
+
 # write_csv(onerowperplant, "minimally_processed_isotope_data.csv")
 write_csv(onerowperplant, "processeddata/minimally_processed_isotope_data_July.csv")
 
 carbon = select(onerowperplant, Plant, Side, tissue, mycofungus, APE13C)
 carbonspread = carbon %>% spread(tissue, APE13C)
-carbonspread$compid = paste(carbonspread$Plant, carbonspread$Side)
-for (i in 1:nrow(carbonspread)) {
-  if (carbonspread$mycofungus[i] == "MIXED") {
-    carbonspread$uncolonized_roots[carbonspread$compid %in% carbonspread$compid[i]] = carbonspread$uncolonized_roots[i]
-  }
-}
+# carbonspread$compid = paste(carbonspread$Plant, carbonspread$Side)
+# for (i in 1:nrow(carbonspread)) {
+#   if (carbonspread$mycofungus[i] == "MIXED") {
+#     carbonspread$uncolonized_roots[carbonspread$compid %in% carbonspread$compid[i]] = carbonspread$uncolonized_roots[i]
+#   }
+# }
 
-carbonspread = subset(carbonspread, mycofungus != "MIXED")
+carbonincludingmixed = carbonspread
+
+# carbonspread = subset(carbonspread, mycofungus != "MIXED")
 
 carbonfinal = select(carbonspread, Plant, Side,
                      hyphae.APE13C = hyphae,
@@ -83,32 +89,51 @@ carbonfinal = select(carbonspread, Plant, Side,
                      uncolonized_roots.APE13C = uncolonized_roots,
                      mycofungus)
 
+carbonfinal_includingmixed = select(carbonincludingmixed, Plant, Side,
+                     hyphae.APE13C = hyphae,
+                     mycorrhizas.APE13C = mycorrhizas,
+                     uncolonized_roots.APE13C = uncolonized_roots,
+                     mycofungus)
+
 nitrogen = select(onerowperplant, Plant, Side, tissue, mycofungus, APE15N)
 nitrospread = nitrogen %>% spread(tissue, APE15N)
-nitrospread$compid = paste(nitrospread$Plant, nitrospread$Side)
+# nitrospread$compid = paste(nitrospread$Plant, nitrospread$Side)
 
-for (i in 1:nrow(nitrospread)) {
-  if (nitrospread$mycofungus[i] == "MIXED") {
-    nitrospread$uncolonized_roots[nitrospread$compid %in% nitrospread$compid[i]] = carbonspread$uncolonized_roots[i]
-  }
-}
+# for (i in 1:nrow(nitrospread)) {
+#   if (nitrospread$mycofungus[i] == "MIXED") {
+#     nitrospread$uncolonized_roots[nitrospread$compid %in% nitrospread$compid[i]] = carbonspread$uncolonized_roots[i]
+#   }
+# }
 
-nitrospread = subset(nitrospread, mycofungus != "MIXED")
+nitrospreadincludingmixed = nitrospread
+# nitrospread = subset(nitrospread, mycofungus != "MIXED")
 
 nitrofinal = select(nitrospread, Plant, Side, hyphae.APE15N = hyphae,
                     mycorrhizas.APE15N = mycorrhizas,
                     uncolonized_roots.APE15N = uncolonized_roots,
                     mycofungus)
 
+nitrofinal_includingmixed = select(nitrospreadincludingmixed, Plant, Side, hyphae.APE15N = hyphae,
+                    mycorrhizas.APE15N = mycorrhizas,
+                    uncolonized_roots.APE15N = uncolonized_roots,
+                    mycofungus)
+
 nandc = full_join(carbonfinal, nitrofinal)
+nandc_includingmixed = full_join(carbonfinal_includingmixed, nitrofinal_includingmixed)
+
 onerow = select(onerowperplant, everything(), -APE13C, -APE15N)
 
 everything = left_join(nandc, onerow)
+everything_includingmixed = left_join(nandc_includingmixed, onerow)
+
 shouldbeunique = paste(everything$Plant, everything$Side, everything$mycofungus)
+
 everything = everything[!duplicated(shouldbeunique),]
+everything_includingmixed = everything_includingmixed[!duplicated(shouldbeunique),]
 
 # write_csv(everything, "isotopes_one_row_per_plant_including_unenriched.csv")
 write_csv(everything, "processeddata/isotopes_one_row_per_plant_including_unenriched_July.csv")
+write_csv(everything_includingmixed, "processeddata/isotopes_one_row_per_plant_including_unenriched_and_mixed.csv")
 
 # UPDATE the below is great for N analyses and C for N,
 # but actually I don't need that side to have received 15N

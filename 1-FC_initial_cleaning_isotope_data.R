@@ -31,8 +31,47 @@ summary(as.factor(isowithmeta$tissue))
 isowithmeta$tissue[isowithmeta$tissue == "hyphae/rhizomorphs"] = "hyphae"
 isowithmeta$tissue[grep("mycos", isowithmeta$tissue)] = "mycorrhizas"
 isowithmeta$tissue[grep("nm|tfr", isowithmeta$tissue)] = "uncolonized_roots"
+isowithmeta$mycofungus = isowithmeta$Actual_fungus_by_compartment
 
-mixed_compartments_need_attention = c("6002b", "6057a", "6067b", "6098a")
+mixed_to_check = subset(isowithmeta, Actual_fungus_by_compartment == "MIXED")
+mixed_to_check = select(mixed_to_check, Plant, Side, "Identifier 2")
+tocheck = select(mixed_to_check, Plant, Side)
+tocheck = arrange(tocheck, Plant)
+
+labels = paste(tocheck$Plant, tocheck$Side)
+
+mixed_ones_to_check = unique(labels)
+
+mixed_ones_to_check
+
+closerlook = arrange(mixed_to_check, Plant, Side)
+closerlook = select(closerlook, Plant, Side, Harvest_notes)
+write_csv(closerlook, "harvest_notes.csv")
+
+# [1] "6002 b" "6028 a" "6034 b" "6052 b"
+# [5] "6056 a" "6057 a" "6067 b" "6098 a"
+
+# We seem to have no isotope data for 6034b (uncolonized) or 6098a (mycos). I think these
+# are the samples that failed at the facility.
+
+#6002b: Identifier 2 = 3_F10, it's SUIPU, based on mass and notes
+#6002b: Identifier 2 = 4_C3, it's THETE, based on mass and notes
+# 6028a: Identifier 2 = 2_B12, it's SUIPU
+# 6028a: Identifier 2 = 4_H9, it's THETE
+# 6034b: Identifier 2 = 3_B4, it's THETE
+# 6034b: Identifier 2 = 4_D8, it's SUIPU 
+# 6052b: Identifier 2 = 1_D4, it's SUIPU
+# 6052b: Identifier 2 = 2_C12, it's THETE
+# 6056a: Identifier 2 = 2_D2, it's SUIPU
+# 6056a: Identifier 2 = ... looks like I don't have THETE tips for some reason.
+# 6057a: Identifier 2 = 3_B12, it's SUIPU
+# 6057a: Identifier 2 = 2_C6, it's THETE
+# 6067b: Identifier 2 = 4_E9, it's SUIPU
+# 6067b: Identifier 2 = 4_H4, it's THETE
+# 6098a: Identifier 2 = 1_C9, it's SUIPU... but no myco isotope data
+
+mixed_compartments_to_update = c("6002b", "6028a", "6052b", "6057a", "6067b")
+
 #6002b: Identifier 2 = 3_F10, it's SUIPU, based on mass and notes
 #6002b: Identifier 2 = 4_C3, it's THETE, based on mass and notes
 #6057a: ID 2 = 3_B12, it's SUIPU
@@ -41,10 +80,9 @@ mixed_compartments_need_attention = c("6002b", "6057a", "6067b", "6098a")
 # 6067b: ID2 = 4_H4, it's THETE
 # 6098a: Apparently only ran one mycorrhiza sample, and it failed. Boo.
 
-SUIPU_ids = c("3_F10", "3_B12", "4_E9")
-THETE_ids = c("4_C3", "2_C6", "4_H4")
+SUIPU_ids = c("3_F10", "2_B12", "4_D8", "1_D4", "2_D2", "3_B12", "4_E9")
+THETE_ids = c("4_C3", "4_H9", "3_B4", "2_C12", "2_C6", "4_H4")
 
-isowithmeta$mycofungus = isowithmeta$Actual_fungus_by_compartment
 
 # Let's straighten out those mixed compartments
 
