@@ -3,16 +3,107 @@
 # Using an LME framework to more rigorously calculate how C for N 
 # exchange rates varied in this experiment.
 
-setwd("~/Documents/2018-2019/Fungal competition/fungal-competition2019/")
+setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Load required packages
-require(cowplot)
-require(tidyverse)
-require(lmerTest)
+library(agricolae)
+library(cowplot)
+library(emmeans)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(stargazer)
 
 # Loading required data
-forN = read_csv("./FCdata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
-exchangerates = subset(forN, compartment_fungus != "MIXED")
+# forN = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withmixed.csv")
+forN = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+
+forN = subset(forN, received15N == "Y")
+forN$mycoCforN = forN$mycoC13ppmexcess/forN$mycoN15ppmexcess
+# log rule: log(x/y) = log(x) - log(y)
+forN$logmycoCforN = forN$mycologC13 - forN$mycologN15
+
+justmycos = forN[!is.na(forN$logmycoCforN),]
+justmycos = subset(justmycos, mycofungus != "None")
+
+justmycos$mycofungus = factor(justmycos$mycofungus, levels = c("Sp", "Tt"))
+justmycos$compartment_fungus = as.factor(justmycos$compartment_fungus)
+
+CforN = lmer(logmycoCforN ~ mycofungus * N_level + (1|Batch/Plant),
+             data = justmycos)
+
+summary(CforN)
+
+CforN.anova = anova(CforN)
+
+CforNposthoc = emmeans(CforN, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+
+sink("stats_tables/CforN_exchangerates_anova.html")
+
+stargazer(CforN.anova, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/CforN_exchangerates_anova_posthoc.txt")
+
+CforNposthoc
+
+sink()
+
+tx = with(justmycos, interaction(mycofungus, N_level))
+forlabels = aov(logmycoCforN~tx, data = justmycos)
+mylabels = HSD.test(forlabels, "tx", group = TRUE)
+# These match my lme posthoc results above.
+
+### Plot exchange rates (plant C to fungal N) in mycorrhizas ###
+labels = c(High = "High N", Low = "Low N")
+annotations = data.frame(x = c((1:2), (1:2)),
+                         y = c(4, 3, 3, 3),
+                         N_level = c(rep("High", 2), rep("Low", 2)),
+                         labs = c(paste(c("a", "b")), paste(c("b", "b"))))
+
+
+exchangerate_plot = ggplot(data = justmycos) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = mycofungus, 
+                   y = logmycoCforN)) +
+  geom_jitter(aes(x = mycofungus, 
+                  y = logmycoCforN),
+                  width = 0.25) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  geom_text(data = annotations, aes(x, y, label = labs))
+
+save_plot("plots/CforN_exchangerates.pdf", 
+          exchangerate_plot,
+          ncol = 1,
+          base_aspect_ratio = 1.8)
+
+save_plot("plots/CforN_exchangerates.jpeg", 
+          exchangerate_plot,
+          ncol = 1,
+          base_aspect_ratio = 1.8)
+
+#### OLD UNNECESSARY STUFF FROM HERE ON ####
+
+# forN$mycoCforN = numeric(nrow(forN))
+# for (i in 1:nrow(forN)) {
+#    for (j in 1:nrow(forN)) {
+#      if (forN$Plant[i] == forN$Plant[j] &
+#          forN$Side[i] == forN$Side[j]) {
+#        if (forN$mycofungus[i] == "None" &
+#            forN$mycofungus[j] != "None") {
+#          forN$mycoCforN = forN$mycoC13ppmexcess[j]/forN$mycoN15ppmexcess
+#        }
+#      }
+# }
 # together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 # exchangerates = subset(together, received15N == "Y" & Batch != "NA" & mycorrhizas.APE13C != "NA" & mycorrhizas.APE15N != "NA")
 # 

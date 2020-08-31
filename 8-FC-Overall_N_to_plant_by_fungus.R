@@ -3,6 +3,11 @@
 # Trying to analyze FC isotopes in a more cohesive way
 # This is NOT currently one of my central scripts 8/19/2020
 
+# I have cool evidence of functional complementarity here, but
+# I need to rearrange my data frame to show this most effectively.
+# Probably best to leave this one for last, once the other analyses
+# are looking good.
+
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Libraries needed:
@@ -13,7 +18,10 @@ library(lmerTest)
 library(stargazer)
 
 # Data:
-together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+# together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+# together = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+
 
 ndata = subset(together, received15N == "Y")
 ndata = subset(ndata, compartment_fungus != "None")
@@ -32,23 +40,24 @@ allmixedcompartments = together[together$compartment_fungus == "MIXED",]
 
 # Exclude COMPARTMENTS with mixed cultures
 
-# excluding_mixed = together[-grep("MIXED", together$compartment_fungus),]
-# excluding_mixed$versus = relevel(excluding_mixed$versus, levels = c("None", "Sp", "Tt"))
+excluding_mixed = ndata[-grep("MIXED", ndata$compartment_fungus),]
+excluding_mixed$versus = as.factor(excluding_mixed$versus)
+# relevel(excluding_mixed$versus, levels = c("None", "Sp", "Tt"))
 
 #### N-15 enrichment of mycos by species ####
 # Does the N-15 enrichment of mycorrhizas depend on the species
 # of fungus forming the mycorrhiza, controlling for competitor
 # identity and N addition level?
 
-n15.full = lmer(nmlogN15 ~ compartment_fungus * N_level + (1|Batch/Plant), 
-                data = ndata) # I don't have any random effects here that I don't think I need
+n15.nm.full = lmer(nmlogN15 ~ compartment_fungus * N_level + (1|Batch), 
+                data = excluding_mixed) # I don't have any random effects here that I don't think I need
 
-summary(n15.full)
+summary(n15.nm.full)
 
-  anovaresults = anova(n15.full)
+anovaresults = anova(n15.nm.full)
 
 
-sink("stats_tables/C_by_fungus_competition_N_lme_results.html")
+sink("stats_tables/C_by_fungus_competition_N_lme_results_nmroots.html")
 
 stargazer(anovaresults, type = "html",
           digits = 3,
@@ -59,28 +68,29 @@ stargazer(anovaresults, type = "html",
 
 sink()
 
-sink("stats_tables/C_by_fungus_competition_N_lme_results_noanova.html")
+n15.myco.full = lmer(mycologN15 ~ compartment_fungus * N_level + (1|Batch), 
+                   data = excluding_mixed) # I don't have any random effects here that I don't think I need
 
-stargazer(c13.full, type = "html",
+summary(n15.myco.full)
+
+anovaresults = anova(n15.myco.full)
+
+
+sink("stats_tables/C_by_fungus_competition_N_lme_results_mycos.html")
+
+stargazer(anovaresults, type = "html",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
           digit.separator = "",
-          summary = TRUE,
+          summary = FALSE,
           no.space = TRUE)
 
 sink()
 
 
-# Significant factors: fungal identity (compartment fungus),
-# N level, and the interaction between fungal identity and N level.
-# Marginal: Interaction between competitor identity (versus) and N level
-# Not significant: Competitor identity alone, 
-# interaction between fungal identity and competitior identity (interesting!),
-# three way interaction between fungal identity and competitor identity and N level.
-
 #### Plot ####
 labels = c(High = "High N", Low = "Low N")
-nitrogencomparison_mycos = ggplot(data = ndata) +
+nitrogencomparison_mycos = ggplot(data = excluding_mixed) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = compartment_fungus, 
                    y = mycologN15)) +
@@ -94,7 +104,7 @@ nitrogencomparison_mycos = ggplot(data = ndata) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus")
 
-nitrogencomparison_nm = ggplot(data = ndata) +
+nitrogencomparison_nm = ggplot(data = excluding_mixed) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = compartment_fungus, 
                    y = nmlogN15)) +

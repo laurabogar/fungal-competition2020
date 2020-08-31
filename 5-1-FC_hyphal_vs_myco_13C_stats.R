@@ -2,6 +2,7 @@
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
+library(tidyverse)
 library(stargazer)
 
 carboninfo = read_csv("processeddata/data_for_carbon_only_analyses.csv")

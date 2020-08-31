@@ -177,6 +177,7 @@ write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_c
 carboninfo = subset(together, compartment_fungus != "None" &
                       compartment_fungus != "MIXED" &
                       compartment_fungus != "OTHER")
+carboninfo = together
 
 carboninfo = carboninfo[!is.na(carboninfo$hyphae.APE13C),]
 carboninfo = carboninfo[!is.na(carboninfo$mycorrhizas.APE13C),]
