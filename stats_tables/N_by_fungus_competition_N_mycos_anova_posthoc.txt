@@ -1,0 +1,35 @@
+$`emmeans of mycofungus, N_level`
+ mycofungus N_level emmean    SE   df lower.CL
+ Sp         High      2.97 0.290 51.4     2.22
+ Tt         High      3.80 0.150 15.5     3.38
+ Sp         Low       3.39 0.196 34.3     2.87
+ Tt         Low       2.87 0.176 26.9     2.40
+ upper.CL
+     3.72
+     4.22
+     3.90
+     3.34
+
+Degrees-of-freedom method: satterthwaite 
+Confidence level used: 0.95 
+Conf-level adjustment: sidak method for 4 estimates 
+
+$`pairwise differences of mycofungus, N_level`
+ contrast          estimate    SE   df t.ratio
+ Sp High - Tt High   -0.828 0.291 54.0 -2.845 
+ Sp High - Sp Low    -0.416 0.350 46.2 -1.189 
+ Sp High - Tt Low     0.101 0.339 44.6  0.299 
+ Tt High - Sp Low     0.412 0.247 25.4  1.671 
+ Tt High - Tt Low     0.930 0.232 21.2  4.015 
+ Sp Low - Tt Low      0.517 0.219 48.7  2.368 
+ p.value
+ 0.0309 
+ 0.6370 
+ 0.9906 
+ 0.3590 
+ 0.0032 
+ 0.0971 
+
+Degrees-of-freedom method: satterthwaite 
+P value adjustment: tukey method for comparing a family of 4 estimates 
+

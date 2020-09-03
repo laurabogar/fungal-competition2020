@@ -1,25 +1,14 @@
 # Generating filtered data for FC (fungal competition) project
-# Updated July 2020
+# ALTERNATIVE TRACK: INCLUDING MIXED PLANTS
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
-require(tidyverse)
-require(cowplot)
+library(tidyverse)
+library(cowplot)
 
-require(agricolae) # for automatic Tukey labels
+library(agricolae) # for automatic Tukey labels
 
-# allisotopes = read_csv("processeddata/isotope_data_two_rows_per_plant_July.csv")
-
-# allisotopes = read_csv("isotope_data_two_rows_per_plant.csv")
-# allisotopes = read_csv("FCdata/isotope_data_two_rows_per_plant_July.csv")
-# allisotopes2 = read_csv("processeddata/isotope_data_two_rows_per_plant_July.csv")
-# allisotopes3 = read_csv("processeddata/isotope_data_two_rows_per_plant_July.csv")
-# 
-# oldmixed = subset(allisotopes, allisotopes$Actual_fungus_by_compartment == "MIXED")
-# newmixed = subset(allisotopes2, allisotopes2$Actual_fungus_by_compartment == "MIXED")
-# mixed3 = subset(allisotopes3, Actual_fungus_by_compartment == "MIXED")
-
-
+allisotopes = read_csv("processeddata/isotopes_one_row_per_plant_including_unenriched_July.csv")
 # correcting a spreadsheet error
 allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6033] = "SUIPU/SUIPU"
 
@@ -30,7 +19,7 @@ metadata_byplant = read_csv("FCdata/percent_col_and_mass_data_by_plant.csv")
 
 allisotopes = rename(allisotopes, compartment_fungus = Actual_fungus_by_compartment)
 allisotopes = select(allisotopes, everything(), -tissue)
-isotopes_forN = rename(isotopes_forN, compartment_fungus = mycofungus)
+# isotopes_forN = rename(isotopes_forN, compartment_fungus = mycofungus)
 isotopes_forN = select(isotopes_forN, everything(), -tissue)
 
 minimally_processed_isotopes = rename(minimally_processed_isotopes, compartment_fungus = Actual_fungus_by_compartment)
@@ -44,33 +33,33 @@ together = rename(together, Fungi = Actual_fungi_at_harvest)
 together = subset(together, Failed_split != "Y")
 
 together$Fungi = recode(together$Fungi,
-                         "NM/NM" = "None/None",
-                         "SUIPU/NM" = "Sp/None",
-                         "SUIPU/SUIPU" = "Sp/Sp",
-                         "THETE/SUIPU" = "Tt/Sp",
-                         "THETE/NM" = "Tt/None",
-                         "THETE/THETE" = "Tt/Tt")
+                        "NM/NM" = "None/None",
+                        "SUIPU/NM" = "Sp/None",
+                        "SUIPU/SUIPU" = "Sp/Sp",
+                        "THETE/SUIPU" = "Tt/Sp",
+                        "THETE/NM" = "Tt/None",
+                        "THETE/THETE" = "Tt/Tt")
 
 
 together$compartment_fungus = recode(together$compartment_fungus,
-                         "NM" = "None",
-                         "SUIPU" = "Sp",
-                         "THETE" = "Tt")
-
-together$mycofungus = recode(together$mycofungus,
                                      "NM" = "None",
                                      "SUIPU" = "Sp",
                                      "THETE" = "Tt")
+
+together$mycofungus = recode(together$mycofungus,
+                             "NM" = "None",
+                             "SUIPU" = "Sp",
+                             "THETE" = "Tt")
 
 batchtomerge = select(metadata_byplant, Plant, Batch)
 
 together = left_join(together, batchtomerge)
 
+together = subset(together, mycofungus != "OTHER")
+
 # Filtering
 
 together$Batch = as.factor(together$Batch)
-
-together = together[-grep("FAILED", together$competitors),]
 
 together$versus = numeric(nrow(together))
 
@@ -121,19 +110,23 @@ together$nmN15ppmexcess = together$uncolonized_roots.APE15N * (10^4)
 together = together[together$enriched != 0,] # just using enriched plants from now on
 
 min(together$mycoC13ppmexcess[!is.na(together$mycoC13ppmexcess)])
-min(together$nmC13ppmexcess[!is.na(together$nmC13ppmexcess)])
+min(together$nmC13ppmexcess[!is.na(together$nmC13ppmexcess)]) # both positive, can be logged.
 
 together$mycologC13 = (log(together$mycoC13ppmexcess))
 together$nmlogC13 = log(together$nmC13ppmexcess)
-# Note: It doesn't make sense to log transform
-# ALL the N15 values, because half of these come from root compartments
-# that received no N15 enrichment (so are negative values that can't be logged).
-# We will make a separate dataframe for analyses that deal explicitly with N15.
-test = subset(together, compartment_fungus == "MIXED" & received15N == "Y")
+
+min(together$mycoN15ppmexcess[!is.na(together$mycoN15ppmexcess)])
+min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)]) # this is more negative
+
+smallconstant = abs(min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)])) + 1 
+
+together$mycologN15 = log(together$mycoN15ppmexcess + smallconstant)
+together$nmlogN15 = log(together$nmN15ppmexcess + smallconstant)
 
 for (i in 1:nrow(together)){
   for (j in 1:nrow(together)) {
-    if (together$Plant[i] == together$Plant[j] & together$Side[i] != together$Side[j]){
+    if (together$Plant[i] == together$Plant[j] & 
+        together$Side[i] != together$Side[j]){
       if (together$compartment_fungus[i] == "Tt") {
         if (together$compartment_fungus[j] == "Tt") {
           together$competition_treatment[i] = "Self"
@@ -172,10 +165,8 @@ for (i in 1:nrow(together)){
     }
   }
 }
-test = subset(together, compartment_fungus == "MIXED" & received15N == "Y")
 
-
-write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
 
 # For any analysis involving ONLY C, it makes sense to include
 # 1) carbon data from root compartments that
@@ -186,6 +177,7 @@ write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_c
 carboninfo = subset(together, compartment_fungus != "None" &
                       compartment_fungus != "MIXED" &
                       compartment_fungus != "OTHER")
+carboninfo = together
 
 carboninfo = carboninfo[!is.na(carboninfo$hyphae.APE13C),]
 carboninfo = carboninfo[!is.na(carboninfo$mycorrhizas.APE13C),]
@@ -207,15 +199,15 @@ nitrogeninfo = subset(nitrogeninfo, compartment_fungus != "MIXED" &
 # Since the "0" point for enrichment is arbitrarily
 # determined by the 15N concentration in atmosphere, it shouldn't make
 # a difference in my relativized analyses to add a constant to my 15N values.
-forcefactor_myco = -min(nitrogeninfo$mycoN15ppmexcess) # this is 7.4476 ppm
-forcefactor_uncolroots = -min(nitrogeninfo$nmN15ppmexcess) # this one is 18.32042 ppm
+# forcefactor_myco = -min(nitrogeninfo$mycoN15ppmexcess) # this is 7.4476 ppm
+# forcefactor_uncolroots = -min(nitrogeninfo$nmN15ppmexcess) # this one is 18.32042 ppm
 # Use uncol value, then, as the linear transformation.
-nitrogeninfo$forced.uncolonized.N15ppmexcess = nitrogeninfo$nmN15ppmexcess + forcefactor_uncolroots + 1 # Prevent ratios with zero in denominator
-nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + forcefactor_uncolroots + 1 # Prevent ratios with zero in denominator
-nitrogeninfo$forced.mycoC13forN15 = nitrogeninfo$mycoC13ppmexcess/nitrogeninfo$forced.mycorrhizas.N15ppmexcess
-nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$forced.uncolonized.N15ppmexcess
-nitrogeninfo$mycoN15ppmexcess = nitrogeninfo$mycorrhizas.APE15N*(10^4)
-nitrogeninfo$uncolN15ppmexcess = nitrogeninfo$uncolonized_roots.APE15N*(10^4)
+# nitrogeninfo$forced.uncolonized.N15ppmexcess = nitrogeninfo$nmN15ppmexcess + forcefactor_uncolroots + 1 # Prevent ratios with zero in denominator
+# nitrogeninfo$forced.mycorrhizas.N15ppmexcess = nitrogeninfo$mycoN15ppmexcess + forcefactor_uncolroots + 1 # Prevent ratios with zero in denominator
+# nitrogeninfo$forced.mycoC13forN15 = nitrogeninfo$mycoC13ppmexcess/nitrogeninfo$forced.mycorrhizas.N15ppmexcess
+# nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$forced.uncolonized.N15ppmexcess
+# nitrogeninfo$mycoN15ppmexcess = nitrogeninfo$mycorrhizas.APE15N*(10^4)
+# nitrogeninfo$uncolN15ppmexcess = nitrogeninfo$uncolonized_roots.APE15N*(10^4)
 
 write_csv(nitrogeninfo, "processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
@@ -230,9 +222,9 @@ rootNformycoN_plot_nolegend = rootNformycoN_plot +
   theme(legend.position = "none")
 
 NforNandCforC = plot_grid(rootNformycoN_plot_nolegend, hyphalCformycoC_plot,
-          labels = c("A", "B"),
-          align = "h",
-          rel_widths = c(1, 1.15))
+                          labels = c("A", "B"),
+                          align = "h",
+                          rel_widths = c(1, 1.15))
 
 save_plot("plots/SUPP_Multipanel_regressions_NforN_and_CforC.pdf",
           NforNandCforC,
@@ -243,9 +235,9 @@ rootNformycoN_plot_nolegend_withoutlier = rootNformycoN_plot_withoutlier +
   theme(legend.position = "none")
 
 NforNandCforC_withoutliers = plot_grid(rootNformycoN_plot_nolegend_withoutlier, hyphalCformycoC_plot_withoutlier,
-                          labels = c("A", "B"),
-                          align = "h",
-                          rel_widths = c(1, 1.15))
+                                       labels = c("A", "B"),
+                                       align = "h",
+                                       rel_widths = c(1, 1.15))
 
 save_plot("plots/MAIN_Multipanel_regressions_NforN_and_CforC_withoutliers.pdf",
           NforNandCforC_withoutliers,
@@ -339,7 +331,7 @@ curveplot = ggplot(data = forcurveplot) +
   scale_shape_manual(values = c(17, 15),
                      name = "Fungus") +
   theme(plot.margin = unit(c(1,1,1,1), "cm"))
-  
+
 
 save_plot("plots/Mycorrhiza_curveplot.pdf",
           curveplot,
@@ -443,9 +435,9 @@ mycosvsnm_linear_withoutliers_nolegend = mycosvsnm_linear_withoutliers +
   theme(legend.position = "none")
 
 mycosvsnm_linear_and_curve = plot_grid(mycosvsnm_linear_withoutliers_nolegend, mycosvsnm_curve_withoutliers,
-                                        labels = c("A", "B"),
-                                        align = "h",
-                                        rel_widths = c(1, 1.15))
+                                       labels = c("A", "B"),
+                                       align = "h",
+                                       rel_widths = c(1, 1.15))
 
 save_plot("plots/SUPP_MycoC_vs_uncolN_linear_plot.pdf",
           mycosvsnm_linear_withoutliers,
@@ -515,9 +507,9 @@ hyphaevsnm_linear_withoutliers_nolegend = hyphaevsnm_linear_withoutliers +
   theme(legend.position = "none")
 
 hyphaevsnm_linear_and_curve = plot_grid(hyphaevsnm_linear_withoutliers_nolegend, hyphaevsnm_curve_withoutliers,
-                                       labels = c("A", "B"),
-                                       align = "h",
-                                       rel_widths = c(1, 1.15))
+                                        labels = c("A", "B"),
+                                        align = "h",
+                                        rel_widths = c(1, 1.15))
 
 save_plot("plots/Hyphaevsnm_multipanel_linear_and_curveplot_WITHoutliers.pdf",
           hyphaevsnm_linear_and_curve,
@@ -671,13 +663,13 @@ exchangerate_plot = ggplot(data = exchangerates) +
                aes(x = compartment_fungus, 
                    y = log(forced.mycoC13forN15))) + 
   geom_jitter(aes(x = compartment_fungus,
-                 y = log(forced.mycoC13forN15)),
-                width = 0.25) +
+                  y = log(forced.mycoC13forN15)),
+              width = 0.25) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   xlab("Fungus receiving nitrogen label") +
   ylab(bquote(atop("Log exchange rate", "("^13*"C to "^15*"N excess in mycorrhizas)"))) +
   geom_text(data = annotations, aes(x, y, label = labs))
-  
+
 
 exchangerate_test = aov(log(forced.mycoC13forN15) ~ compartment_fungus*N_level, data = exchangerates)
 plot(exchangerate_test) #blech
@@ -737,13 +729,13 @@ for (i in 1:nrow(exchangerates)) {
   if (exchangerates$Fungi[i] == "Sp/None" |
       exchangerates$Fungi[i] == "Tt/None" |
       exchangerates$Fungi[i] == "THETE") {
-      exchangerates$competition_treatment[i] = "None"
+    exchangerates$competition_treatment[i] = "None"
   } else if (exchangerates$Fungi[i] == "Sp/Sp" | exchangerates$Fungi[i] == "Tt/Tt") {
-      exchangerates$competition_treatment[i] = "Self"
+    exchangerates$competition_treatment[i] = "Self"
   } else if (exchangerates$Fungi[i] == "MIXED/THETE" | 
              exchangerates$Fungi[i] == "MIXED/SUIPU" |
              exchangerates$Fungi[i] == "Tt/Sp") {
-      exchangerates$competition_treatment[i] = "Other"
+    exchangerates$competition_treatment[i] = "Other"
   }
 }
 
@@ -756,7 +748,7 @@ competition_exchangerate_plot = ggplot(data = exchangerates) +
   geom_jitter(width = 0.20,
               aes(x = competition_treatment,
                   y = log(forced.mycoC13forN15),
-                 shape = compartment_fungus)) +
+                  shape = compartment_fungus)) +
   scale_shape_manual(values = c(17, 15),
                      name = "Fungus") +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
@@ -786,16 +778,16 @@ onlyTt_selfvsother$competition_treatment = as.factor(onlyTt_selfvsother$competit
 require(ggsignif)
 
 seginfo = data.frame(x = 0.9, 
-                         xend = 2.1,
-                         y = 5.3, 
-                         yend = 5.3, 
-                         color = "black",
-                         N_level = "High")
+                     xend = 2.1,
+                     y = 5.3, 
+                     yend = 5.3, 
+                     color = "black",
+                     N_level = "High")
 
 starinfo = data.frame(x = c((1.5), (1.5)),
-                         y = c(5.7, 5.7),
-                         N_level = c(rep("High", 1), rep("Low", 1)),
-                         labs = c(".", ""))
+                      y = c(5.7, 5.7),
+                      N_level = c(rep("High", 1), rep("Low", 1)),
+                      labs = c(".", ""))
 
 
 
@@ -805,10 +797,10 @@ onlyTt_selfvsother_plot = ggplot(data = onlyTt_selfvsother) +
                    y = log(forced.mycoC13forN15))) +
   geom_jitter(width = 0.25,
               aes(x = competition_treatment,
-                 y = log(forced.mycoC13forN15))) +
+                  y = log(forced.mycoC13forN15))) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   geom_segment(data=seginfo,
-           aes(x=x,y=y,yend=yend,xend=xend),inherit.aes=FALSE) +
+               aes(x=x,y=y,yend=yend,xend=xend),inherit.aes=FALSE) +
   geom_text(data = starinfo, aes(x, y, label = labs), size = 8) +
   xlab("Competition treatment") +
   theme(plot.margin = unit(c(1,1,0.5,0.5), "cm")) +
@@ -892,9 +884,9 @@ test = noNM[is.na(noNM$mycoC13forN15),]
 
 ggplot(data = noNM) +
   geom_point(aes(x = percent_col,
-             y = mycoC13forN15,
-             color = compartment_fungus,
-             shape = N_level))
+                 y = mycoC13forN15,
+                 color = compartment_fungus,
+                 shape = N_level))
 
 # WOW that is not informative because there
 # are a couple huge outliers.
@@ -975,7 +967,7 @@ ggplot(data = subset(byfungus, compartment_fungus != "MIXED" & compartment_fungu
 # Yep, plain ol' roots have much higher C:N than hyphae or mycos!
 
 ggplot(data = subset(fortissueplot, tissue == "mycorrhizas" & enriched == 1 & `Receives 15N label?` == "Y")) +
-         geom_point(aes(x = pctN, y = pctC))
+  geom_point(aes(x = pctN, y = pctC))
 test = lm(pctC ~ pctN, data = subset(fortissueplot, tissue == "mycorrhizas" & enriched == 1 & `Receives 15N label?` == "Y"))
 # k great, this almost over-dispersed scatter plot indeed
 # represents no relationship.
@@ -1059,4 +1051,4 @@ ggplot(getridpseudo) +
   geom_jitter(aes(x = mycofungus, y = avgmyco13C)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels))
 
-  
+

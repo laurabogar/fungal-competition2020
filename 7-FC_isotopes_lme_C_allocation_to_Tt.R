@@ -14,7 +14,7 @@ library(lmerTest)
 library(stargazer)
 
 # Loading required data
-together = read_csv("FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
 
 
 #### How does the allocation ratio to Tt change with competition? ####
@@ -133,6 +133,21 @@ save_plot("plots/Relative_C_allocation_to_Tt.jpeg",
 # basically same amount vs itself.
 # Tt gets LESS N relative to Sp under low N,
 # basically same amount vs itself.
+
+median(allocratios$logallocratio[allocratios$versus == "Sp" & allocratios$N_level == "High"]) # 0.658
+exp(0.658) #1.93 -- Tt got about 2x the carbon
+
+median(allocratios$logallocratio[allocratios$versus == "Sp" & allocratios$N_level == "Low"]) # - 0.7733
+exp(-0.773) # 0.46 -- Tt got about half the carbon.
+
+
+### T tests ###
+#None high p = 0.1
+t.test(allocratios$logallocratio[allocratios$versus == "None" & allocratios$N_level == "High"], alternative = "greater")
+# Sp high p = 0.1234 Dang it!
+t.test(allocratios$logallocratio[allocratios$versus == "Sp" & allocratios$N_level == "High"], alternative = "greater")
+# Tt high p = 0.9927
+t.test(allocratios$logallocratio[allocratios$versus == "Tt" & allocratios$N_level == "High"])
 
 
 #### OLD AND IRRELEVANT FROM HERE ON. ####

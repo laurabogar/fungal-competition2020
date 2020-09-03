@@ -1,23 +1,23 @@
-Plant,Side,Harvest_notes
-6002,b,"I'm finding it much easier, now, to distinguish THETE-type from SUIPU-type mycorrhizes. Sorted accordingly."
-6002,b,"I'm finding it much easier, now, to distinguish THETE-type from SUIPU-type mycorrhizes. Sorted accordingly."
-6002,b,"I'm finding it much easier, now, to distinguish THETE-type from SUIPU-type mycorrhizes. Sorted accordingly."
-6028,a,"some THETE proto-crust AF, very dry soil AR. High-N mycos (esp. THETE) will probably be gritter than Low-N; hyphae hold dirt."
-6028,a,"some THETE proto-crust AF, very dry soil AR. High-N mycos (esp. THETE) will probably be gritter than Low-N; hyphae hold dirt."
-6028,a,"some THETE proto-crust AF, very dry soil AR. High-N mycos (esp. THETE) will probably be gritter than Low-N; hyphae hold dirt."
-6034,b,Although it's hard to tell -- both odl SUIPU and normal THETE is a sort of cafe au lauit color -- I think we hvae some SUIPU (mostly old) and THETE growing out of it.
-6034,b,Although it's hard to tell -- both odl SUIPU and normal THETE is a sort of cafe au lauit color -- I think we hvae some SUIPU (mostly old) and THETE growing out of it.
-6034,b,Although it's hard to tell -- both odl SUIPU and normal THETE is a sort of cafe au lauit color -- I think we hvae some SUIPU (mostly old) and THETE growing out of it.
-6052,b,NA
-6052,b,NA
-6052,b,NA
-6056,a,"scope check shows not all THETE roots have mantle, but they all have clamp-y hyphae everywhere, and many have at least patchy mantle."
-6056,a,"scope check shows not all THETE roots have mantle, but they all have clamp-y hyphae everywhere, and many have at least patchy mantle."
-6057,a,several dead SUIPU tips with THETE tips growing out.
-6057,a,several dead SUIPU tips with THETE tips growing out.
-6057,a,several dead SUIPU tips with THETE tips growing out.
-6067,b,"mostly THETE (some may be NM roots), a few dead or nearly dead SUIPU. Not really any dead THETE."
-6067,b,"mostly THETE (some may be NM roots), a few dead or nearly dead SUIPU. Not really any dead THETE."
-6067,b,"mostly THETE (some may be NM roots), a few dead or nearly dead SUIPU. Not really any dead THETE."
-6098,a,"lots of dead or nearly-dead SUIPU looking mycos w/NM roots protruding. Very little THETE -- collected all i could find for isotopes, but there's non in % pool."
-6098,a,"lots of dead or nearly-dead SUIPU looking mycos w/NM roots protruding. Very little THETE -- collected all i could find for isotopes, but there's non in % pool."
+Plant,Side,Identifier 2
+6002,b,1_D1
+6002,b,3_F10
+6002,b,4_C3
+6028,a,2_B12
+6028,a,3_C2
+6028,a,4_H9
+6034,b,3_B4
+6034,b,4_D8
+6034,b,1_B11
+6052,b,2_B5
+6052,b,1_D4
+6052,b,2_C12
+6056,a,2_D2
+6056,a,2_G8
+6057,a,2_C6
+6057,a,2_F10
+6057,a,3_B12
+6067,b,2_C1
+6067,b,4_E9
+6067,b,4_H4
+6098,a,1_C2
+6098,a,1_C9

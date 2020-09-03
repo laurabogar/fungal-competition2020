@@ -13,11 +13,11 @@ nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES
 #### Carbon panel: How well did hyphal C track myco C? ####
 
 hyphalCformycoC_plot = ggplot(data = carboninfo) +
-  geom_point(aes(x = log(mycoC13ppmexcess),
+  geom_point(aes(x = mycologC13,
                  y = log(hyphae.ppm13Cexcess), 
                  color = N_level,
                  shape =compartment_fungus)) +
-  geom_smooth(method = "lm", aes(x = log(mycoC13ppmexcess),
+  geom_smooth(method = "lm", aes(x = mycologC13,
                                  y = log(hyphae.ppm13Cexcess)),
               color = "black",
               size = 0.5) +
@@ -44,13 +44,13 @@ hyphalCformycoC_plot_nolegend = hyphalCformycoC_plot +
 
 ### Nitrogen panel ####
 rootNformycoN_plot = ggplot(data = nitrogeninfo) +
-  geom_point(aes(x = log(forced.mycorrhizas.N15ppmexcess),
-                 y = log(forced.uncolonized.N15ppmexcess), 
+  geom_point(aes(x = mycologN15,
+                 y = nmlogN15, 
                  color = N_level,
                  shape = mycofungus)) +
   geom_smooth(method = "lm",
-              aes(x = log(forced.mycorrhizas.N15ppmexcess),
-                  y = log(forced.uncolonized.N15ppmexcess)),
+              aes(x = mycologN15,
+                  y = nmlogN15),
               color = "black",
               size = 0.5) +
   scale_color_manual(values = c("steelblue4", "steelblue1"),
@@ -69,14 +69,14 @@ rootNformycoN_plot_nolegend = rootNformycoN_plot +
 # that only includes plants/compartments that received nitrogen label.
 
 mycoCforN = ggplot(data = nitrogeninfo) +
-  geom_point(aes(x = log(forced.mycorrhizas.N15ppmexcess),
-                 y = log(mycoC13ppmexcess), 
+  geom_point(aes(x = mycologN15,
+                 y = mycologC13, 
                  color = N_level,
                  shape = compartment_fungus)) +
   geom_smooth(method = "lm", 
               formula = y ~ x, 
-              aes(x = log(forced.mycorrhizas.N15ppmexcess),
-                  y = log(mycoC13ppmexcess)),
+              aes(x = mycologN15,
+                  y = mycologC13),
               color = "black",
               size = 0.5) +
   ylab(bquote(atop("Mycorrhizal "^13*"C", "(ln ppm excess)"))) +
@@ -105,22 +105,20 @@ save_plot("plots/Multipanel_regressions_myco_N_and_C.pdf",
           base_aspect_ratio = 3.6)
 
 ### Stats ###
-CforNlm = lm((mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo)
-plot(CforNlm) # seems okay
-summary(CforNlm)
+# CforNlm = lm((mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo)
+# plot(CforNlm) # seems okay
+# summary(CforNlm)
 
 # Use N15 values forced positive with linear transformation
 # so you can try a log fit.
-CforNlm_log = lm((mycoC13ppmexcess) ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo)
-plot(CforNlm_log) # Kinda weird, esp point 25.
-summary(CforNlm_log) # Adj R^2 = 0.4287
+# CforNlm_log = lm((mycoC13ppmexcess) ~ mycologN15, data = nitrogeninfo)
+# plot(CforNlm_log) # Kinda weird, esp point 25.
+# summary(CforNlm_log) # Adj R^2 = 0.4287
 
-CforNlm_loglog = lm(log(mycoC13ppmexcess) ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo)
+CforNlm_loglog = lm(mycologC13 ~ mycologN15, data = nitrogeninfo)
 plot(CforNlm_loglog) # Better
 summary(CforNlm_loglog) # Adj R^2 = 0.4644
 
-
-summary(CforNlm) # Adj R^2 = 0.5285 -- this one is still the best
 
 sink("stats_tables/myco13C_vs_myco_15N_lm_loglogresults.html")
 
@@ -133,14 +131,14 @@ stargazer(CforNlm_loglog, type = "html",
 
 sink()
 
-sink("stats_tables/myco13C_vs_myco_15N_comparingthreemodels.html")
-
-stargazer(CforNlm, CforNlm_log, CforNlm_loglog, 
-          type = "html",
-          align = TRUE,
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "",
-          no.space = TRUE)
-
-sink()
+# sink("stats_tables/myco13C_vs_myco_15N_comparingthreemodels.html")
+# 
+# stargazer(CforNlm, CforNlm_log, CforNlm_loglog, 
+#           type = "html",
+#           align = TRUE,
+#           digits = 3,
+#           star.cutoffs = c(0.05, 0.01, 0.001),
+#           digit.separator = "",
+#           no.space = TRUE)
+# 
+# sink()

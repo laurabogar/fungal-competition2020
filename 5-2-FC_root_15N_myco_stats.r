@@ -8,7 +8,7 @@ library(stargazer)
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
 # STATS FOR PAPER: Root N correlates with mycorrhiza N
-rootNformycoN_linear = lm(log(forced.uncolonized.N15ppmexcess) ~ log(forced.mycorrhizas.N15ppmexcess), data = nitrogeninfo)
+rootNformycoN_linear = lm(nmlogN15 ~ mycologN15, data = nitrogeninfo)
 plot(rootNformycoN_linear)
 summary(rootNformycoN_linear)
 

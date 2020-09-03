@@ -81,6 +81,7 @@ exchangerate_plot = ggplot(data = justmycos) +
   xlab("Fungus") +
   geom_text(data = annotations, aes(x, y, label = labs))
 
+
 save_plot("plots/CforN_exchangerates.pdf", 
           exchangerate_plot,
           ncol = 1,

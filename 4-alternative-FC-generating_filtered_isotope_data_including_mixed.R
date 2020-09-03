@@ -110,13 +110,13 @@ together$nmN15ppmexcess = together$uncolonized_roots.APE15N * (10^4)
 together = together[together$enriched != 0,] # just using enriched plants from now on
 
 min(together$mycoC13ppmexcess[!is.na(together$mycoC13ppmexcess)])
-min(together$nmC13ppmexcess[!is.na(together$nmC13ppmexcess)])
+min(together$nmC13ppmexcess[!is.na(together$nmC13ppmexcess)]) # both positive, can be logged.
 
 together$mycologC13 = (log(together$mycoC13ppmexcess))
 together$nmlogC13 = log(together$nmC13ppmexcess)
 
 min(together$mycoN15ppmexcess[!is.na(together$mycoN15ppmexcess)])
-min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)]) # this is lower
+min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)]) # this is more negative
 
 smallconstant = abs(min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)])) + 1 
 

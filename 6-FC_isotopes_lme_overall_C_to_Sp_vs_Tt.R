@@ -22,7 +22,7 @@ library(lmerTest)
 library(stargazer)
 
 # Data:
-together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
 
 # Shouldn't model mycorrhiza-specific phenomena with NM plants
 
@@ -69,7 +69,7 @@ summary(c13.full)
 anovaresults = anova(c13.full)
 
 
-sink("stats_tables/C_by_fungus_competition_N_lme_results.html")
+sink("stats_tables/C_by_fungus_competition_N_lme_anova.html")
 
 stargazer(anovaresults, type = "html",
           digits = 3,
@@ -80,16 +80,19 @@ stargazer(anovaresults, type = "html",
 
 sink()
 
-sink("stats_tables/C_by_fungus_competition_N_lme_results_noanova.html")
+Cbyfungusposthoc = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
 
-stargazer(c13.full, type = "html",
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "",
-          summary = TRUE,
-          no.space = TRUE)
 
-sink()
+# sink("stats_tables/C_by_fungus_competition_N_lme_results_noanova.html")
+# 
+# stargazer(c13.full, type = "html",
+#           digits = 3,
+#           star.cutoffs = c(0.05, 0.01, 0.001),
+#           digit.separator = "",
+#           summary = TRUE,
+#           no.space = TRUE)
+# 
+# sink()
 
 
 # Significant factors: fungal identity (compartment fungus),
@@ -101,6 +104,13 @@ sink()
 
 #### Plot ####
 labels = c(High = "High N", Low = "Low N")
+
+annotations = data.frame(x = c((1:2), (1:2)),
+                         y = c(7.2, 7.2, 7.2, 6),
+                         N_level = c(rep("High", 2), rep("Low", 2)),
+                         labs = c(paste(c("a", "a")), paste(c("a", "b"))))
+
+
 carboncomparison = ggplot(data = excluding_mixed) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = compartment_fungus, y = mycologC13)) +
@@ -111,14 +121,19 @@ carboncomparison = ggplot(data = excluding_mixed) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungus")
+  xlab("Fungus") +
+  geom_text(data = annotations, aes(x, y, label = labs))
+
 
 save_plot("plots/Sp_gets_more_C_than_Tt_in_low_N.pdf",
-          carboncomparison)
+          carboncomparison,
+          base_aspect_ratio = 1.4)
 
 save_plot("plots/Sp_gets_more_C_than_Tt_in_low_N.jpeg",
-          carboncomparison)
+          carboncomparison,
+          base_aspect_ratio = 1.4)
 
+#### EXTRA ANALYSES NOT PRESENTED IN MAIN TEXT FOLLOW ####
 # How well does 13C in mycos correspond to 13C in adjacent fine roots?
 
 ggplot(data = excluding_mixed) +
