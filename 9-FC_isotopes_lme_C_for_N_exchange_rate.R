@@ -77,10 +77,12 @@ exchangerate_plot = ggplot(data = justmycos) +
                   width = 0.25) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas)") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  # theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
   geom_text(data = annotations, aes(x, y, label = labs))
 
+test = plot_grid(exchangerate_plot,
+                 labels = c("A"))
 
 save_plot("plots/CforN_exchangerates.pdf", 
           exchangerate_plot,
@@ -91,6 +93,71 @@ save_plot("plots/CforN_exchangerates.jpeg",
           exchangerate_plot,
           ncol = 1,
           base_aspect_ratio = 1.8)
+
+#### Building three panel plot ####
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+nonm = together[!is.na(together$mycorrhizas.APE13C),]
+nonm = subset(nonm, compartment_fungus != "None")
+excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
+
+labels = c(High = "High N", Low = "Low N")
+
+annotations = data.frame(x = c((1:2), (1:2)),
+                         y = c(7.2, 7.2, 7.2, 6),
+                         N_level = c(rep("High", 2), rep("Low", 2)),
+                         labs = c(paste(c("a", "a")), paste(c("a", "b"))))
+
+
+carboncomparison = ggplot(data = excluding_mixed) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = compartment_fungus, y = mycologC13)) +
+  geom_jitter(width = 0.20,
+              aes(x = compartment_fungus, 
+                  y = mycologC13)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
+  # theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  geom_text(data = annotations, aes(x, y, label = labs))
+
+carboncomparison_nolegend = carboncomparison +
+  theme(legend.position = "none")
+
+labels = c(High = "High N", Low = "Low N")
+annotations = data.frame(x = c((1:2), (1:2)),
+                         y = c(4.5, 6.6, 5.6, 4.5),
+                         N_level = c(rep("High", 2), rep("Low", 2)),
+                         labs = c(paste(c("a", "b")), paste(c("ab", "a"))))
+
+nitrogencomparison_mycos = ggplot(data = justmycos) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = mycofungus, 
+                   y = mycologN15)) +
+  geom_jitter(width = 0.20,
+              aes(x = mycofungus, 
+                  y = mycologN15)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Labeled N in mycorrhizas\n(ln ppm excess)") +
+  # theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  geom_text(data = annotations, aes(x, y, label = labs))
+
+nitrogencomparison_mycos_nolegend = nitrogencomparison_mycos +
+  theme(legend.position = "none")
+
+threepanels = plot_grid(carboncomparison_nolegend, 
+                        nitrogencomparison_mycos_nolegend,
+                        exchangerate_plot,
+                        labels = c("A", "B", "C"),
+                        align = "v",
+                        nrow = 3)
+
+save_plot("plots/vertical_three_panel_plot_CC_NN_CN.pdf", 
+          threepanels,
+          base_height = 10,
+          base_aspect_ratio = .5)
 
 #### OLD UNNECESSARY STUFF FROM HERE ON ####
 

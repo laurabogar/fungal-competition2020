@@ -409,28 +409,44 @@ summarytable = plantleveldata %>% group_by(Fungi, N_level, enriched) %>% summari
 # 
 # # How can I get those data?
 # 
-# prepfortable = select(fungcomp, Plant_number, Side, coded_tissue, Mass_g, for_percent_col)
-# prepfortable = subset(prepfortable, for_percent_col == 1)
-# 
-# onepertiss = prepfortable %>% group_by(Plant_number, Side, coded_tissue) %>% summarize(mass = sum(Mass_g, na.rm = TRUE))
-# 
-# wide_bycompt = onepertiss %>% spread(coded_tissue, mass)
-# 
-# wide_bycompt$mycorrhizas[is.na(wide_bycompt$mycorrhizas)] = 0 # if na, there were no mycorrhizas
-# 
-# wide_bycompt$percent_col = numeric(nrow(wide_bycompt))
-# for (i in 1:nrow(wide_bycompt)) {
-#   percentcoldenom = sum(wide_bycompt$mycorrhizas[i], wide_bycompt$roots[i], wide_bycompt$other[i], na.rm = TRUE)
-#   wide_bycompt$percent_col[i] = 100*(wide_bycompt$mycorrhizas[i]/percentcoldenom)
-# }
-# 
-# wide_bycompt = rename(wide_bycompt, Plant = Plant_number)
-# tomerge = select(metadata, Plant, Side, N_level, Batch, compartment_fungus = Actual_fungus_by_compartment, competitors = Actual_fungi_at_harvest, enriched)
-# 
-# wide_bycompt = left_join(wide_bycompt, tomerge)
-# 
-# write_csv(wide_bycompt, "processeddata/percent_colonization_and_mass_data_by_compartment.csv")
-# 
+prepfortable = select(fungcomp, Plant_number, Side, coded_tissue, Mass_g, for_percent_col)
+prepfortable = subset(prepfortable, for_percent_col == 1)
+
+onepertiss = prepfortable %>% group_by(Plant_number, Side, coded_tissue) %>% summarize(mass = sum(Mass_g, na.rm = TRUE))
+
+wide_bycompt = onepertiss %>% spread(coded_tissue, mass)
+
+wide_bycompt$mycorrhizas[is.na(wide_bycompt$mycorrhizas)] = 0 # if na, there were no mycorrhizas
+
+wide_bycompt$percent_col = numeric(nrow(wide_bycompt))
+for (i in 1:nrow(wide_bycompt)) {
+  percentcoldenom = sum(wide_bycompt$mycorrhizas[i], wide_bycompt$roots[i], wide_bycompt$other[i], na.rm = TRUE)
+  wide_bycompt$percent_col[i] = 100*(wide_bycompt$mycorrhizas[i]/percentcoldenom)
+}
+
+wide_bycompt = rename(wide_bycompt, Plant = Plant_number)
+tomerge = select(metadata, Plant, Side, N_level, Batch, compartment_fungus = Actual_fungus_by_compartment, competitors = Actual_fungi_at_harvest, attempted = Fungal_treatment, enriched)
+
+tomerge$attempted = recode(tomerge$attempted,
+                           "THETE/THETE" = "Tt/Tt",
+                           "THETE/NM" = "Tt/None",
+                           "THETE/SUIPU" = "Tt/Sp",
+                           "SUIPU/SUIPU" = "Sp/Sp",
+                           "SUIPU/NM" = "Sp/None",
+                           "NM/NM" = "None/None")
+
+tomerge$competitors = recode(tomerge$competitors,
+                           "THETE/THETE" = "Tt/Tt",
+                           "THETE/NM" = "Tt/None",
+                           "THETE/SUIPU" = "Tt/Sp",
+                           "SUIPU/SUIPU" = "Sp/Sp",
+                           "SUIPU/NM" = "Sp/None",
+                           "NM/NM" = "None/None")
+
+wide_bycompt = left_join(wide_bycompt, tomerge)
+
+write_csv(wide_bycompt, "processeddata/percent_colonization_and_mass_data_by_compartment.csv")
+
 # #### Did plant repress colonization by less helpful fungus? ####
 # 
 # wide_bycompt$compartment_fungus
