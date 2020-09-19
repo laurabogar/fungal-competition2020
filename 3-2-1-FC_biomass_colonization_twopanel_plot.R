@@ -55,7 +55,6 @@ ggsave("plots/Biomass_boxplot.jpeg", plot = massplot,
 #### COLONIZATION ####
 
 ### Analyses ###
-test = colforplot[is.na(colforplot$compartment_fungus),]
 
 # colforplot = subset(alldata, Fungi != "None/None")
 # remove the "NA" values because these are all failed splits
@@ -68,6 +67,10 @@ colforplot = subset(colforplot, compartment_fungus != "MIXED" &
                       competitors != "THETE")
 colforplot = colforplot[-grep("MIXED", colforplot$competitors),]
 colforplot = subset(colforplot, N_level != "None")
+colforplot$compartment_fungus = recode(colforplot$compartment_fungus,
+                                        "NM" = "None",
+                                        "SUIPU" = "Sp",
+                                        "THETE" = "Tt")
 
 labels = c(High = "High N", Low = "Low N")
 
@@ -87,8 +90,8 @@ mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
 
 
 collabels = data.frame(N_level = c("High", "Low"),
-                       x1 = c(1, 1), x2 = c(5, 5), y1 = c(80, 50), y2 = c(81, 51),
-                       xstar = c(3, 3), ystar = c(88, 58),
+                       x1 = c(1, 1), x2 = c(6, 6), y1 = c(95, 70), y2 = c(95, 71),
+                       xstar = c(3.5, 3.5), ystar = c(103, 78),
                        lab = c("a", "b"))
 
 
@@ -96,29 +99,96 @@ colplot = ggplot(data = colforplot) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = competitors, y = percent_col,
                    fill = compartment_fungus)) +
-  geom_jitter(width = 0.20,
+  geom_jitter(width = 0.2,
               aes(x = competitors, y = percent_col,
                   fill = compartment_fungus,
                   shape = compartment_fungus)) +
   # geom_line(aes(group = as.factor(Plant))) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  ylab("Percent fungal colonization of\nroot system (by mass)") +
+  ylab("Percent fungal colonization of\nroots (by compartment)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungal treatment") +
-  scale_fill_grey() +
-  scale_shape_manual(values = c(16, 1, 2))
-  # geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
-  # geom_segment(data = collabels, aes(x = x1, xend = x2,
-  #                                    y = y2, yend = y2),
-  #              colour = "black")
+  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+  scale_shape_manual(values = c(1, 16, 2)) +
+  labs(shape = "Fungus", fill = "Fungus") +
+  ylim(-2, 105) +
+  geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
+  geom_segment(data = collabels, aes(x = x1, xend = x2,
+                                     y = y1, yend = y2),
+               colour = "black")
 
-gray.colors(3)
-pdf("plots/Colonization_boxplot.pdf", width = 7, height = 5)
-colplot
-dev.off()
+save_plot("plots/Colonization_boxplot_by_compartment.pdf",
+          colplot,
+          base_aspect_ratio = 1.8)
+
+
+
 
 Figure = plot_grid(massplot, colplot, ncol = 2, align = "h",
-                    labels = c("A", "B"))
-save_plot("plots/MAIN_Mass_and_colonization_two_panel_boxplot.pdf",
+                    labels = c("A", "B"),
+                   rel_widths = c(1, 1.4))
+save_plot("plots/Mass_and_colonization_two_panel_boxplot.pdf",
           Figure, ncol = 2)
+
+#### COLONIZATION STATS ####
+colfortest = colforplot
+colfortest$versus = numeric(nrow(colfortest))
+
+for (i in 1:nrow(colfortest)) {
+  if (colfortest$compartment_fungus[i] == "Sp") {
+    if (colfortest$competitors[i] == "Sp/None") {
+      colfortest$versus[i] = "None"
+    } else if (colfortest$competitors[i] == "Sp/Sp") {
+      colfortest$versus[i] = "Sp"
+    } else if (colfortest$competitors[i] == "Tt/Sp") {
+      colfortest$versus[i] = "Tt"
+    } else if (grepl("MIXED", colfortest$competitors[i])){
+      colfortest$versus[i] = "Mixed"
+    }
+  } else if (colfortest$compartment_fungus[i] == "Tt") {
+    if (colfortest$competitors[i] == "Tt/None") {
+      colfortest$versus[i] = "None"
+    } else if (colfortest$competitors[i] == "Tt/Tt") {
+      colfortest$versus[i] = "Tt"
+    } else if (colfortest$competitors[i] == "Tt/Sp") {
+      colfortest$versus[i] = "Sp"
+    } else if (grepl("MIXED", colfortest$competitors[i])) {
+      colfortest$versus[i] = "Mixed"
+    }
+  } else if (colfortest$compartment_fungus[i] == "None") {
+    if (colfortest$competitors[i] == "Sp/None") {
+      colfortest$versus[i] = "Sp"
+    } else if (colfortest$competitors[i] == "None/None") {
+      colfortest$versus[i] = "None"
+    } else if (colfortest$competitors[i] == "Tt/None") {
+      colfortest$versus[i] = "Tt"
+    }
+  } else if (colfortest$compartment_fungus[i] == "MIXED") {
+    if (colfortest$competitors[i] == "MIXED/Sp") {
+      colfortest$versus[i] = "Sp"
+    } else if (colfortest$competitors[i] == "MIXED/Tt") {
+      colfortest$versus[i] = "Tt"
+    }
+  }
+}
+
+colfortest = subset(colfortest, compartment_fungus != "None")
+
+colonization_test = lmer(percent_col ~ compartment_fungus * N_level * versus + (1|Plant),
+                         data = colfortest)
+anovaresults = anova(colonization_test)
+
+sink("stats_tables/colonization_by_compartment_lme_anova.html")
+
+stargazer(anovaresults, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+colonizationposthoc = emmeans(colonization_test, list(pairwise ~ compartment_fungus*N_level*versus), adjust = "tukey")
+
