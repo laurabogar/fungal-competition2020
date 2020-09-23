@@ -1,7 +1,5 @@
 # 3-2-1 Combining biomass and colonization plots into one figure
 
-test = alldata[alldata$Fungus == "Tt/Sp",]
-
 #### BIOMASS ####
 
 # significance labels determined by anova for interaction between N level and fungal treatment.
@@ -173,7 +171,9 @@ for (i in 1:nrow(colfortest)) {
   }
 }
 
-colfortest = subset(colfortest, compartment_fungus != "None")
+colfortest = subset(colfortest, compartment_fungus != "None") # exclude compartments with no fungi,
+# since "significant differences" in colonization based on the no spores
+# vs yes spores compartments will not be informative.
 
 colonization_test = lmer(percent_col ~ compartment_fungus * N_level * versus + (1|Plant),
                          data = colfortest)

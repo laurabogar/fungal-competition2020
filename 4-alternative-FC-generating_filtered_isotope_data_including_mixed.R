@@ -12,10 +12,10 @@ allisotopes = read_csv("processeddata/isotopes_one_row_per_plant_including_unenr
 # correcting a spreadsheet error
 allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6033] = "SUIPU/SUIPU"
 
-isotopes_forN = read_csv("FCdata/isotope_data_one_row_per_plant_July.csv")
-minimally_processed_isotopes = read_csv("FCdata/Cleaned_processed_FC_isotope_data_July.csv")
-percent_col = read_csv("FCdata/percent_colonization_and_mass_data_by_compartment.csv")
-metadata_byplant = read_csv("FCdata/percent_col_and_mass_data_by_plant.csv")
+isotopes_forN = read_csv("processeddata/isotope_data_one_row_per_plant_July.csv")
+minimally_processed_isotopes = read_csv("processeddata/Cleaned_processed_FC_isotope_data_July.csv")
+percent_col = read_csv("processeddata/percent_colonization_and_mass_data_by_compartment.csv")
+metadata_byplant = read_csv("processeddata/percent_col_and_mass_data_by_plant.csv")
 
 allisotopes = rename(allisotopes, compartment_fungus = Actual_fungus_by_compartment)
 allisotopes = select(allisotopes, everything(), -tissue)

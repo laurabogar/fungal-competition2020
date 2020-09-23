@@ -76,6 +76,7 @@ wrongfung = as.character(metadata$Fungal_treatment) != as.character(metadata$Act
 # I have a more detailed treatment of this in
 # Fungal_competition_analysis_for_committee.r
 
+
 #### BIOMASS ####
 
 plant_mass = fungcomp %>% group_by(Plant_number) %>% summarize(total_biomass = sum(Mass_g, na.rm = TRUE))
@@ -425,7 +426,7 @@ for (i in 1:nrow(wide_bycompt)) {
 }
 
 wide_bycompt = rename(wide_bycompt, Plant = Plant_number)
-tomerge = select(metadata, Plant, Side, N_level, Batch, compartment_fungus = Actual_fungus_by_compartment, competitors = Actual_fungi_at_harvest, attempted = Fungal_treatment, enriched)
+tomerge = select(metadata, Plant, Side, N_level, Batch, Fungus_attempted, compartment_fungus = Actual_fungus_by_compartment, competitors = Actual_fungi_at_harvest, attempted = Fungal_treatment, enriched)
 
 tomerge$attempted = recode(tomerge$attempted,
                            "THETE/THETE" = "Tt/Tt",
@@ -434,6 +435,18 @@ tomerge$attempted = recode(tomerge$attempted,
                            "SUIPU/SUIPU" = "Sp/Sp",
                            "SUIPU/NM" = "Sp/None",
                            "NM/NM" = "None/None")
+
+tomerge$Fungus_attempted = recode(tomerge$Fungus_attempted,
+                           "THETE" = "Tt",
+                           "SUIPU" = "Sp",
+                           "NM" = "None")
+
+tomerge$compartment_fungus = recode(tomerge$compartment_fungus,
+                                  "THETE" = "Tt",
+                                  "SUIPU" = "Sp",
+                                  "NM" = "None",
+                                  "OTHER" = "Failed",
+                                  "MIXED" = "Mixed")
 
 tomerge$competitors = recode(tomerge$competitors,
                            "THETE/THETE" = "Tt/Tt",
