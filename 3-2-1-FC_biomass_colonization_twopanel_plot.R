@@ -4,11 +4,15 @@
 
 # significance labels determined by anova for interaction between N level and fungal treatment.
 
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(agricolae)
+library(emmeans)
 library(cowplot)
+library(lme4)
+library(lmerTest)
 library(tidyverse)
+library(stargazer)
 
 alldata = read_csv("processeddata/percent_col_and_mass_data_by_plant.csv")
 compdata = read_csv("processeddata/percent_colonization_and_mass_data_by_compartment.csv")
@@ -62,9 +66,11 @@ ggsave("plots/Biomass_boxplot.jpeg", plot = massplot,
 colforplot = compdata[!is.na(compdata$compartment_fungus),]
 colforplot = subset(colforplot, compartment_fungus != "MIXED" &
                       compartment_fungus != "OTHER" &
-                      competitors != "THETE")
+                      competitors != "THETE" &
+                      competitors != "FAILED")
 colforplot = colforplot[-grep("MIXED", colforplot$competitors),]
-colforplot = subset(colforplot, N_level != "None")
+colforplot = subset(colforplot, N_level != "None" &
+                      compartment_fungus != "Failed")
 colforplot$compartment_fungus = recode(colforplot$compartment_fungus,
                                         "NM" = "None",
                                         "SUIPU" = "Sp",
@@ -104,17 +110,17 @@ colplot = ggplot(data = colforplot) +
   # geom_line(aes(group = as.factor(Plant))) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  ylab("Percent fungal colonization of\nroots (by compartment)") +
+  ylab("Percent fungal colonization of\nroots by compartment") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungal treatment") +
   scale_fill_manual(values = c("lightgray", "gray46", "white")) +
   scale_shape_manual(values = c(1, 16, 2)) +
   labs(shape = "Fungus", fill = "Fungus") +
-  ylim(-2, 105) +
-  geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
-  geom_segment(data = collabels, aes(x = x1, xend = x2,
-                                     y = y1, yend = y2),
-               colour = "black")
+  ylim(-2, 105)
+  # geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
+  # geom_segment(data = collabels, aes(x = x1, xend = x2,
+  #                                    y = y1, yend = y2),
+  #              colour = "black")
 
 save_plot("plots/Colonization_boxplot_by_compartment.pdf",
           colplot,
@@ -170,6 +176,8 @@ for (i in 1:nrow(colfortest)) {
     }
   }
 }
+# 
+# write_csv(colfortest, "processeddata/colonization_and_biomass_data_by_compartment_with_competition.csv")
 
 colfortest = subset(colfortest, compartment_fungus != "None") # exclude compartments with no fungi,
 # since "significant differences" in colonization based on the no spores
@@ -178,6 +186,7 @@ colfortest = subset(colfortest, compartment_fungus != "None") # exclude compartm
 colonization_test = lmer(percent_col ~ compartment_fungus * N_level * versus + (1|Plant),
                          data = colfortest)
 anovaresults = anova(colonization_test)
+summary(anovaresults)
 
 sink("stats_tables/colonization_by_compartment_lme_anova.html")
 
