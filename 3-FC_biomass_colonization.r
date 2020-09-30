@@ -481,10 +481,18 @@ wide_bycompt = left_join(wide_bycompt, tomerge)
 wide_bycompt = wide_bycompt[!is.na(wide_bycompt$compartment_fungus),]
 
 for (i in 1:nrow(wide_bycompt)) {
-  if(wide_bycompt$mycofungus[i] == 0){
-    wide_bycompt$mycofungus[i] = wide_bycompt$compartment_fungus[i]
-  }
+  if(wide_bycompt$compartment_fungus[i] == "Mixed") {
+    if(wide_bycompt$mycofungus[i] == 0) {
+      wide_bycompt$mycofungus[i] = "Tt"
+    } 
+  } else if (wide_bycompt$compartment_fungus[i] == "Sp") {
+      wide_bycompt$mycofungus[i] = "Sp"
+  } else if (wide_bycompt$compartment_fungus[i] == "Tt") {
+      wide_bycompt$mycofungus[i] = "Tt"
+    }
 }
+
+wide_bycompt$mycofungus[wide_bycompt$mycofungus == 0] = NA
 
 
 
@@ -496,7 +504,7 @@ makingwide = smallerframe %>% group_by(Plant, Side) %>%
 
 makingwide = rename(makingwide, Sp_myco_mass = Sp, Tt_myco_mass = Tt)
 makingwide = select(makingwide, everything(), 
-                    -Failed, -None, -dead_tissue, -other)
+                    -"NA", -dead_tissue, -other)
 
 makingwide$uniqueID = paste(makingwide$Plant, makingwide$Side, sep = "")
 
@@ -505,19 +513,15 @@ capturing_dead = smallerframe %>% group_by(Plant, Side) %>%
 
 capturing_dead = rename(capturing_dead, Sp_dead_mass = Sp, Tt_dead_mass = Tt)
 capturing_dead = select(capturing_dead, everything(), 
-                        -Failed, -None, -roots, -other, -mycorrhizas)
+                        -"NA", -roots, -other, -mycorrhizas)
 
 capturing_other = smallerframe %>% group_by(Plant, Side) %>%
   spread(key = mycofungus, value = other)
 capturing_other = rename(capturing_other, Sp_other_mass = Sp, Tt_other_mass = Tt)
 capturing_other = select(capturing_other, everything(), 
-                        -Failed, -None, -roots, -dead_tissue, -mycorrhizas)
+                        -"NA", -roots, -dead_tissue, -mycorrhizas)
 
-dupes = makingwide[duplicated(makingwide$uniqueID),]
-
-makingwide_unduplicated = subset(makingwide, !(Plant %in% dupes$Plant))
-
-alltogether = left_join(makingwide_unduplicated, capturing_dead, by = c("Plant", "Side"))
+alltogether = left_join(makingwide, capturing_dead, by = c("Plant", "Side"))
 alltogether = left_join(alltogether, capturing_other, by = c("Plant", "Side"))
 
 alltogether$percent_Tt_mycos = numeric(nrow(alltogether))
@@ -559,6 +563,10 @@ alltogether = left_join(alltogether, metadata)
 alltogether = rename(alltogether, uncolonized_root_mass = roots)
 
 
+consolidated = alltogether %>% 
+  group_by(uniqueID) %>% 
+  summarise_all(funs(first(na.omit(.))))
+
 # plant_mass = fungcomp %>% group_by(Plant_number) %>% summarize(total_biomass = sum(Mass_g, na.rm = TRUE))
 justroots = subset(fungcomp, Tissue != "shoot" & 
                      Tissue != "Shoot" &
@@ -569,11 +577,53 @@ justroots = justroots[-grep("F", justroots$Side),]
 justroots = rename(justroots, Plant = Plant_number)
 rootmass_bycompt = justroots %>% group_by(Plant, Side) %>% summarize(total_root_biomass_compartment = sum(Mass_g, na.rm = TRUE))
 
-granular_with_metadata = left_join(alltogether, rootmass_bycompt)
+granular_with_metadata = left_join(consolidated, rootmass_bycompt)
 
 write_csv(granular_with_metadata, "processeddata/granular_mass_and_colonization_data_by_compartment.csv")
 
+#### Making a "by plant" option ####
 
+granular_byplant = granular_with_metadata %>% 
+  group_by(Plant) %>% 
+  summarize(Tt_myco_mass_wholesystem = sum(Tt_myco_mass, na.rm = TRUE),
+            Sp_myco_mass_wholesystem = sum(Sp_myco_mass, na.rm = TRUE),
+            Tt_dead_mass_wholesystem = sum(Tt_dead_mass, na.rm = TRUE),
+            Sp_dead_mass_wholesystem = sum(Sp_dead_mass, na.rm = TRUE),
+            NM_mass_wholesystem = sum(uncolonized_root_mass, na.rm = TRUE),
+            percent_col_denominator = sum(Tt_myco_mass,
+                                          Sp_myco_mass,
+                                          Tt_dead_mass,
+                                          Sp_dead_mass,
+                                          uncolonized_root_mass,
+                                          na.rm = TRUE),
+            total_root_mass_wholesystem = sum(total_root_biomass_compartment, na.rm = TRUE))
+
+percentages = granular_byplant %>% 
+  group_by(Plant) %>% 
+  summarize(percent_Tt = 100*(Tt_myco_mass_wholesystem/percent_col_denominator),
+            percent_Sp = 100*(Sp_myco_mass_wholesystem/percent_col_denominator),
+            percent_Tt_dead = 00*(Tt_dead_mass_wholesystem/percent_col_denominator),
+            percent_Sp_dead = 100*(Sp_dead_mass_wholesystem/percent_col_denominator))
+
+granular_byplant_with_percent = left_join(granular_byplant, percentages)
+
+meta_by_plant = select(granular_with_metadata,
+                       Plant,
+                       N_level,
+                       Batch,
+                       competitors_attempted,
+                       competitors,
+                       enriched)
+
+justshoots = subset(fungcomp, coded_tissue == "shoot")
+shootmass = justshoots %>% group_by(Plant_number) %>% summarize(shoot_biomass = sum(Mass_g, na.rm = TRUE))
+shootmass = rename(shootmass, Plant = Plant_number)
+
+meta_by_plant_withshoot = left_join(meta_by_plant, shootmass)
+
+alldata_byplant = left_join(granular_byplant_with_percent, meta_by_plant_withshoot, by = "Plant")
+
+write_csv(alldata_byplant, "processeddata/granular_mass_and_colonization_data_by_plant.csv")
 
 #### UNUSED INFO FROM HERE ON ####
 
