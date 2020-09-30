@@ -1,7 +1,7 @@
 # Analyzing FC biomass and colonization data
 
 # setwd("~/Documents/2018-2019/Fungal competition/")
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(tidyverse)
 library(cowplot)
@@ -19,6 +19,10 @@ fungcomp = select(fungcomp, Page:Notes2)
 # Cleaning up coding for data processing
 fungcomp$for_percent_col = numeric(nrow(fungcomp))
 fungcomp$for_percent_col[grep("%", fungcomp$Tissue)] = 1
+fungcomp$mycofungus = numeric(nrow(fungcomp))
+fungcomp$mycofungus[grep("SUIPU", fungcomp$Tissue)] = "Sp"
+fungcomp$mycofungus[grep("uipu", fungcomp$Tissue)] = "Sp"
+
 
 fungcomp$coded_tissue = numeric(nrow(fungcomp))
 fungcomp$coded_tissue = "other" # default assume this is a crust or rhizomorph or something weird
@@ -26,6 +30,7 @@ fungcomp$coded_tissue[grep("TFR", fungcomp$Tissue)] = "roots" # "terminal fine r
 fungcomp$coded_tissue[grep("root", fungcomp$Tissue)] = "roots"
 fungcomp$coded_tissue[grep("no mycos", fungcomp$Tissue)] = "roots"
 fungcomp$coded_tissue[grep("other %", fungcomp$Tissue)] = "roots"
+fungcomp$coded_tissue[grep("Other %", fungcomp$Tissue)] = "roots"
 fungcomp$coded_tissue[grep("NM", fungcomp$Tissue)] = "roots"
 fungcomp$coded_tissue[grep("extra", fungcomp$Tissue)] = "roots"
 fungcomp$coded_tissue[grep("mycos", fungcomp$Tissue)] = "mycorrhizas"
@@ -86,6 +91,8 @@ plant_mass = fungcomp %>% group_by(Plant_number) %>% summarize(total_biomass = s
 # to do WITHIN nitrogen treatments.
 
 plantleveldata = select(metadata, Plant:N_level, `Harvest date`:Actual_fungi_at_harvest, Harvest_notes, enriched)
+
+
 plantleveldata = plantleveldata[!duplicated(plantleveldata$Plant),]
 
 plant_mass = rename(plant_mass, Plant = Plant_number)
@@ -152,6 +159,7 @@ protocol = subset(protocol, for_percent_col == 1)
 
 oneentrypertissue = protocol %>% group_by(Plant_number, coded_tissue) %>% summarize(mass = sum(Mass_g, na.rm = TRUE))
 
+
 widedata = oneentrypertissue %>% spread(coded_tissue, mass)
 
 widedata$mycorrhizas[is.na(widedata$mycorrhizas)] = 0 # if na, there were no mycorrhizas
@@ -180,8 +188,6 @@ write_csv(alldata, "processeddata/percent_col_and_mass_data_by_plant.csv")
 
 #### REPLICATION SUMMARY ####
 summarytable = plantleveldata %>% group_by(Fungi, N_level, enriched) %>% summarize(count = n())
-
-#### OLD, IRRELEVANT, OR EXPLORATORY STUFF BELOW ####
 
 
 # ### Analyses ###
@@ -409,21 +415,36 @@ summarytable = plantleveldata %>% group_by(Fungi, N_level, enriched) %>% summari
 # 
 # 
 # # How can I get those data?
+
+#### Prepping for analyses by compartment ####
 # 
-prepfortable = select(fungcomp, Plant_number, Side, coded_tissue, Mass_g, for_percent_col)
+prepfortable = select(fungcomp, Plant_number, Side, coded_tissue, mycofungus, Mass_g, for_percent_col)
 prepfortable = subset(prepfortable, for_percent_col == 1)
 
-onepertiss = prepfortable %>% group_by(Plant_number, Side, coded_tissue) %>% summarize(mass = sum(Mass_g, na.rm = TRUE))
+
+onepertiss = prepfortable %>% group_by(Plant_number, Side, coded_tissue, mycofungus) %>% summarize(mass = sum(Mass_g, na.rm = TRUE))
 
 wide_bycompt = onepertiss %>% spread(coded_tissue, mass)
 
 wide_bycompt$mycorrhizas[is.na(wide_bycompt$mycorrhizas)] = 0 # if na, there were no mycorrhizas
 
+# for (i in 1:nrow(wide_bycompt)) {
+#   for (j in 1:nrow(wide_bycompt)) {
+#     if (wide_bycompt$mycofungus[i] == "Sp"){
+#       if (wide_bycompt$Plant_number[i] == wide_bycompt$Plant_number[j]
+#           & wide_bycompt$Side[i] == wide_bycompt$Side[j]) {
+#         wide_bycompt$roots[i] = wide_bycompt$roots[j]
+#       }
+#     }
+#   }
+# }
+# 
 wide_bycompt$percent_col = numeric(nrow(wide_bycompt))
 for (i in 1:nrow(wide_bycompt)) {
   percentcoldenom = sum(wide_bycompt$mycorrhizas[i], wide_bycompt$roots[i], wide_bycompt$other[i], na.rm = TRUE)
   wide_bycompt$percent_col[i] = 100*(wide_bycompt$mycorrhizas[i]/percentcoldenom)
 }
+
 
 wide_bycompt = rename(wide_bycompt, Plant = Plant_number)
 tomerge = select(metadata, Plant, Side, N_level, Batch, Fungus_attempted, compartment_fungus = Actual_fungus_by_compartment, competitors = Actual_fungi_at_harvest, attempted = Fungal_treatment, enriched)
@@ -457,6 +478,116 @@ tomerge$competitors = recode(tomerge$competitors,
                            "NM/NM" = "None/None")
 
 wide_bycompt = left_join(wide_bycompt, tomerge)
+wide_bycompt = wide_bycompt[!is.na(wide_bycompt$compartment_fungus),]
+
+for (i in 1:nrow(wide_bycompt)) {
+  if(wide_bycompt$mycofungus[i] == 0){
+    wide_bycompt$mycofungus[i] = wide_bycompt$compartment_fungus[i]
+  }
+}
+
+
+
+# 
+smallerframe = select(wide_bycompt, Plant, Side, mycofungus, dead_tissue, mycorrhizas, other, roots)
+
+makingwide = smallerframe %>% group_by(Plant, Side) %>%
+  spread(key = mycofungus, value = mycorrhizas)
+
+makingwide = rename(makingwide, Sp_myco_mass = Sp, Tt_myco_mass = Tt)
+makingwide = select(makingwide, everything(), 
+                    -Failed, -None, -dead_tissue, -other)
+
+makingwide$uniqueID = paste(makingwide$Plant, makingwide$Side, sep = "")
+
+capturing_dead = smallerframe %>% group_by(Plant, Side) %>%
+  spread(key = mycofungus, value = dead_tissue)
+
+capturing_dead = rename(capturing_dead, Sp_dead_mass = Sp, Tt_dead_mass = Tt)
+capturing_dead = select(capturing_dead, everything(), 
+                        -Failed, -None, -roots, -other, -mycorrhizas)
+
+capturing_other = smallerframe %>% group_by(Plant, Side) %>%
+  spread(key = mycofungus, value = other)
+capturing_other = rename(capturing_other, Sp_other_mass = Sp, Tt_other_mass = Tt)
+capturing_other = select(capturing_other, everything(), 
+                        -Failed, -None, -roots, -dead_tissue, -mycorrhizas)
+
+dupes = makingwide[duplicated(makingwide$uniqueID),]
+
+makingwide_unduplicated = subset(makingwide, !(Plant %in% dupes$Plant))
+
+alltogether = left_join(makingwide_unduplicated, capturing_dead, by = c("Plant", "Side"))
+alltogether = left_join(alltogether, capturing_other, by = c("Plant", "Side"))
+
+alltogether$percent_Tt_mycos = numeric(nrow(alltogether))
+alltogether$percent_Sp_mycos = numeric(nrow(alltogether))
+alltogether$percent_Tt_dead = numeric(nrow(alltogether))
+alltogether$percent_Sp_dead = numeric(nrow(alltogether))
+
+for (i in 1:nrow(alltogether)) {
+  percentdenom = sum(alltogether$roots[i], 
+                     alltogether$Sp_myco_mass[i],
+                     alltogether$Tt_myco_mass[i],
+                     alltogether$Sp_dead_mass[i],
+                     alltogether$Tt_dead_mass[i],
+                     na.rm = TRUE)
+  alltogether$percent_Tt_mycos[i] = (alltogether$Tt_myco_mass[i]/percentdenom)*100
+  alltogether$percent_Sp_mycos[i] = (alltogether$Sp_myco_mass[i]/percentdenom)*100
+  alltogether$percent_Tt_dead[i] = (alltogether$Tt_dead_mass[i]/percentdenom)*100
+  alltogether$percent_Sp_dead[i] = (alltogether$Sp_dead_mass[i]/percentdenom)*100
+  
+}
+
+alltogether$percent_Tt_mycos[is.na(alltogether$percent_Tt_mycos)] = 0
+alltogether$percent_Sp_mycos[is.na(alltogether$percent_Sp_mycos)] = 0
+alltogether$percent_Tt_dead[is.na(alltogether$percent_Tt_dead)] = 0
+alltogether$percent_Sp_dead[is.na(alltogether$percent_Sp_dead)] = 0
+
+metadata = select(wide_bycompt, 
+                  Plant, 
+                  Side, 
+                  N_level, 
+                  Batch, 
+                  compartment_fungus_attempted = Fungus_attempted, 
+                  compartment_fungus, 
+                  competitors_attempted = attempted, 
+                  competitors, 
+                  enriched)
+
+alltogether = left_join(alltogether, metadata)
+alltogether = rename(alltogether, uncolonized_root_mass = roots)
+
+
+# plant_mass = fungcomp %>% group_by(Plant_number) %>% summarize(total_biomass = sum(Mass_g, na.rm = TRUE))
+justroots = subset(fungcomp, Tissue != "shoot" & 
+                     Tissue != "Shoot" &
+                     Tissue != "before" &
+                     Side != "none")
+justroots = justroots[-grep("R", justroots$Side),] # I used R and F only to refer to crust samples
+justroots = justroots[-grep("F", justroots$Side),]
+justroots = rename(justroots, Plant = Plant_number)
+rootmass_bycompt = justroots %>% group_by(Plant, Side) %>% summarize(total_root_biomass_compartment = sum(Mass_g, na.rm = TRUE))
+
+granular_with_metadata = left_join(alltogether, rootmass_bycompt)
+
+write_csv(granular_with_metadata, "processeddata/granular_mass_and_colonization_data_by_compartment.csv")
+
+
+
+#### UNUSED INFO FROM HERE ON ####
+
+# Ideally, at this point I would rearrange the matrix
+# so that each compartment has one row.
+# Some columns will be NAs for plants that only have
+# one fungus in that compartment, but I need enough
+# columns that there'd be room for two fungi in each compartment.
+# My vision for the eventual plot is to look at % Tt vs % Sp 0VERALL within
+# a root system (and maybe by compartment?), with shapes and colors denoting
+# intended fungal treatment and N level, respectively.
+
+test = wide_bycompt %>% spread(mycofungus, percent_col)
+
 
 write_csv(wide_bycompt, "processeddata/percent_colonization_and_mass_data_by_compartment.csv")
 

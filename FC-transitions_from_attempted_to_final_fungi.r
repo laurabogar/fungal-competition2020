@@ -1,5 +1,5 @@
 
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(tidyverse)
 library(stargazer)
@@ -76,27 +76,6 @@ stargazer(transsummary, type = "html",
           no.space = TRUE)
 
 sink()
-# How did I lose 18 plants?
-
-summary(metadata$Failed_split == "Y") # 8/2 = 4 failed splits
-hmm = metadata[metadata$Failed_split == "Y",]
-
-
-sum(grepl("MIXED|OTHER", metadata$Actual_fungi_at_harvest)) #16/2 = 8 microcosms where we had a mixed result
-more = metadata[grepl("MIXED|OTHER|FAILED", metadata$Actual_fungi_at_harvest),]
-
-# I'm still missing six plants that need explaining
-
-letslook = metadata[!metadata$Plant %in% plantleveldata$Plant,]
-letslook = letslook[!letslook$Plant %in% more$Plant,]
-letslook = letslook[!letslook$Plant %in% hmm$Plant,]
-
-# > length(unique(more$Plant))
-# [1] 9
-# > length(unique(hmm$Plant))
-# [1] 6
-# > length(unique(letslook$Plant))
-# [1] 4 # but one of these doesn't count because it was the "no N" control plant
 
 #### Fisher's exact test with independent samples ####
 # Is my significant result robust to
@@ -121,3 +100,36 @@ table2 = matrix(dimnames = list(N_level = c("High", "Low"),
                                  Fungus_at_harvest = c("Sp", "Not Sp")))
 fisher.test(table2)
 # p = 0.02907
+
+#### Making a plot ####
+
+compartmentleveldata$percent_Tt = numeric(nrow(compartmentleveldata))
+compartmentleveldata$percent_Sp = numeric(nrow(compartmentleveldata))
+
+for (i in 1:nrow(compartmentleveldata)) {
+  if (compartmentleveldata$compartment_fungus[i] == "Tt") {
+    compartmentleveldata$percent_Tt[i] = compartmentleveldata$percent_col[i]
+  }
+}
+
+transition_plot = ggplot(data = compartmentleveldata) +
+  geom_jitter(aes(x =))
+
+colplot = ggplot(data = colforplot) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = competitors, y = percent_col,
+                   fill = compartment_fungus)) +
+  geom_jitter(width = 0.2,
+              aes(x = competitors, y = percent_col,
+                  fill = compartment_fungus,
+                  shape = compartment_fungus)) +
+  # geom_line(aes(group = as.factor(Plant))) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Percent fungal colonization of\nroots by compartment") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungal treatment") +
+  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+  scale_shape_manual(values = c(1, 16, 2)) +
+  labs(shape = "Fungus", fill = "Fungus") +
+  ylim(-2, 105)
