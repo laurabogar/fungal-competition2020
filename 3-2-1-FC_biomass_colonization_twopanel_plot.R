@@ -44,7 +44,7 @@ massplot = ggplot(data = alldata) +
   ylab("Total plant biomass (g)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_text(data = anothertry, aes(x, y, label = labs)) +
-  xlab("Fungal treatment")
+  xlab("Fungi on roots at harvest")
 
 pdf("plots/Biomass_boxplot.pdf", width = 9, height = 5)
 massplot
@@ -75,6 +75,24 @@ colforplot$compartment_fungus = recode(colforplot$compartment_fungus,
                                         "NM" = "None",
                                         "SUIPU" = "Sp",
                                         "THETE" = "Tt")
+colforplot$bettercomp = fct_relevel(colforplot$attempted,
+                                   "None/None",
+                                   "Sp/None",
+                                   "Sp/Sp",
+                                   "Tt/Sp",
+                                   "Tt/None",
+                                   "Tt/Tt")
+colforplot$competitors_reordered = fct_relevel(colforplot$competitors,
+                                    "None/None",
+                                    "Sp/None",
+                                    "Sp/Sp",
+                                    "Tt/Sp",
+                                    "Tt/None",
+                                    "Tt/Tt")
+
+colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "A"] = "Tt" # why not in data? unclear
+colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "B"] = "Sp"
+
 
 labels = c(High = "High N", Low = "Low N")
 
@@ -103,16 +121,16 @@ colplot = ggplot(data = colforplot) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = competitors, y = percent_col,
                    fill = compartment_fungus)) +
-  geom_jitter(width = 0.2,
-              aes(x = competitors, y = percent_col,
+  geom_point(aes(x = competitors, y = percent_col,
                   fill = compartment_fungus,
-                  shape = compartment_fungus)) +
+                  shape = compartment_fungus),
+             position = position_jitterdodge()) +
   # geom_line(aes(group = as.factor(Plant))) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Percent fungal colonization of\nroots by compartment") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungal treatment") +
+  xlab("Fungi on roots at harvest") +
   scale_fill_manual(values = c("lightgray", "gray46", "white")) +
   scale_shape_manual(values = c(1, 16, 2)) +
   labs(shape = "Fungus", fill = "Fungus") +
@@ -126,14 +144,68 @@ save_plot("plots/Colonization_boxplot_by_compartment.pdf",
           colplot,
           base_aspect_ratio = 1.8)
 
-
-
+Figure = plot_grid(massplot, colplot, 
+                   nrow = 2,
+                   ncol = 1,
+                   align = "v",
+                   axis = "l",
+                   rel_heights = c(2,2),
+                   labels = c("A", "B"))
+save_plot("plots/Mass_and_colonization_two_panel_boxplot_vertical.pdf",
+          Figure)
 
 Figure = plot_grid(massplot, colplot, ncol = 2, align = "h",
                     labels = c("A", "B"),
-                   rel_widths = c(1, 1.4))
+                   rel_widths = c(1, 1.6))
 save_plot("plots/Mass_and_colonization_two_panel_boxplot.pdf",
           Figure, ncol = 2)
+
+### Trying out col plot with color indicating intended fungi ####
+
+colplot_color = ggplot(data = colforplot) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = competitors, y = percent_col,
+                   fill = compartment_fungus)) +
+  geom_jitter(width = 0.2,
+              aes(x = competitors, y = percent_col,
+                  color = bettercomp,
+                  shape = compartment_fungus)) +
+  # geom_line(aes(group = as.factor(Plant))) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Percent fungal colonization of\nroots by compartment") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungal treatment") +
+  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+  scale_shape_manual(values = c(1, 16, 2)) +
+  scale_color_manual(values = c("white", "lightgoldenrod1", "darkgoldenrod1", "tan4", "plum2", "darkorchid4"),
+                    name = "Fungi applied") +
+  labs(shape = "Fungus", fill = "Fungus") +
+  ylim(-2, 105)
+
+colplot_color_bycompt = ggplot(data = colforplot) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = competitors_reordered, 
+                   y = percent_col,
+                   fill = compartment_fungus)) +
+  geom_point(aes(x = competitors_reordered, y = percent_col,
+                  color = Fungus_attempted,
+                  shape = compartment_fungus),
+             position = position_jitterdodge()) +
+  # geom_line(aes(group = as.factor(Plant))) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Percent fungal colonization of\nroots by compartment") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungi on roots at harvest") +
+  scale_shape_manual(values = c(21, 23, 24)) +
+  scale_color_manual(values = c("black", "darkgoldenrod1", "darkorchid4"),
+                    name = "Fungus applied") +
+  labs(shape = "Fungus at harvest", fill = "Fungus at harvest") +
+  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+  ylim(-2, 105)
+
+
 
 #### COLONIZATION STATS ####
 colfortest = colforplot
