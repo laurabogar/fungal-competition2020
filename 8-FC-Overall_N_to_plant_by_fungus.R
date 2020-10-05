@@ -26,6 +26,28 @@ together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_c
 ndata = subset(together, received15N == "Y")
 ndata = subset(ndata, compartment_fungus != "None")
 
+ndata$versus2 = ndata$versus
+ndata$versus3 = ndata$versus
+for (i in 1:nrow(ndata)) {
+  if ((ndata$versus[i] == "Mixed")|
+      (ndata$compartment_fungus[i] == "MIXED")) {
+    ndata$versus2[i] = "Other"
+    ndata$versus3[i] = "Other"
+  } else if ((ndata$versus[i] == "Tt" & ndata$compartment_fungus[i] == "Tt")|
+             (ndata$versus[i] == "Sp" & ndata$compartment_fungus[i] == "Sp")) {
+    ndata$versus2[i] = "Self"
+    ndata$versus3[i] = "Self"
+  } else if ((ndata$versus[i] == "Tt" & ndata$compartment_fungus[i] == "Sp")|
+             (ndata$versus[i] == "Sp" & ndata$compartment_fungus[i] == "Tt")) {
+    ndata$versus2[i] = "Other"
+    ndata$versus3[i] = "Other"
+  } else if (ndata$versus[i] == "None") {
+    ndata$versus2[i] = "Other"
+    ndata$versus3[i] = "None"
+    
+  }
+}
+
 # smallconstant = abs(min(ndata$nmN15ppmexcess)) + 1 # add 1 ppm plus minimum value
 # # to make all n enrichment data log-able.
 # 
@@ -41,18 +63,23 @@ allmixedcompartments = together[together$compartment_fungus == "MIXED",]
 # Exclude COMPARTMENTS with mixed cultures
 
 excluding_mixed = ndata[-grep("MIXED", ndata$compartment_fungus),]
+
 excluding_mixed$versus = as.factor(excluding_mixed$versus)
 # relevel(excluding_mixed$versus, levels = c("None", "Sp", "Tt"))
 
 justmycos = subset(ndata, mycofungus != "None")
+justmycos_nomixed = justmycos[-grep("MIXED", justmycos$competitors),]
 
 #### N-15 enrichment of mycos by species ####
 # Does the N-15 enrichment of mycorrhizas depend on the species
 # of fungus forming the mycorrhiza, controlling for competitor
 # identity and N addition level?
 
-n15.myco.full = lmer(mycologN15 ~ mycofungus * N_level + (1|Batch/Plant), 
-                     data = justmycos) # I don't have any random effects here that I don't think I need
+# n15.myco.full = lmer(mycologN15 ~ mycofungus * N_level + (1|Batch/Plant), 
+#                      data = justmycos) # I don't have any random effects here that I don't think I need
+
+n15.myco.full = lmer(mycologN15 ~ mycofungus * N_level + (1|Batch), 
+                     data = justmycos_nomixed)
 
 summary(n15.myco.full)
 
@@ -74,6 +101,36 @@ sink()
 sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc.txt")
 
 n15.myco.posthoc
+
+sink()
+
+### Including competition again ####
+# n15.myco.withcomp = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch/Plant), 
+#                      data = justmycos) # I don't have any random effects here that I don't think I need
+
+n15.myco.withcomp = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch), 
+                         data = justmycos_nomixed)
+
+summary(n15.myco.withcomp)
+
+anovaresults = anova(n15.myco.withcomp)
+
+n15.myco.withcomp.posthoc = emmeans(n15.myco.withcomp, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+
+sink("stats_tables/N_by_fungus_competition_N_lme_results_mycos.html")
+
+stargazer(anovaresults, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc.txt")
+
+n15.myco.withcomp.posthoc
 
 sink()
 
@@ -150,3 +207,53 @@ save_plot("plots/N_comparison_byfungus_mycorrhizas.jpeg",
           nitrogencomparison_mycos,
           base_aspect_ratio = 1.4)
 
+### Plot with competition ###
+
+collabels = data.frame(N_level = c("High", "High", "Low", "Low"),
+                       x1 = c(0.6, 1.6, 0.6, 1.6), 
+                       x2 = c(1.4, 2.4, 1.4, 2.4), 
+                       y1 = c(4, 6.5, 5.6, 4), 
+                       y2 = c(4, 6.5, 5.6, 4),
+                       xstar = c(1, 2, 1, 2), ystar = c(4.3, 6.8, 5.9, 4.3),
+                       lab = c("ab", "b", "ab", "a"))
+
+margsig = data.frame(N_level = "High",
+                     x1 = 1,
+                     x2 = 2,
+                     xstar = 1.5,
+                     y1 = 7.2,
+                     y2 = 7.2,
+                     ystar = 7.7,
+                     lab = ".")
+
+labels = c(High = "High N", Low = "Low N")
+nitrogencomparison_mycos_withcomp = ggplot(data = justmycos) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = mycologN15,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+             aes(x = mycofungus, 
+                 y = mycologN15,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Labeled N in mycorrhizas\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor") +
+  geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
+  geom_segment(data = collabels, aes(x = x1, xend = x2,
+                                     y = y1, yend = y2),
+               colour = "black") +
+  geom_text(data = margsig, size = 10, aes(x = xstar,  y = ystar, label = lab)) +
+  geom_segment(data = margsig, aes(x = x1, xend = x2,
+                                     y = y1, yend = y2),
+               colour = "black")
+
+save_plot("plots/N_comparison_byfungus_mycorrhizas_withcomp.pdf",
+          nitrogencomparison_mycos_withcomp,
+          base_aspect_ratio = 1.4)

@@ -26,7 +26,7 @@ together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_c
 # allocratios = allocratios[-grep("Mixed", allocratios$versus),]
 allocratios = together
 allocratios$allocratio = rep(NA, nrow(allocratios))
-allocratios = allocratios[-grep("Mixed", allocratios$versus),]
+# allocratios = allocratios[-grep("Mixed", allocratios$versus),]
 
 # allocratios$mycorrhizas.APE13C = allocratios$mycorrhizas.APE13C + smallconstant
 
@@ -65,30 +65,39 @@ allocratios = allocratios[!is.na(allocratios$allocratio),]
 allocratios$logallocratio = log(allocratios$allocratio)
 
 allocratios$versus2 = allocratios$versus
+allocratios$versus3 = allocratios$versus
 for (i in 1:nrow(allocratios)) {
   if ((allocratios$versus[i] == "Mixed")) {
     allocratios$versus2[i] = "Other"
-  } else if ((allocratios$versus[i] == "Tt" & allocratios$compartment_fungus == "Tt")|
-             (allocratios$versus[i] == "Sp" & allocratios$compartment_fungus == "Sp")) {
+    allocratios$versus3[i] = "Other"
+  } else if ((allocratios$versus[i] == "Tt" & allocratios$mycofungus[i] == "Tt")|
+             (allocratios$versus[i] == "Sp" & allocratios$mycofungus[i] == "Sp")) {
     allocratios$versus2[i] = "Self"
-  } else if ((allocratios$versus[i] == "Tt" & allocratios$compartment_fungus == "Sp")|
-             (allocratios$versus[i] == "Sp" & allocratios$compartment_fungus == "Tt")|
-             (allocratios$versus[i] == "None")) {
+    allocratios$versus3[i] = "Self"
+  } else if ((allocratios$versus[i] == "Tt" & allocratios$mycofungus[i] == "Sp")|
+             (allocratios$versus[i] == "Sp" & allocratios$mycofungus[i] == "Tt")) {
     allocratios$versus2[i] = "Other"
+    allocratios$versus3[i] = "Other"
+    
+  } else if (allocratios$versus[i] == "None") {
+    allocratios$versus2[i] = "Other"
+    allocratios$versus3[i] = "None"
+    
   }
 }
 
+test = subset(allocratios, versus == "Mixed")
 ### Statistical test with lmerTest ###
 # allocation_ratio.full = lmer(logallocratio ~ versus * N_level + (1|Batch), 
 #                 data = allocratios)
 
 # Boundary(singular) fit... but may not be wrong.
 
-allocation_ratio.full = lmer(logallocratio ~ versus2 * N_level + (1|Batch), 
+allocation_ratio.full = lmer(logallocratio ~ versus3 * N_level + (1|Batch), 
                              data = allocratios)
 
 allocanova = anova(allocation_ratio.full)
-allocposthoc = emmeans(allocation_ratio.full, list(pairwise ~ versus2*N_level), adjust = "tukey")
+allocposthoc = emmeans(allocation_ratio.full, list(pairwise ~ versus3*N_level), adjust = "tukey")
 
 sink("stats_tables/Relative_C_allocation_anova.html")
 
@@ -184,6 +193,18 @@ t.test(allocratios$logallocratio[allocratios$versus == "Sp" & allocratios$N_leve
 # Tt high p = 0.9927
 t.test(allocratios$logallocratio[allocratios$versus == "Tt" & allocratios$N_level == "High"])
 
+# Other high p = 0.01
+t.test(allocratios$logallocratio[allocratios$versus2 == "Other" & allocratios$N_level == "High"], alternative = "greater")
+
+# Other high p = 0.12
+t.test(allocratios$logallocratio[allocratios$versus3 == "Other" & allocratios$N_level == "High"], alternative = "greater")
+
+# Does it work if I take out the vs mixed samples, since they're often mostly Tt?
+nomixed = subset(allocratios, versus != "Mixed")
+
+t.test(nomixed$logallocratio[nomixed$versus3 == "Other" & nomixed$N_level == "High"], alternative = "greater")
+# Nah, it's only a significant result if I lump the none and Sp competitors.
+t.test(nomixed$logallocratio[nomixed$versus3 == "None" & nomixed$N_level == "High"], alternative = "greater")
 
 #### OLD AND IRRELEVANT FROM HERE ON. ####
 

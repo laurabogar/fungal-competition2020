@@ -117,6 +117,9 @@ myplot = ggplot(data = allocratios) +
   ylab("Log C allocation ratio to Tt") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Competitor") +
+  scale_x_discrete(labels = c("None" = "None", 
+                              "Sp" = "Other",
+                              "Tt" = "Self"))+
   geom_text(data = annotations, aes(x, y, label = labs))
 
 save_plot("plots/Relative_C_allocation_to_Tt.pdf", 

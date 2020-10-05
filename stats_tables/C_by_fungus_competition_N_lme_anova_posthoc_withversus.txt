@@ -1,0 +1,91 @@
+$`emmeans of compartment_fungus, N_level, versus3`
+ compartment_fungus N_level versus3 emmean    SE   df lower.CL upper.CL
+ Sp                 High    None      6.39 0.685 67.2     4.36     8.42
+ Tt                 High    None      5.45 0.279 55.4     4.62     6.28
+ Sp                 Low     None      4.94 0.314 65.5     4.01     5.87
+ Tt                 Low     None      4.00 0.294 61.6     3.12     4.87
+ Sp                 High    Other     5.12 0.342 52.7     4.10     6.14
+ Tt                 High    Other     5.31 0.200 23.5     4.68     5.94
+ Sp                 Low     Other     5.03 0.315 65.6     4.10     5.97
+ Tt                 Low     Other     4.06 0.210 32.6     3.42     4.71
+ Sp                 High    Self      5.72 0.447 47.3     4.38     7.06
+ Tt                 High    Self      5.94 0.342 52.7     4.92     6.96
+ Sp                 Low     Self      4.90 0.242 43.0     4.17     5.63
+ Tt                 Low     Self      4.03 0.315 65.6     3.10     4.97
+
+Degrees-of-freedom method: satterthwaite 
+Confidence level used: 0.95 
+Conf-level adjustment: sidak method for 12 estimates 
+
+$`pairwise differences of compartment_fungus, N_level, versus3`
+ contrast                      estimate    SE   df t.ratio p.value
+ Sp High None - Tt High None     0.9426 0.706 61.4  1.336  0.9708 
+ Sp High None - Sp Low None      1.4471 0.754 68.0  1.920  0.7426 
+ Sp High None - Tt Low None      2.3940 0.745 68.0  3.212  0.0784 
+ Sp High None - Sp High Other    1.2664 0.736 62.8  1.721  0.8517 
+ Sp High None - Tt High Other    1.0817 0.706 65.2  1.533  0.9256 
+ Sp High None - Sp Low Other     1.3569 0.754 68.0  1.800  0.8120 
+ Sp High None - Tt Low Other     2.3274 0.716 66.9  3.249  0.0717 
+ Sp High None - Sp High Self     0.6722 0.768 51.2  0.875  0.9991 
+ Sp High None - Tt High Self     0.4508 0.736 62.8  0.613  1.0000 
+ Sp High None - Sp Low Self      1.4933 0.726 66.3  2.056  0.6547 
+ Sp High None - Tt Low Self      2.3565 0.754 68.0  3.127  0.0971 
+ Tt High None - Sp Low None      0.5045 0.420 61.6  1.200  0.9870 
+ Tt High None - Tt Low None      1.4514 0.405 58.8  3.582  0.0307 
+ Tt High None - Sp High Other    0.3238 0.412 66.6  0.786  0.9997 
+ Tt High None - Tt High Other    0.1391 0.307 60.0  0.453  1.0000 
+ Tt High None - Sp Low Other     0.4143 0.420 61.6  0.985  0.9975 
+ Tt High None - Tt Low Other     1.3848 0.349 45.8  3.966  0.0121 
+ Tt High None - Sp High Self    -0.2704 0.487 44.9 -0.555  1.0000 
+ Tt High None - Tt High Self    -0.4918 0.412 66.6 -1.194  0.9877 
+ Tt High None - Sp Low Self      0.5507 0.369 49.7  1.491  0.9363 
+ Tt High None - Tt Low Self      1.4140 0.420 61.6  3.363  0.0547 
+ Sp Low None - Tt Low None       0.9469 0.390 56.9  2.427  0.4055 
+ Sp Low None - Sp High Other    -0.1807 0.464 59.2 -0.389  1.0000 
+ Sp Low None - Tt High Other    -0.3654 0.372 51.1 -0.981  0.9975 
+ Sp Low None - Sp Low Other     -0.0902 0.417 60.7 -0.216  1.0000 
+ Sp Low None - Tt Low Other      0.8803 0.339 53.5  2.597  0.3069 
+ Sp Low None - Sp High Self     -0.7750 0.547 53.4 -1.418  0.9547 
+ Sp Low None - Tt High Self     -0.9963 0.464 59.2 -2.146  0.5932 
+ Sp Low None - Sp Low Self       0.0462 0.362 53.1  0.127  1.0000 
+ Sp Low None - Tt Low Self       0.9094 0.417 60.7  2.178  0.5708 
+ Tt Low None - Sp High Other    -1.1276 0.451 56.6 -2.503  0.3594 
+ Tt Low None - Tt High Other    -1.3123 0.355 46.4 -3.695  0.0255 
+ Tt Low None - Sp Low Other     -1.0371 0.395 59.1 -2.624  0.2904 
+ Tt Low None - Tt Low Other     -0.0666 0.323 54.9 -0.206  1.0000 
+ Tt Low None - Sp High Self     -1.7218 0.535 52.6 -3.219  0.0828 
+ Tt Low None - Tt High Self     -1.9432 0.451 56.6 -4.313  0.0035 
+ Tt Low None - Sp Low Self      -0.9007 0.341 52.2 -2.639  0.2857 
+ Tt Low None - Tt Low Self      -0.0375 0.395 59.1 -0.095  1.0000 
+ Sp High Other - Tt High Other  -0.1847 0.372 60.4 -0.496  1.0000 
+ Sp High Other - Sp Low Other    0.0905 0.464 59.2  0.195  1.0000 
+ Sp High Other - Tt Low Other    1.0610 0.401 46.3  2.647  0.2849 
+ Sp High Other - Sp High Self   -0.5943 0.523 47.7 -1.137  0.9912 
+ Sp High Other - Tt High Self   -0.8156 0.253 37.8 -3.224  0.0912 
+ Sp High Other - Sp Low Self     0.2269 0.419 49.4  0.542  1.0000 
+ Sp High Other - Tt Low Self     1.0901 0.464 59.2  2.348  0.4562 
+ Tt High Other - Sp Low Other    0.2752 0.372 51.2  0.739  0.9998 
+ Tt High Other - Tt Low Other    1.2457 0.290 27.9  4.301  0.0084 
+ Tt High Other - Sp High Self   -0.4095 0.474 46.3 -0.865  0.9992 
+ Tt High Other - Tt High Self   -0.6309 0.372 60.4 -1.695  0.8635 
+ Tt High Other - Sp Low Self     0.4116 0.314 34.2  1.312  0.9718 
+ Tt High Other - Tt Low Self     1.2748 0.372 51.2  3.423  0.0501 
+ Sp Low Other - Tt Low Other     0.9705 0.339 53.9  2.861  0.1848 
+ Sp Low Other - Sp High Self    -0.6848 0.547 53.4 -1.253  0.9815 
+ Sp Low Other - Tt High Self    -0.9061 0.464 59.2 -1.952  0.7226 
+ Sp Low Other - Sp Low Self      0.1364 0.356 50.9  0.384  1.0000 
+ Sp Low Other - Tt Low Self      0.9996 0.253 37.8  3.951  0.0148 
+ Tt Low Other - Sp High Self    -1.6552 0.494 47.6 -3.352  0.0618 
+ Tt Low Other - Tt High Self    -1.8766 0.401 46.3 -4.681  0.0014 
+ Tt Low Other - Sp Low Self     -0.8341 0.274 42.0 -3.046  0.1310 
+ Tt Low Other - Tt Low Self      0.0291 0.339 53.9  0.086  1.0000 
+ Sp High Self - Tt High Self    -0.2214 0.523 47.7 -0.424  1.0000 
+ Sp High Self - Sp Low Self      0.8211 0.508 48.1  1.615  0.8950 
+ Sp High Self - Tt Low Self      1.6844 0.547 53.4  3.081  0.1141 
+ Tt High Self - Sp Low Self      1.0425 0.419 49.4  2.490  0.3698 
+ Tt High Self - Tt Low Self      1.9058 0.464 59.2  4.104  0.0065 
+ Sp Low Self - Tt Low Self       0.8632 0.356 50.9  2.428  0.4072 
+
+Degrees-of-freedom method: satterthwaite 
+P value adjustment: tukey method for comparing a family of 12 estimates 
+

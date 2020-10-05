@@ -34,12 +34,13 @@ nonm$versus3 = nonm$versus
 for (i in 1:nrow(nonm)) {
   if (nonm$versus[i] == "Mixed") {
     nonm$versus2[i] = "Other"
-  } else if ((nonm$versus[i] == "Tt" & nonm$compartment_fungus == "Tt")|
-        (nonm$versus[i] == "Sp" & nonm$compartment_fungus == "Sp")) {
+    nonm$versus3[i] = "Other"
+  } else if ((nonm$versus[i] == "Tt" & nonm$mycofungus[i] == "Tt")|
+        (nonm$versus[i] == "Sp" & nonm$mycofungus[i] == "Sp")) {
           nonm$versus2[i] = "Self"
           nonm$versus3[i] = "Self"
-  } else if ((nonm$versus[i] == "Tt" & nonm$compartment_fungus == "Sp")|
-             (nonm$versus[i] == "Sp" & nonm$compartment_fungus == "Tt")) {
+  } else if ((nonm$versus[i] == "Tt" & nonm$mycofungus[i] == "Sp")|
+             (nonm$versus[i] == "Sp" & nonm$mycofungus[i] == "Tt")) {
     nonm$versus2[i] = "Other"
     nonm$versus3[i] = "Other"
   } else if (nonm$versus[i] == "None") {
@@ -48,6 +49,8 @@ for (i in 1:nrow(nonm)) {
     
   }
 }
+
+write_csv(nonm, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_betterversus.csv")
 
 # Should I exclude microcosms with mixed cultures?
 
@@ -104,8 +107,18 @@ stargazer(anovaresults, type = "html",
 sink()
 
 Cbyfungusposthoc = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
+
 Cbyfungusposthoc_withversus = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level*versus3), adjust = "tukey")
 
+sink("stats_tables/C_by_fungus_competition_N_lme_anova_posthoc_withversus.txt")
+
+Cbyfungusposthoc_withversus
+sink()
+
+sink("stats_tables/C_by_fungus_competition_N_lme_anova_posthoc.txt")
+
+Cbyfungusposthoc
+sink()
 
 # sink("stats_tables/C_by_fungus_competition_N_lme_results_noanova.html")
 # 

@@ -16,7 +16,9 @@ library(stargazer)
 
 # Loading required data
 # forN = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withmixed.csv")
-forN = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+# forN = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+forN = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_betterversus.csv")
+
 
 forN = subset(forN, received15N == "Y")
 forN$mycoCforN = forN$mycoC13ppmexcess/forN$mycoN15ppmexcess
@@ -29,8 +31,14 @@ justmycos = subset(justmycos, mycofungus != "None")
 justmycos$mycofungus = factor(justmycos$mycofungus, levels = c("Sp", "Tt"))
 justmycos$compartment_fungus = as.factor(justmycos$compartment_fungus)
 
-CforN = lmer(logmycoCforN ~ mycofungus * N_level + (1|Batch/Plant),
-             data = justmycos)
+justmycos_nomixed = justmycos[-grep("MIXED", justmycos$competitors),]
+
+# No competition
+# CforN = lmer(logmycoCforN ~ mycofungus * N_level + (1|Batch/Plant),
+#              data = justmycos)
+
+CforN = lmer(logmycoCforN ~ mycofungus * N_level + (1|Batch),
+             data = justmycos_nomixed)
 
 summary(CforN)
 
@@ -55,52 +63,235 @@ CforNposthoc
 
 sink()
 
-tx = with(justmycos, interaction(mycofungus, N_level))
-forlabels = aov(logmycoCforN~tx, data = justmycos)
-mylabels = HSD.test(forlabels, "tx", group = TRUE)
+# WITH competition
+# CforN = lmer(logmycoCforN ~ mycofungus * N_level * versus3 + (1|Batch/Plant),
+#              data = justmycos)
+
+CforN = lmer(logmycoCforN ~ mycofungus * N_level * versus3 + (1|Batch),
+             data = justmycos_nomixed)
+
+summary(CforN)
+
+CforN.anova = anova(CforN)
+
+CforNposthoc = emmeans(CforN, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+
+sink("stats_tables/CforN_exchangerates_anova.html")
+
+stargazer(CforN.anova, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/CforN_exchangerates_anova_posthoc.txt")
+
+CforNposthoc
+
+sink()
+
+# tx = with(justmycos, interaction(mycofungus, N_level))
+# forlabels = aov(logmycoCforN~tx, data = justmycos)
+# mylabels = HSD.test(forlabels, "tx", group = TRUE)
 # These match my lme posthoc results above.
 
 ### Plot exchange rates (plant C to fungal N) in mycorrhizas ###
 labels = c(High = "High N", Low = "Low N")
 annotations = data.frame(x = c((1:2), (1:2)),
-                         y = c(4, 3, 3, 3),
+                         y = c(4.3, 4, 3.3, 3.3),
                          N_level = c(rep("High", 2), rep("Low", 2)),
-                         labs = c(paste(c("a", "b")), paste(c("b", "b"))))
+                         labs = c(paste(c("a", "b")), paste(c("b", "b"))),
+                         x1 = c(0.6, 1.6, 0.6, 1.6), 
+                         x2 = c(1.4, 2.4, 1.4, 2.4), 
+                         y1 = c(4, 3.7, 3, 3), 
+                         y2 = c(4, 3.7, 3, 3))
 
 
-exchangerate_plot = ggplot(data = justmycos) +
+exchangerate_plot = ggplot(data = justmycos_nomixed) +
   geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
                aes(x = mycofungus, 
-                   y = logmycoCforN)) +
-  geom_jitter(aes(x = mycofungus, 
-                  y = logmycoCforN),
-                  width = 0.25) +
+                   y = logmycoCforN,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+             aes(x = mycofungus, 
+                 y = logmycoCforN,
+                 fill = versus3)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas)") +
-  # theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor") +
+  geom_segment(data = annotations, aes(x = x1, xend = x2,
+                                     y = y1, yend = y2),
+               colour = "black") +
   geom_text(data = annotations, aes(x, y, label = labs))
 
-test = plot_grid(exchangerate_plot,
-                 labels = c("A"))
 
-save_plot("plots/CforN_exchangerates.pdf", 
+save_plot("plots/CforN_exchangerates_withcomp.pdf", 
           exchangerate_plot,
           ncol = 1,
           base_aspect_ratio = 1.8)
 
-save_plot("plots/CforN_exchangerates.jpeg", 
-          exchangerate_plot,
-          ncol = 1,
-          base_aspect_ratio = 1.8)
 
 #### Building three panel plot ####
-together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_betterversus.csv")
 nonm = together[!is.na(together$mycorrhizas.APE13C),]
 nonm = subset(nonm, compartment_fungus != "None")
 excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
 
+# nonm$versus2 = nonm$versus
+# nonm$versus3 = nonm$versus
+# for (i in 1:nrow(nonm)) {
+#   if ((nonm$versus[i] == "Mixed")|
+#       (nonm$compartment_fungus[i] == "MIXED")) {
+#     nonm$versus2[i] = "Other"
+#     nonm$versus3[i] = "Other"
+#   } else if ((nonm$versus[i] == "Tt" & nonm$compartment_fungus[i] == "Tt")|
+#              (nonm$versus[i] == "Sp" & nonm$compartment_fungus[i] == "Sp")) {
+#     nonm$versus2[i] = "Self"
+#     nonm$versus3[i] = "Self"
+#   } else if ((nonm$versus[i] == "Tt" & nonm$compartment_fungus[i] == "Sp")|
+#              (nonm$versus[i] == "Sp" & nonm$compartment_fungus[i] == "Tt")) {
+#     nonm$versus2[i] = "Other"
+#     nonm$versus3[i] = "Other"
+#   } else if (nonm$versus[i] == "None") {
+#     nonm$versus2[i] = "Other"
+#     nonm$versus3[i] = "None"
+#     
+#   }
+# }
+# excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
+# 
+# ndata = subset(nonm, received15N == "Y")
+# ndata = subset(ndata, compartment_fungus != "None")
+# justmycos = subset(ndata, mycofungus != "None")
+
 labels = c(High = "High N", Low = "Low N")
+
+### Carbon plot ####
+annotations = data.frame(x = c((1:2), (1:2)),
+                         y = c(7.3, 7.8, 7.1, 6.3),
+                         N_level = c(rep("High", 2), rep("Low", 2)),
+                         labs = c(paste(c("a", "a")), paste(c("a", "b"))),
+                         x1 = c(0.6, 1.6, 0.6, 1.6), 
+                         x2 = c(1.4, 2.4, 1.4, 2.4), 
+                         y1 = c(7, 7.5, 6.8, 6))
+
+carboncomparison_withcompetition = ggplot(data = excluding_mixed) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = compartment_fungus, 
+                   y = mycologC13,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+             aes(x = compartment_fungus, 
+                 y = mycologC13,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs))
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  geom_segment(data = annotations, aes(x = x1, xend = x2,
+                                   y = y1, yend = y1),
+               colour = "black") +
+  geom_text(data = annotations, aes(x, y, label = labs)) +
+  labs(fill = "Competitor")
+
+
+### Nitrogen plot ####
+collabels = data.frame(N_level = c("High", "High", "Low", "Low"),
+                       x1 = c(0.6, 1.6, 0.6, 1.6), 
+                       x2 = c(1.4, 2.4, 1.4, 2.4), 
+                       y1 = c(4, 6.5, 5.6, 4), 
+                       y2 = c(4, 6.5, 5.6, 4),
+                       xstar = c(1, 2, 1, 2), ystar = c(4.3, 6.8, 5.9, 4.3),
+                       lab = c("ab", "b", "ab", "a"))
+
+margsig = data.frame(N_level = "High",
+                     x1 = 1,
+                     x2 = 2,
+                     xstar = 1.5,
+                     y1 = 7.2,
+                     y2 = 7.2,
+                     ystar = 7.9,
+                     lab = ".")
+
+labels = c(High = "High N", Low = "Low N")
+nitrogencomparison_mycos_withcomp = ggplot(data = justmycos_nomixed) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = mycologN15,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+             aes(x = mycofungus, 
+                 y = mycologN15,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Labeled N in mycorrhizas\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor") +
+  geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
+  geom_segment(data = collabels, aes(x = x1, xend = x2,
+                                     y = y1, yend = y2),
+               colour = "black") +
+  geom_text(data = margsig, size = 10, aes(x = xstar,  y = ystar, label = lab)) +
+  geom_segment(data = margsig, aes(x = x1, xend = x2,
+                                   y = y1, yend = y2),
+               colour = "black")
+
+carboncomparison_withcompetition_nolegend = carboncomparison_withcompetition +
+  theme(legend.position = "none")
+
+nitrogencomparison_mycos_withcomp_nolegend = nitrogencomparison_mycos_withcomp +
+  theme(legend.position = "none")
+
+exchangerate_plot_legendbelow = exchangerate_plot +
+  theme(legend.position = "bottom")
+
+threepanels_horiz = plot_grid(carboncomparison_withcompetition_nolegend, 
+                        nitrogencomparison_mycos_withcomp_nolegend,
+                        exchangerate_plot,
+                        labels = c("A", "B", "C"),
+                        align = "h",
+                        # nrow = 1,
+                        ncol = 3,
+                        rel_widths = c(1, 1, 1.6))
+
+
+save_plot("plots/horizontal_three_panel_plot_CC_NN_CN_withcompetition.pdf", 
+          threepanels)
+
+threepanels_vertical = plot_grid(carboncomparison_withcompetition_nolegend, 
+                              nitrogencomparison_mycos_withcomp_nolegend,
+                              exchangerate_plot_legendbelow,
+                              labels = c("A", "B", "C"),
+                              align = "v",
+                              nrow = 3,
+                              ncol = 1,
+                              rel_heights = c(1, 1, 1.2))
+
+
+
+save_plot("plots/vertical_three_panel_plot_CC_NN_CN_withcompetition_test.pdf", 
+          threepanels_vertical,
+          base_height = 10,
+          base_aspect_ratio = .5)
+
+#### OLD STUFF ####
 
 annotations = data.frame(x = c((1:2), (1:2)),
                          y = c(7.2, 7.2, 7.2, 6),
