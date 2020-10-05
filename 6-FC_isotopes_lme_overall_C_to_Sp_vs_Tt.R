@@ -15,10 +15,11 @@
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Libraries needed:
-library(cowplot)
 library(tidyverse)
+library(cowplot)
 library(lme4)
 library(lmerTest)
+library(emmeans)
 library(stargazer)
 
 # Data:
@@ -28,6 +29,26 @@ together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_c
 
 nonm = together[!is.na(together$mycorrhizas.APE13C),]
 nonm = subset(nonm, compartment_fungus != "None")
+nonm$versus2 = nonm$versus
+nonm$versus3 = nonm$versus
+for (i in 1:nrow(nonm)) {
+  if (nonm$versus[i] == "Mixed") {
+    nonm$versus2[i] = "Other"
+  } else if ((nonm$versus[i] == "Tt" & nonm$compartment_fungus == "Tt")|
+        (nonm$versus[i] == "Sp" & nonm$compartment_fungus == "Sp")) {
+          nonm$versus2[i] = "Self"
+          nonm$versus3[i] = "Self"
+  } else if ((nonm$versus[i] == "Tt" & nonm$compartment_fungus == "Sp")|
+             (nonm$versus[i] == "Sp" & nonm$compartment_fungus == "Tt")) {
+    nonm$versus2[i] = "Other"
+    nonm$versus3[i] = "Other"
+  } else if (nonm$versus[i] == "None") {
+    nonm$versus2[i] = "Other"
+    nonm$versus3[i] = "None"
+    
+  }
+}
+
 # Should I exclude microcosms with mixed cultures?
 
 excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
@@ -59,9 +80,11 @@ excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
 # *Interaction between competitor identity and N level MIGHT be significant
 # * Three way interaction between fungus and competitor and N level MIGHT be significant.
 
+# c13.full = lmer(mycologC13 ~ mycofungus * versus2 * N_level + (1|Batch/Plant), 
+#                 data = nonm) 
 
 
-c13.full = lmer(mycologC13 ~ compartment_fungus * versus * N_level + (1|Batch/Plant), 
+c13.full = lmer(mycologC13 ~ compartment_fungus * versus3 * N_level + (1|Batch/Plant),
                 data = excluding_mixed) # I don't have any random effects here that I don't think I need
 
 summary(c13.full)
@@ -81,6 +104,7 @@ stargazer(anovaresults, type = "html",
 sink()
 
 Cbyfungusposthoc = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
+Cbyfungusposthoc_withversus = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level*versus3), adjust = "tukey")
 
 
 # sink("stats_tables/C_by_fungus_competition_N_lme_results_noanova.html")
@@ -133,6 +157,49 @@ save_plot("plots/Sp_gets_more_C_than_Tt_in_low_N.jpeg",
           carboncomparison,
           base_aspect_ratio = 1.4)
 
+carboncomparison_withcompetition = ggplot(data = excluding_mixed) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = compartment_fungus, 
+                   y = mycologC13,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+              aes(x = compartment_fungus, 
+                  y = mycologC13,
+                  fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs))
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
+  
+
+save_plot("plots/Sp_gets_more_C_than_Tt_in_low_N.pdf",
+          carboncomparison,
+          base_aspect_ratio = 1.4)
+
+
+
+carboncomparison_includingmixed = ggplot(data = nonm) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = mycofungus, y = mycologC13)) +
+  geom_jitter(width = 0.20,
+              aes(x = mycofungus, 
+                  y = mycologC13)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  geom_text(data = annotations, aes(x, y, label = labs))
+
+
+save_plot("plots/Sp_gets_more_C_than_Tt_in_low_N.pdf",
+          carboncomparison,
+          base_aspect_ratio = 1.4)
 #### EXTRA ANALYSES NOT PRESENTED IN MAIN TEXT FOLLOW ####
 # How well does 13C in mycos correspond to 13C in adjacent fine roots?
 
