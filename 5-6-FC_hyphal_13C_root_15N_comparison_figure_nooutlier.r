@@ -1,12 +1,16 @@
 #5-6-FC_hyphal_13C_root_15N_comparison_figure_nooutlier.r
 
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(cowplot)
 library(tidyverse)
+library(stargazer)
 
 carboninfo = read_csv("processeddata/data_for_carbon_only_analyses.csv")
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
+
+nitrogeninfo$hyphae.ppm13Cexcess =  nitrogeninfo$hyphae.APE13C*10^4
+
 
 nitrogeninfo_nooutlier = subset(nitrogeninfo, Plant != 6041)
 carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b
@@ -96,6 +100,59 @@ save_plot("plots/Multipanel_regressions_myco_N_and_C_NOOUTLIER.jpeg",
 save_plot("plots/Multipanel_regressions_myco_N_and_C_NOOUTLIER.pdf",
           threepanels,
           base_aspect_ratio = 3.6)
+
+## Adding fourth panel? ####
+data_for_hypharootplot = nitrogeninfo_nooutlier %>% drop_na(hyphae.ppm13Cexcess)
+# I have literally one Suillus compartment in here.
+# Can't analyze effect of fungus, so best to exclude it.
+
+# data_for_hypharootplot = subset(data_for_hypharootplot, compartment_fungus != "Sp")
+
+
+hyphaCforrootN = ggplot(data = data_for_hypharootplot) +
+  geom_point(aes(y = log(hyphae.ppm13Cexcess),
+                 x = nmlogN15, 
+                 color = N_level,
+                 shape = compartment_fungus)) +
+  geom_smooth(method = "lm", 
+              formula = y ~ x, 
+              aes(y = log(hyphae.ppm13Cexcess),
+                  x = nmlogN15),
+              color = "black",
+              size = 0.5) +
+  ylab(bquote(atop("Hyphal "^13*"C", "(ln ppm excess)"))) +
+  xlab(bquote(atop("Root "^15*"N (ln ppm excess)"))) +
+  scale_color_manual(values = c("steelblue4", "steelblue1"),
+                     name = "N level") +
+  scale_shape_manual(values = c(17, 15),
+                     name = "Fungus") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+
+model_hyphaerootCforN_nooutlier = lm(log(hyphae.ppm13Cexcess) ~ nmlogN15*N_level, data = data_for_hypharootplot)
+summary(model_hyphaerootCforN_nooutlier)
+plot(model_hyphaerootCforN_nooutlier)
+
+model_hyphaerootCforN = lm(log(hyphae.ppm13Cexcess) ~ nmlogN15*N_level, data = nitrogeninfo)
+summary(model_hyphaerootCforN) # Literally the same
+# as the outlier removed version. I think the outlier
+# didn't have hyphal C and root N data together.
+
+mytest = lm(log(hyphae.ppm13Cexcess) ~ nmlogN15, data = data_for_hypharootplot)
+summary(mytest) # definitely worse to exclude N level here.
+
+anothermodel = lm(mycologC13 ~ mycologN15*N_level*compartment_fungus, data = nitrogeninfo_nooutlier)
+summary(anothermodel)
+
+sink("stats_tables/hyphae13C_vs_root_15N_lm_loglogresults.html")
+
+stargazer(model_hyphaerootCforN_nooutlier, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.058,0.035, 0.01, 0.001),
+          digit.separator = "",
+          summary = TRUE,
+          report = 'vc*s*p')
+
+sink()
 
 # CforNlm_nooutlier = lm((mycoC13ppmexcess) ~ mycoN15ppmexcess, data = nitrogeninfo_nooutlier)
 # plot(CforNlm_nooutlier)
