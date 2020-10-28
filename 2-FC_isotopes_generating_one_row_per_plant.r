@@ -5,6 +5,13 @@ setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 require(tidyverse)
 require(cowplot)
+library(naniar)
+
+# This function was important for data wrangling 10/28/2020:
+# Got it here: https://stackoverflow.com/questions/18142117/how-to-replace-nan-value-with-zero-in-a-huge-data-frame/18143097
+
+is.nan.data.frame <- function(x)
+  do.call(cbind, lapply(x, is.nan))
 
 # isotopes = read_csv("Cleaned_processed_FC_isotope_data.csv")
 isotopes = read_csv("processeddata/Cleaned_processed_FC_isotope_data_July.csv")
@@ -70,8 +77,27 @@ onerowperplant$mycofungus[onerowperplant$mycofungus == "MIXED"] = "NM"
 # write_csv(onerowperplant, "minimally_processed_isotope_data.csv")
 write_csv(onerowperplant, "processeddata/minimally_processed_isotope_data_July.csv")
 
-carbon = select(onerowperplant, Plant, Side, tissue, mycofungus, APE13C)
-carbonspread = carbon %>% spread(tissue, APE13C)
+carbon = select(onerowperplant, Plant, Side, tissue, mycofungus, APE13C, pctC)
+carbonspread_13C = carbon %>% spread(tissue, APE13C)
+carbonspread_pctC = carbon %>% spread(tissue, pctC)
+carbonfor13C = select(carbonspread_13C, Plant, Side, 
+                      mycofungus, 
+                      hyphae.APE13C = hyphae,
+                      mycorrhizas.APE13C = mycorrhizas,
+                      uncolonized_roots.APE13C = uncolonized_roots)
+
+carbontomerge = select(carbonspread_pctC,
+                       Plant, Side, mycofungus,
+                       hyphae.pctC = hyphae,
+                       mycorrhizas.pctC = mycorrhizas,
+                       uncolonized_roots.pctC = uncolonized_roots)
+
+carbonspread = left_join((carbonfor13C %>% group_by(Plant, Side, mycofungus) %>%
+                    mutate(id = row_number())), carbontomerge %>% 
+                    group_by(Plant, Side, mycofungus) %>%
+                    mutate(id = row_number()))
+
+
 # carbonspread$compid = paste(carbonspread$Plant, carbonspread$Side)
 # for (i in 1:nrow(carbonspread)) {
 #   if (carbonspread$mycofungus[i] == "MIXED") {
@@ -81,22 +107,62 @@ carbonspread = carbon %>% spread(tissue, APE13C)
 
 carbonincludingmixed = carbonspread
 
+carbon_onerow = carbonspread %>% group_by(Plant, Side, mycofungus) %>% 
+  summarize(hyphae.APE13C = mean(hyphae.APE13C, na.rm = TRUE),
+            mycorrhizas.APE13C = mean(mycorrhizas.APE13C, na.rm = TRUE),
+            uncolonized_roots.APE13C = mean(uncolonized_roots.APE13C, na.rm = TRUE),
+            hyphae.pctC = mean(hyphae.pctC, na.rm = TRUE),
+            mycorrhizas.pctC = mean(mycorrhizas.pctC, na.rm = TRUE),
+            uncolonized_roots.pctC = mean(uncolonized_roots.pctC, na.rm = TRUE))
+
+carbon_onerow[is.nan.data.frame(carbon_onerow)] <- NA
+
 # carbonspread = subset(carbonspread, mycofungus != "MIXED")
 
-carbonfinal = select(carbonspread, Plant, Side,
-                     hyphae.APE13C = hyphae,
-                     mycorrhizas.APE13C = mycorrhizas,
-                     uncolonized_roots.APE13C = uncolonized_roots,
-                     mycofungus)
+# carbonfinal = select(carbonspread, Plant, Side,
+#                      hyphae.APE13C = hyphae,
+#                      mycorrhizas.APE13C = mycorrhizas,
+#                      uncolonized_roots.APE13C = uncolonized_roots,
+#                      mycofungus)
+# 
+# carbonfinal_includingmixed = select(carbonincludingmixed, Plant, Side,
+#                      hyphae.APE13C = hyphae,
+#                      mycorrhizas.APE13C = mycorrhizas,
+#                      uncolonized_roots.APE13C = uncolonized_roots,
+#                      mycofungus)
 
-carbonfinal_includingmixed = select(carbonincludingmixed, Plant, Side,
-                     hyphae.APE13C = hyphae,
-                     mycorrhizas.APE13C = mycorrhizas,
-                     uncolonized_roots.APE13C = uncolonized_roots,
-                     mycofungus)
+nitrogen = select(onerowperplant, Plant, Side, tissue, mycofungus, APE15N, pctN)
 
-nitrogen = select(onerowperplant, Plant, Side, tissue, mycofungus, APE15N)
-nitrospread = nitrogen %>% spread(tissue, APE15N)
+nitrospread_15N = nitrogen %>% spread(tissue, APE15N)
+nitrospread_pctN = nitrogen %>% spread(tissue, pctN)
+
+nitro_15N_tomerge = select(nitrospread_15N, Plant, Side, 
+                      mycofungus, 
+                      hyphae.APE15N = hyphae,
+                      mycorrhizas.APE15N = mycorrhizas,
+                      uncolonized_roots.APE15N = uncolonized_roots)
+
+nitro_pctN_tomerge = select(nitrospread_pctN,
+                       Plant, Side, mycofungus,
+                       hyphae.pctN = hyphae,
+                       mycorrhizas.pctN = mycorrhizas,
+                       uncolonized_roots.pctN = uncolonized_roots)
+
+nitrospread = left_join((nitro_15N_tomerge %>% group_by(Plant, Side, mycofungus) %>%
+                            mutate(id = row_number())), nitro_pctN_tomerge %>% 
+                           group_by(Plant, Side, mycofungus) %>%
+                           mutate(id = row_number()))
+
+nitrogen_onerow = nitrospread %>% group_by(Plant, Side, mycofungus) %>% 
+  summarize(hyphae.APE15N = mean(hyphae.APE15N, na.rm = TRUE),
+            mycorrhizas.APE15N = mean(mycorrhizas.APE15N, na.rm = TRUE),
+            uncolonized_roots.APE15N = mean(uncolonized_roots.APE15N, na.rm = TRUE),
+            hyphae.pctN = mean(hyphae.pctN, na.rm = TRUE),
+            mycorrhizas.pctN = mean(mycorrhizas.pctN, na.rm = TRUE),
+            uncolonized_roots.pctN = mean(uncolonized_roots.pctN, na.rm = TRUE))
+
+nitrogen_onerow[is.nan.data.frame(nitrogen_onerow)] <- NA
+# nitrospread = nitrogen %>% spread(tissue, APE15N)
 # nitrospread$compid = paste(nitrospread$Plant, nitrospread$Side)
 
 # for (i in 1:nrow(nitrospread)) {
@@ -108,16 +174,35 @@ nitrospread = nitrogen %>% spread(tissue, APE15N)
 nitrospreadincludingmixed = nitrospread
 # nitrospread = subset(nitrospread, mycofungus != "MIXED")
 
-nitrofinal = select(nitrospread, Plant, Side, hyphae.APE15N = hyphae,
-                    mycorrhizas.APE15N = mycorrhizas,
-                    uncolonized_roots.APE15N = uncolonized_roots,
-                    mycofungus)
+# nitrofinal = select(nitrospread, Plant, Side, hyphae.APE15N = hyphae,
+#                     mycorrhizas.APE15N = mycorrhizas,
+#                     uncolonized_roots.APE15N = uncolonized_roots,
+#                     mycofungus)
+# 
+# nitrofinal_includingmixed = select(nitrospreadincludingmixed, Plant, Side, hyphae.APE15N = hyphae,
+#                     mycorrhizas.APE15N = mycorrhizas,
+#                     uncolonized_roots.APE15N = uncolonized_roots,
+#                     mycofungus)
 
-nitrofinal_includingmixed = select(nitrospreadincludingmixed, Plant, Side, hyphae.APE15N = hyphae,
-                    mycorrhizas.APE15N = mycorrhizas,
-                    uncolonized_roots.APE15N = uncolonized_roots,
-                    mycofungus)
+# nandc = full_join(carbonspread, nitrospread)
+nandc = full_join(carbon_onerow, nitrogen_onerow)
 
+
+onerow = select(onerowperplant, everything(), -APE13C, -APE15N, -pctC, -pctN, -tissue, -CNratio)
+everything = left_join(nandc %>% group_by(Plant, Side, mycofungus) %>% 
+                   mutate(id = row_number()), 
+                 onerow %>% group_by(Plant, Side, mycofungus) %>% 
+                   mutate(id = row_number()))
+everything = select(everything, everything(), -id)
+
+write_csv(everything, "processeddata/isotopes_two_rows_per_plant_updated_with_pctCN.csv")
+
+
+# Old version 10/28/2020:
+   everything = left_join(nandc, onerow)
+   shouldbeunique = paste(everything$Plant, everything$Side, everything$mycofungus)
+   sum(duplicated(shouldbeunique))
+   everything = everything[!duplicated(shouldbeunique),]
 nandc = full_join(carbonfinal, nitrofinal)
 nandc_includingmixed = full_join(carbonfinal_includingmixed, nitrofinal_includingmixed)
 

@@ -5,12 +5,17 @@
 library(cowplot)
 library(tidyverse)
 library(stargazer)
+library(lme4)
+library(lmerTest)
+library(emmeans)
 library(ggiraphExtra) # required for ggpredict() visualization.
 
 carboninfo = read_csv("processeddata/data_for_carbon_only_analyses.csv")
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 
+carboninfo$hyphalog13C = log(carboninfo$hyphae.ppm13Cexcess)
 nitrogeninfo$hyphae.ppm13Cexcess =  nitrogeninfo$hyphae.APE13C*10^4
+nitrogeninfo$hyphae.ppm15Nexcess =  nitrogeninfo$hyphae.APE15N*10^4
 
 
 nitrogeninfo_nooutlier = subset(nitrogeninfo, Plant != 6041)
@@ -39,6 +44,34 @@ hyphalCformycoC_plot_nooutlier = ggplot(data = carboninfo_nooutlier) +
 
 hyphalCformycoC_plot_nolegend = hyphalCformycoC_plot_nooutlier +
   theme(legend.position = "none")
+
+hyphaCmycoC_model = lm(hyphalog13C ~ mycologC13*compartment_fungus*N_level, data = carboninfo)
+summary(hyphaCmycoC_model)
+anova(hyphaCmycoC_model)
+ggPredict(hyphaCmycoC_model)
+
+hyphaCmycoC_justTt = lm(hyphalog13C ~ mycologC13*N_level, 
+                        data = subset(carboninfo_nooutlier, compartment_fungus == "Tt"))
+summary(hyphaCmycoC_justTt) # much clearer when you remove undersampled Sp data
+ggPredict(hyphaCmycoC_justTt)
+plot(hyphaCmycoC_justTt)
+
+hyphaCmycoC_justTt_lme = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch), 
+                        data = subset(carboninfo_nooutlier, compartment_fungus == "Tt"))
+summary(hyphaCmycoC_justTt_lme) # mycologC13 is significant
+ggPredict(hyphaCmycoC_justTt)
+plot(hyphaCmycoC_justTt)
+
+nolog = lm(hyphae.ppm13Cexcess ~ mycoC13ppmexcess*N_level, 
+           data = subset(carboninfo_nooutlier, compartment_fungus == "Tt"))
+plot(nolog)
+summary(nolog)
+ggPredict(nolog)
+
+# When I examine histograms of each data set (hyphae and mycos C13,
+# logged or not), I see long right tails on both distributions.
+# The log-transformed hyphae data look sort of uniform, while the myco
+# data look basically normal. Log transformation is probably the way to go.
 
 ### Nitrogen panel ####
 rootNformycoN_plot_nooutlier = ggplot(data = nitrogeninfo_nooutlier) +
@@ -85,6 +118,29 @@ mycoCforN = ggplot(data = nitrogeninfo_nooutlier) +
                      name = "Fungus") +
   theme(plot.margin = unit(c(1,1,1,1), "cm"))
 
+
+model_mycoCforN = lm(mycologC13 ~ mycologN15, data = nitrogeninfo_nooutlier)
+summary(model_mycoCforN)
+
+lmer_model_mycoCforN = lmer(mycologC13 ~ mycologN15*compartment_fungus*N_level + (1|Batch),
+                            data = nitrogeninfo_nooutlier)
+summary(lmer_model_mycoCforN) #NS
+anova(lmer_model_mycoCforN) # mycologN15 significant
+
+lmer_model_mycoCfornmN = lmer(mycologC13 ~ nmlogN15*compartment_fungus*N_level + (1|Batch),
+                            data = nitrogeninfo)
+summary(lmer_model_mycoCfornmN) #NS
+anova(lmer_model_mycoCfornmN) #NS
+
+onlyTt = lmer(mycologC13 ~ nmlogN15*N_level + (1|Batch),
+                              data = subset(nitrogeninfo, compartment_fungus == "Tt"))
+summary(onlyTt) #Intercept AND NM N15 AND interaction with N level very significant.
+anova(onlyTt)
+
+onlySp = lmer(mycologC13 ~ nmlogN15*N_level + (1|Batch),
+              data = subset(nitrogeninfo, compartment_fungus == "Sp"))
+summary(onlySp) #NS.
+
 threepanels = plot_grid(rootNformycoN_plot_nolegend, 
                         hyphalCformycoC_plot_nolegend,
                         mycoCforN,
@@ -104,22 +160,26 @@ save_plot("plots/Multipanel_regressions_myco_N_and_C_NOOUTLIER.pdf",
 
 ## Adding fourth panel? ####
 data_for_hypharootplot = nitrogeninfo_nooutlier %>% drop_na(hyphae.ppm13Cexcess)
+data_for_hypharootplot$hyphalogC13 = log(data_for_hypharootplot$hyphae.ppm13Cexcess)
+
+data_for_hypharootplot$hyphalogN15 = log(data_for_hypharootplot$hyphae.ppm15Nexcess+abs(min(data_for_hypharootplot$hyphae.ppm15Nexcess))+1)
 data_for_hypharootplot_justTt = subset(data_for_hypharootplot,
                                        compartment_fungus == "Tt")
+
+
 # I have literally one Suillus compartment in here.
 # Can't analyze effect of fungus, so best to exclude it.
 
 # data_for_hypharootplot = subset(data_for_hypharootplot, compartment_fungus != "Sp")
-data_for_hypharootplot$hyphalog13C = log(data_for_hypharootplot$hyphae.ppm13Cexcess)
 
 
 hyphaCforrootN = ggplot(data = data_for_hypharootplot_justTt) +
-  geom_point(aes(y = hyphalog13C,
+  geom_point(aes(y = hyphalogC13,
                  x = nmlogN15, 
                  color = N_level)) +
   geom_smooth(method = "lm", 
               formula = y ~ x, 
-              aes(y = hyphalog13C,
+              aes(y = hyphalogC13,
                   x = nmlogN15),
               color = "black",
               size = 0.5) +
@@ -131,12 +191,50 @@ hyphaCforrootN = ggplot(data = data_for_hypharootplot_justTt) +
   #                    name = "Fungus") +
   theme(plot.margin = unit(c(1,1,1,1), "cm"))
 
+lmer_model_hyphaCfornmN = lmer(hyphalogC13 ~ nmlogN15*N_level + (1|Batch),
+                            data = data_for_hypharootplot_justTt)
+anova(lmer_model_hyphaCfornmN) #NS, boo
+summary(lmer_model_hyphaCfornmN) # intercept significant
+
+lmer_model_hyphalCformycoN = lmer(hyphalogC13 ~ mycologN15*N_level + (1|Batch),
+                                data = data_for_hypharootplot_justTt)
+anova(lmer_model_hyphalCformycoN) #NS, boo
+summary(lmer_model_hyphalCformycoN) #still NS
+
+lmer_model_mycoCfornmN = lmer(mycologC13 ~ nmlogN15*N_level + (1|Batch),
+                               data = data_for_hypharootplot_justTt)
+anova(lmer_model_mycoCfornmN) #NS, boo
+summary(lmer_model_mycoCfornmN) #NM log N15 is significant, as is intercept
+
+lmer_model_mycoCformycoN = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
+                              data = data_for_hypharootplot_justTt)
+anova(lmer_model_mycoCformycoN) #NS, boo
+summary(lmer_model_mycoCformycoN) #mycologN15 is significant.
 
 
-model_hyphaerootCforN_justTt = lm(hyphalog13C ~ nmlogN15*N_level, data = data_for_hypharootplot_justTt)
-summary(model_hyphaerootCforN_nooutlier)
 
+
+
+model_hyphaerootCforN_justTt = lm(hyphalogC13 ~ nmlogN15*N_level, data = data_for_hypharootplot_justTt)
+summary(model_hyphaerootCforN_justTt)
 ggPredict(model_hyphaerootCforN_justTt)
+
+model_mycorootCforN_justTt = lm(mycologC13 ~ nmlogN15*N_level, data = data_for_hypharootplot_justTt)
+summary(model_mycorootCforN_justTt)
+ggPredict(model_mycorootCforN_justTt)
+
+model_rootrootCforN_justTt = lm(nmlogC13 ~ nmlogN15*N_level, data = data_for_hypharootplot_justTt)
+summary(model_rootrootCforN_justTt)
+ggPredict(model_rootrootCforN_justTt)
+
+model_hyphahyphaCforN_justTt = lm(hyphalogC13 ~ hyphalogN15*N_level, data = data_for_hypharootplot_justTt)
+ggPredict(model_hyphahyphaCforN_justTt)
+
+model_hyphamycoCforN_justTt = lm(hyphalogC13 ~ mycologN15*N_level, data = data_for_hypharootplot_justTt)
+ggPredict(model_hyphamycoCforN_justTt)
+
+model_mycomycoCforN_justTt = lm(mycologC13 ~ mycologN15*N_level, data = data_for_hypharootplot_justTt)
+ggPredict(model_mycomycoCforN_justTt)
 # This web page is very helpful for thinking about slope differences:
 # https://blog.minitab.com/blog/adventures-in-statistics-2/how-to-compare-regression-lines-between-different-models
 # Looking at just Tt (and I think when I include the one Sp point),
@@ -161,6 +259,7 @@ summary(mytest) # definitely worse to exclude N level here.
 fullmycomodel = lm(mycologC13 ~ mycologN15*N_level*compartment_fungus, data = nitrogeninfo_nooutlier)
 summary(fullmycomodel)
 anova(fullmycomodel)
+ggPredict(fullmycomodel)
 
 test = lm(mycologC13 ~ mycologN15, data = nitrogeninfo_nooutlier)
 summary(test)
@@ -192,6 +291,11 @@ sink()
 #### C for N changes a lot depending on N level and tissue ####
 model_justmycos = lm(mycologC13 ~ mycologN15*N_level, data = data_for_hypharootplot_justTt)
 summary(model_justmycos)
+plot(model_justmycos)
+
+model_justmycos_nolog = lm(mycoC13ppmexcess ~ mycoN15ppmexcess*N_level, data = data_for_hypharootplot_justTt)
+plot(model_justmycos_nolog)
+
 anova(model_justmycos)
 ggPredict(model_justmycos, interactive = TRUE)
 ggPredict(model_hyphaerootCforN_justTt, interactive = TRUE)
@@ -268,7 +372,7 @@ summary(fullmycomodel)
 # for Sp and Tt.
 
 # Tt 13C = -0.8718 + 2.2295 (myco15N) +
-equation1=function(x){coef(fullmycomodel)[2]*x+coef(fit1)[1]}
+# equation1=function(x){coef(fullmycomodel)[2]*x+coef(fit1)[1]}
 
 alternativemodel = lm(mycologC13 ~ mycologN15 * compartment_fungus * N_level,
                       data = nitrogeninfo)
@@ -279,9 +383,13 @@ ggPredict(alternativemodel, interactive = TRUE) # This is very cool, but I am no
 
 ggPredict(alternativemodel)
 
+
+
+
 fullmodel_rootsasN = lm(mycologC13 ~ nmlogN15 * compartment_fungus * N_level,
                         data = nitrogeninfo)
-ggPredict(fullmodel_rootsasN)
+summary(fullmodel_rootsasN)
+ggPredict(fullmodel_rootsasN, interactive = TRUE)
 
 fullmodel_flippingaxes = lm(nmlogN15 ~ mycologC13 * compartment_fungus * N_level,
                         data = nitrogeninfo)

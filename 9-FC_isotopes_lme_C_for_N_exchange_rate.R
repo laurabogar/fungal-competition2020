@@ -22,8 +22,10 @@ forN = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded
 
 forN = subset(forN, received15N == "Y")
 forN$mycoCforN = forN$mycoC13ppmexcess/forN$mycoN15ppmexcess
+forN$improvedCforN = forN$mycoC13ppmexcess/forN$nmN15ppmexcess
 # log rule: log(x/y) = log(x) - log(y)
 forN$logmycoCforN = forN$mycologC13 - forN$mycologN15
+forN$logimprovedCforN = forN$mycologC13 - forN$nmlogN15
 
 justmycos = forN[!is.na(forN$logmycoCforN),]
 justmycos = subset(justmycos, mycofungus != "None")
@@ -93,6 +95,38 @@ CforNposthoc
 
 sink()
 
+### Including root N instead of myco N ####
+
+CforN_improved = lmer(logimprovedCforN ~ mycofungus * N_level * versus3 + (1|Batch),
+             data = justmycos_nomixed)
+
+CforN_improvedlm = lm(logimprovedCforN ~ N_level * versus3 * mycofungus,
+                        data = justmycos_nomixed)
+ggPredict(CforN_improvedlm)
+
+summary(CforN_improved)
+
+CforN.anova_improved = anova(CforN_improved)
+
+CforNposthoc = emmeans(CforN_improved, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+
+sink("stats_tables/CforN_exchangerates_anova.html")
+
+stargazer(CforN.anova, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/CforN_exchangerates_anova_posthoc.txt")
+
+CforNposthoc
+
+sink()
+
 # tx = with(justmycos, interaction(mycofungus, N_level))
 # forlabels = aov(logmycoCforN~tx, data = justmycos)
 # mylabels = HSD.test(forlabels, "tx", group = TRUE)
@@ -131,6 +165,46 @@ exchangerate_plot = ggplot(data = justmycos_nomixed) +
                                      y = y1, yend = y2),
                colour = "black") +
   geom_text(data = annotations, aes(x, y, label = labs))
+
+
+save_plot("plots/CforN_exchangerates_withcomp.pdf", 
+          exchangerate_plot,
+          ncol = 1,
+          base_aspect_ratio = 1.8)
+
+### ROOT N INSTEAD: plot exchange rates (plant C to fungal N) in mycorrhizas ###
+labels = c(High = "High N", Low = "Low N")
+annotations = data.frame(x = c((1:2), (1:2)),
+                         y = c(4.3, 4, 3.3, 3.3),
+                         N_level = c(rep("High", 2), rep("Low", 2)),
+                         labs = c(paste(c("a", "b")), paste(c("b", "b"))),
+                         x1 = c(0.6, 1.6, 0.6, 1.6), 
+                         x2 = c(1.4, 2.4, 1.4, 2.4), 
+                         y1 = c(4, 3.7, 3, 3), 
+                         y2 = c(4, 3.7, 3, 3))
+
+
+exchangerate_plot_improved = ggplot(data = justmycos_nomixed) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = logimprovedCforN,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+             aes(x = mycofungus, 
+                 y = logimprovedCforN,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Log exchange rate (plant C\nin mycorrhizas to fungal N in roots") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor") 
+  # geom_segment(data = annotations, aes(x = x1, xend = x2,
+  #                                      y = y1, yend = y2),
+  #              colour = "black") +
+  # geom_text(data = annotations, aes(x, y, label = labs))
 
 
 save_plot("plots/CforN_exchangerates_withcomp.pdf", 
@@ -290,6 +364,58 @@ save_plot("plots/vertical_three_panel_plot_CC_NN_CN_withcompetition_test.pdf",
           threepanels_vertical,
           base_height = 10,
           base_aspect_ratio = .5)
+
+#### JUST ROOT N: Nitrogen plot ####
+
+collabels = data.frame(N_level = c("High", "High", "Low", "Low"),
+                       x1 = c(0.6, 1.6, 0.6, 1.6), 
+                       x2 = c(1.4, 2.4, 1.4, 2.4), 
+                       y1 = c(4, 6.5, 5.6, 4), 
+                       y2 = c(4, 6.5, 5.6, 4),
+                       xstar = c(1, 2, 1, 2), ystar = c(4.3, 6.8, 5.9, 4.3),
+                       lab = c("ab", "b", "ab", "a"))
+
+margsig = data.frame(N_level = "High",
+                     x1 = 1,
+                     x2 = 2,
+                     xstar = 1.5,
+                     y1 = 7.2,
+                     y2 = 7.2,
+                     ystar = 7.9,
+                     lab = ".")
+
+labels = c(High = "High N", Low = "Low N")
+nitrogencomparison_mycos_withcomp_improved = ggplot(data = justmycos_nomixed) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = nmlogN15,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+             aes(x = mycofungus, 
+                 y = nmlogN15,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Labeled N in uncolonized roots\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor") 
+  # geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
+  # geom_segment(data = collabels, aes(x = x1, xend = x2,
+  #                                    y = y1, yend = y2),
+  #              colour = "black") +
+  # geom_text(data = margsig, size = 10, aes(x = xstar,  y = ystar, label = lab)) +
+  # geom_segment(data = margsig, aes(x = x1, xend = x2,
+  #                                  y = y1, yend = y2),
+  #              colour = "black")
+
+#### HOARDING ? ####
+
+myhoardmodel = lm(nmlogN15 ~ mycologN15*mycofungus*N_level, data = justmycos_nomixed)
+ggPredict(myhoardmodel)
 
 #### OLD STUFF ####
 

@@ -8,7 +8,10 @@ library(cowplot)
 
 library(agricolae) # for automatic Tukey labels
 
-allisotopes = read_csv("processeddata/isotopes_one_row_per_plant_including_unenriched_July.csv")
+allisotopes = read_csv("processeddata/isotopes_two_rows_per_plant_updated_with_pctCN.csv")
+
+# Old version as of October 28, 2020:
+# allisotopes = read_csv("processeddata/isotopes_one_row_per_plant_including_unenriched_July.csv")
 # correcting a spreadsheet error
 allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6033] = "SUIPU/SUIPU"
 
@@ -19,12 +22,19 @@ metadata_byplant = read_csv("processeddata/percent_col_and_mass_data_by_plant.cs
 
 allisotopes = rename(allisotopes, compartment_fungus = Actual_fungus_by_compartment)
 allisotopes = select(allisotopes, everything(), -tissue)
+allisotopes$mycofungus = recode(allisotopes$mycofungus,
+                             "NM" = "None",
+                             "SUIPU" = "Sp",
+                             "THETE" = "Tt")
+
 # isotopes_forN = rename(isotopes_forN, compartment_fungus = mycofungus)
 isotopes_forN = select(isotopes_forN, everything(), -tissue)
 
 minimally_processed_isotopes = rename(minimally_processed_isotopes, compartment_fungus = Actual_fungus_by_compartment)
 
 percent_col$Side = tolower(percent_col$Side)
+
+percent_col = select(percent_col, -enriched, -N_level, -compartment_fungus)
 
 together = left_join(allisotopes, percent_col)
 
@@ -44,18 +54,17 @@ together$Fungi = recode(together$Fungi,
 together$compartment_fungus = recode(together$compartment_fungus,
                                      "NM" = "None",
                                      "SUIPU" = "Sp",
-                                     "THETE" = "Tt")
+                                     "THETE" = "Tt",
+                                     "MIXED" = "Mixed")
 
-together$mycofungus = recode(together$mycofungus,
-                             "NM" = "None",
-                             "SUIPU" = "Sp",
-                             "THETE" = "Tt")
+
 
 batchtomerge = select(metadata_byplant, Plant, Batch)
 
 together = left_join(together, batchtomerge)
 
 together = subset(together, mycofungus != "OTHER")
+
 
 # Filtering
 
@@ -65,31 +74,31 @@ together$versus = numeric(nrow(together))
 
 for (i in 1:nrow(together)) {
   if (together$compartment_fungus[i] == "Sp") {
-    if (together$competitors[i] == "SUIPU/NM") {
+    if (together$competitors[i] == "Sp/None") {
       together$versus[i] = "None"
-    } else if (together$competitors[i] == "SUIPU/SUIPU") {
+    } else if (together$competitors[i] == "Sp/Sp") {
       together$versus[i] = "Sp"
-    } else if (together$competitors[i] == "THETE/SUIPU") {
+    } else if (together$competitors[i] == "Tt/Sp") {
       together$versus[i] = "Tt"
     } else if (grepl("MIXED", together$competitors[i])){
       together$versus[i] = "Mixed"
     }
   } else if (together$compartment_fungus[i] == "Tt") {
-    if (together$competitors[i] == "THETE/NM") {
+    if (together$competitors[i] == "Tt/None") {
       together$versus[i] = "None"
-    } else if (together$competitors[i] == "THETE/THETE") {
+    } else if (together$competitors[i] == "Tt/Tt") {
       together$versus[i] = "Tt"
-    } else if (together$competitors[i] == "THETE/SUIPU") {
+    } else if (together$competitors[i] == "Tt/Sp") {
       together$versus[i] = "Sp"
     } else if (grepl("MIXED", together$competitors[i])) {
       together$versus[i] = "Mixed"
     }
   } else if (together$compartment_fungus[i] == "None") {
-    if (together$competitors[i] == "SUIPU/NM") {
+    if (together$competitors[i] == "Sp/None") {
       together$versus[i] = "Sp"
-    } else if (together$competitors[i] == "NM/NM") {
+    } else if (together$competitors[i] == "None/None") {
       together$versus[i] = "None"
-    } else if (together$competitors[i] == "THETE/NM") {
+    } else if (together$competitors[i] == "Tt/None") {
       together$versus[i] = "Tt"
     }
   } else if (together$compartment_fungus[i] == "MIXED") {
@@ -123,6 +132,8 @@ smallconstant = abs(min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)]
 together$mycologN15 = log(together$mycoN15ppmexcess + smallconstant)
 together$nmlogN15 = log(together$nmN15ppmexcess + smallconstant)
 
+together$competition_treatment = numeric(nrow(together))
+
 for (i in 1:nrow(together)){
   for (j in 1:nrow(together)) {
     if (together$Plant[i] == together$Plant[j] & 
@@ -137,7 +148,7 @@ for (i in 1:nrow(together)){
         } else if (together$compartment_fungus[j] == "None") {
           together$competition_treatment[i] = "None"
           together$competition_treatment[j] = "None"
-        } else if (together$compartment_fungus[j] == "MIXED") {
+        } else if (together$compartment_fungus[j] == "Mixed") {
           together$competition_treatment[i] = "Mixed"
           together$competition_treatment[j] = "Mixed"
         }
@@ -151,14 +162,14 @@ for (i in 1:nrow(together)){
         } else if (together$compartment_fungus[j] == "None") {
           together$competition_treatment[i] = "None"
           together$competition_treatment[j] = "None"
-        } else if (together$compartment_fungus[j] == "MIXED") {
+        } else if (together$compartment_fungus[j] == "Mixed") {
           together$competition_treatment[i] = "Mixed"
           together$competition_treatment[j] = "Mixed"
         }
       } else if (together$compartment_fungus[i] == "None") {
         together$competition_treatment[i] = "None"
         together$competition_treatment[j] = "None"
-      } else if (together$compartment_fungus[i] == "MIXED") {
+      } else if (together$compartment_fungus[i] == "Mixed") {
         together$competition_treatment[i] = "Mixed"
         together$competition_treatment[j] = "Mixed"
       }
@@ -166,7 +177,8 @@ for (i in 1:nrow(together)){
   }
 }
 
-write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+# write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
 
 # For any analysis involving ONLY C, it makes sense to include
 # 1) carbon data from root compartments that
@@ -174,9 +186,9 @@ write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_c
 # 2) data from plants with failed splits (two of these, 40 successfully split)
 # So I'll subset to ONLY exclude compartments with no fungi, compartments
 # with mixed fungi, or compartments with something else weird going on.
-carboninfo = subset(together, compartment_fungus != "None" &
-                      compartment_fungus != "MIXED" &
-                      compartment_fungus != "OTHER")
+# carboninfo = subset(together, compartment_fungus != "None" &
+#                       compartment_fungus != "MIXED" &
+#                       compartment_fungus != "OTHER")
 carboninfo = together
 
 carboninfo = carboninfo[!is.na(carboninfo$hyphae.APE13C),]
@@ -184,13 +196,13 @@ carboninfo = carboninfo[!is.na(carboninfo$mycorrhizas.APE13C),]
 
 carboninfo$hyphae.ppm13Cexcess = carboninfo$hyphae.APE13C*(10^4)
 
-write_csv(carboninfo, "processeddata/data_for_carbon_only_analyses_withmixed.csv")
+# write_csv(carboninfo, "processeddata/data_for_carbon_only_analyses_withmixed.csv")
+write_csv(carboninfo, "processeddata/data_for_carbon_only_analyses_withpctC.csv")
 
 ### Making data frame for N15 analyses ###
 
 nitrogeninfo = subset(together, received15N == "Y" & Batch != "NA" & mycorrhizas.APE13C != "NA" & mycorrhizas.APE15N != "NA")
-nitrogeninfo = subset(nitrogeninfo, compartment_fungus != "MIXED" &
-                        compartment_fungus != "OTHER")
+nitrogeninfo = subset(nitrogeninfo, compartment_fungus != "Mixed")
 
 # In order to understand these data, I'm going to need to 
 # log transform my N enrichment data (there's a lot of variation in extent of enrichment)
@@ -209,7 +221,7 @@ nitrogeninfo$forced.nmC13forN15 = nitrogeninfo$nmC13ppmexcess/nitrogeninfo$force
 nitrogeninfo$mycoN15ppmexcess = nitrogeninfo$mycorrhizas.APE15N*(10^4)
 nitrogeninfo$uncolN15ppmexcess = nitrogeninfo$uncolonized_roots.APE15N*(10^4)
 
-write_csv(nitrogeninfo, "processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withmixed.csv")
+write_csv(nitrogeninfo, "processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withpctN.csv")
 
 
 
