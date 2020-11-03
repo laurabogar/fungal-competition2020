@@ -93,6 +93,15 @@ colforplot$competitors_reordered = fct_relevel(colforplot$competitors,
 colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "A"] = "Tt" # why not in data? unclear
 colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "B"] = "Sp"
 
+dead_mycos = colforplot %>% group_by(N_level, Fungus_attempted, mycofungus) %>% 
+  filter(dead_tissue > 0) %>%
+  summarize(n(), sum(dead_tissue))
+
+# If including mixed:
+# dead_mycos = colforplot %>% group_by(N_level, Fungus_attempted, compartment_fungus) %>% 
+#   filter(dead_tissue > 0) %>%
+#   summarize(n(), sum(dead_tissue))
+
 
 labels = c(High = "High N", Low = "Low N")
 

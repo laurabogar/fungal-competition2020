@@ -15,6 +15,7 @@ biomasslm = lm(total_biomass ~ N_level * Fungi * percent_col, data = alldata)
 summary(biomasslm)
 bioanova = anova(biomasslm)
 
+
 # apa.reg.table(biomasslm, filename = "stats_tables/Biomass_lm_APA.doc", table.number = 2)
 
 # Saving biomass table
