@@ -9,8 +9,8 @@ library(lmerTest)
 library(emmeans)
 library(MuMIn)
 
-carboninfo = read_csv("processeddata/data_for_carbon_only_analyses_withpctC.csv.csv")
-nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withpctN.csv.csv")
+carboninfo = read_csv("processeddata/data_for_carbon_only_analyses_withpctC.csv")
+nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withpctN.csv")
 
 carboninfo$hyphalog13C = log(carboninfo$hyphae.ppm13Cexcess)
 nitrogeninfo$hyphae.ppm13Cexcess =  nitrogeninfo$hyphae.APE13C*10^4
@@ -47,11 +47,27 @@ mycoCforN_justTt_table = summary(mycoCforN_justTt)
 class(mycoCforN_justTt) <- "lmerMod"
 r.squaredGLMM(mycoCforN_justTt)
 
+# This allows me to visualize the partial
+# residuals of my model -- basically subtracting
+# out the influence of N level and its interaction with
+# mycorrhiza 15N concentration, I think.
+# Ultimately, though, this plot looks very similar
+# to the raw data, and is a bit more convoluted to interpret.
+library(effects)
+est = Effect("mycologN15", partial.residuals = TRUE, mycoCforN_justTt)
+plot(est)
+
+# Found remef package hard to use
+# library(remef)
+# test = remef(mycoCforN_justTt, fix = 2, ran = "all")
+# plot(test)
+
 sink("stats_tables/mycoCforN_justTt_lmer.html")
 
 stargazer(mycoCforN_justTt, type = "html",
           digits = 3,
           digit.separator = "",
+          ci = TRUE,
           summary = TRUE)
 
 sink()
@@ -68,15 +84,25 @@ sink("stats_tables/mycoCforN_justSp_lmer.html")
 stargazer(mycoCforN_justSp, type = "html",
           digits = 3,
           digit.separator = "",
+          ci = TRUE,
           summary = TRUE)
 
 sink()
 
 sink("stats_tables/mycoCforN_TtvsSp_lmer.html")
 
-stargazer(mycoCforN_justTt, mycoCforN_justSp, type = "html",
+stargazer(mycoCforN_justTt, 
+          mycoCforN_justSp, 
+          type = "html",
+          dep.var.labels = "Mycorrhizal [13C] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [15N] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [15N]:N level"),
+          column.labels = c("Tt", "Sp"),
           digits = 3,
           digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
           summary = TRUE)
 
 sink()
@@ -123,7 +149,8 @@ r.squaredGLMM(NforN_justSp) #very bad
 
 sink("stats_tables/NforN_justSp_lmer.html")
 
-stargazer(NforN_justSp, type = "html",
+stargazer(NforN_justSp, 
+          type = "html",
           digits = 3,
           digit.separator = "",
           summary = TRUE)
@@ -132,16 +159,25 @@ sink()
 
 sink("stats_tables/NforN_TtvsSp_lmer.html")
 
-stargazer(NforN_justTt, NforN_justSp, type = "html",
+stargazer(NforN_justTt, 
+          NforN_justSp, 
+          type = "html",
+          dep.var.labels = "Uncolonized root [15N] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [15N] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [15N]:N level"),
+          column.labels = c("Tt", "Sp"),
           digits = 3,
           digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
           summary = TRUE)
 
 sink()
 
 ### 3: Plant C goes to hyphae in Tt ####
 
-hyphalCformycoC_plot_nooutlier = ggplot(data = subset(carboninfo_nooutlier, compartment_fungus == "Tt")) +
+hyphalCformycoC_plot_nooutlier = ggplot(data = subset(carboninfo, compartment_fungus == "Tt")) +
   geom_point(aes(x = mycologC13,
                  y = log(hyphae.ppm13Cexcess), 
                  color = N_level)) +
@@ -157,9 +193,10 @@ hyphalCformycoC_plot_nooutlier = ggplot(data = subset(carboninfo_nooutlier, comp
   ylab(expression("Hyphal "^13*"C in Tt (ln ppm excess)")) +
   xlab(expression("Mycorrhizal "^13*"C in Tt (ln ppm excess)")) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) 
-
+test = lm(hyphalog13C ~ mycologC13*N_level, data = carboninfo_nooutlier)
+plot(test)
 CforC_justTt = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
-                    data = subset(carboninfo_nooutlier, compartment_fungus == "Tt"))
+                    data = subset(carboninfo, compartment_fungus == "Tt"))
 class(CforC_justTt) <- "lmerMod"
 summary(CforC_justTt)
 r.squaredGLMM(CforC_justTt)
@@ -168,8 +205,15 @@ r.squaredGLMM(CforC_justTt)
 sink("stats_tables/CforC_justTt_lmer.html")
 
 stargazer(CforC_justTt, type = "html",
+          dep.var.labels = "Hyphal [13C] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [13C] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [13C]:N level"),
+          column.labels = c("Tt", "Sp"),
           digits = 3,
           digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
           summary = TRUE)
 
 sink()
@@ -181,12 +225,15 @@ ByfungusCforNmyco_nolegend = ByfungusCforNmyco +
 ByfungusNforNroots_nolegend = ByfungusNforNroots +
   theme(legend.position = "none")
 
+hyphalCformycoC_plot_nooutlier_legendbelow = hyphalCformycoC_plot_nooutlier +
+  theme(legend.position = "bottom")
 
 threepanels_horiz = plot_grid(ByfungusCforNmyco_nolegend, 
                               ByfungusNforNroots_nolegend,
                               hyphalCformycoC_plot_nooutlier,
                               labels = c("A", "B", "C"),
                               align = "h",
+                              axis = "b",
                               nrow = 1,
                               ncol = 3,
                               rel_widths = c(1, 1, .9))
@@ -195,6 +242,21 @@ threepanels_horiz = plot_grid(ByfungusCforNmyco_nolegend,
 save_plot("plots/horizontal_three_panel_plot_CforN_relationships_fig1.pdf", 
           threepanels_horiz,
           base_width = 15)
+
+threepanels_vertical = plot_grid(ByfungusCforNmyco_nolegend, 
+                              ByfungusNforNroots_nolegend,
+                              hyphalCformycoC_plot_nooutlier_legendbelow,
+                              labels = c("A", "B", "C"),
+                              align = "v",
+                              axis = "l",
+                              nrow = 3,
+                              ncol = 1,
+                              rel_heights = c(1,1,1))
+
+save_plot("plots/vertical_three_panel_plot_CforN_relationships_fig1.pdf", 
+          threepanels_vertical,
+          base_height = 12,
+          base_width = 5)
 
 
 
