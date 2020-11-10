@@ -8,7 +8,7 @@
 # Probably best to leave this one for last, once the other analyses
 # are looking good.
 
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Libraries needed:
 library(cowplot)
@@ -21,7 +21,7 @@ library(stargazer)
 # together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
 # together = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
 # together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
-together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
 
 ndata = subset(together, received15N == "Y")
 ndata = subset(ndata, compartment_fungus != "None")
@@ -62,7 +62,7 @@ allmixedcompartments = together[together$compartment_fungus == "MIXED",]
 
 # Exclude COMPARTMENTS with mixed cultures
 
-excluding_mixed = ndata[-grep("MIXED", ndata$compartment_fungus),]
+excluding_mixed = ndata[-grep("Mixed", ndata$compartment_fungus),]
 
 excluding_mixed$versus = as.factor(excluding_mixed$versus)
 # relevel(excluding_mixed$versus, levels = c("None", "Sp", "Tt"))
@@ -78,16 +78,21 @@ justmycos_nomixed = justmycos[-grep("MIXED", justmycos$competitors),]
 # n15.myco.full = lmer(mycologN15 ~ mycofungus * N_level + (1|Batch/Plant), 
 #                      data = justmycos) # I don't have any random effects here that I don't think I need
 
-n15.myco.full = lmer(mycologN15 ~ mycofungus * N_level + (1|Batch), 
+n15.myco.full = lmerTest::lmer(mycologN15 ~ compartment_fungus * N_level * versus + (1|Batch), 
                      data = justmycos_nomixed)
+
+# class(n15.myco.full) = "lmerMod"
 
 summary(n15.myco.full)
 
 anovaresults = anova(n15.myco.full)
 
-n15.myco.posthoc = emmeans(n15.myco.full, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+n15.myco.posthoc = emmeans(n15.myco.full, list(pairwise ~ compartment_fungus*N_level*versus), adjust = "tukey")
+n15.myco.posthoc.interpretable = emmeans(n15.myco.full, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
+
 
 sink("stats_tables/N_by_fungus_competition_N_lme_results_mycos.html")
+# sink("stats_tables/test.html")
 
 stargazer(anovaresults, type = "html",
           digits = 3,
@@ -100,7 +105,7 @@ sink()
 
 sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc.txt")
 
-n15.myco.posthoc
+n15.myco.posthoc.interpretable
 
 sink()
 

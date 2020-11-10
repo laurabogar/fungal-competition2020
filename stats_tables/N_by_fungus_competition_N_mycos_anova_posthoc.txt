@@ -1,25 +1,37 @@
-$`emmeans of mycofungus, N_level`
- mycofungus N_level emmean    SE   df lower.CL upper.CL
- Sp         High      2.95 0.335 36.2     2.08     3.83
- Tt         High      4.13 0.176 16.8     3.64     4.62
- Sp         Low       3.39 0.265 36.7     2.70     4.09
- Tt         Low       2.88 0.217 26.4     2.30     3.46
+$`emmeans of compartment_fungus, N_level`
+ compartment_fungus N_level emmean    SE   df
+ Sp                 High      2.95 0.342 39.5
+ Tt                 High      4.13 0.184 17.9
+ Sp                 Low       3.39 0.257 37.1
+ Tt                 Low       2.88 0.223 28.4
+ lower.CL upper.CL
+     2.06     3.84
+     3.62     4.64
+     2.72     4.06
+     2.28     3.47
 
-Results are averaged over the levels of: versus3 
+Results are averaged over the levels of: versus 
 Degrees-of-freedom method: satterthwaite 
 Confidence level used: 0.95 
 Conf-level adjustment: sidak method for 4 estimates 
 
-$`pairwise differences of mycofungus, N_level`
- contrast          estimate    SE   df t.ratio p.value
- Sp High - Tt High  -1.1765 0.339 37.4 -3.472  0.0069 
- Sp High - Sp Low   -0.4382 0.427 36.4 -1.026  0.7354 
- Sp High - Tt Low    0.0754 0.400 33.6  0.189  0.9976 
- Tt High - Sp Low    0.7383 0.318 30.5  2.322  0.1151 
- Tt High - Tt Low    1.2519 0.280 22.1  4.472  0.0010 
- Sp Low - Tt Low     0.5136 0.295 31.7  1.741  0.3201 
+$`pairwise differences of compartment_fungus, N_level`
+ contrast          estimate    SE   df t.ratio
+ Sp High - Tt High  -1.1811 0.341 41.2 -3.467 
+ Sp High - Sp Low   -0.4394 0.427 38.7 -1.028 
+ Sp High - Tt Low    0.0715 0.408 36.5  0.175 
+ Tt High - Sp Low    0.7417 0.316 29.8  2.347 
+ Tt High - Tt Low    1.2526 0.289 23.6  4.329 
+ Sp Low - Tt Low     0.5110 0.281 35.0  1.817 
+ p.value
+ 0.0066 
+ 0.7342 
+ 0.9981 
+ 0.1100 
+ 0.0013 
+ 0.2827 
 
-Results are averaged over the levels of: versus3 
+Results are averaged over the levels of: versus 
 Degrees-of-freedom method: satterthwaite 
 P value adjustment: tukey method for comparing a family of 4 estimates 
 

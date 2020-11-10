@@ -25,7 +25,8 @@ sink("stats_tables/biomass_lm_table.html")
 stargazer(biomasslm, type = "html",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "")
+          digit.separator = "",
+          no.space = TRUE)
 
 sink()
 
@@ -37,6 +38,7 @@ stargazer(bioanova, type = "html",
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
           digit.separator = "",
-          summary = FALSE)
+          summary = FALSE,
+          no.space = TRUE)
 
 sink()

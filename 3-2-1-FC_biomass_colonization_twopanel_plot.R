@@ -159,12 +159,12 @@ Figure = plot_grid(massplot, colplot,
                    align = "v",
                    axis = "l",
                    rel_heights = c(2,2),
-                   labels = c("A", "B"))
+                   labels = c("a", "b"))
 save_plot("plots/Mass_and_colonization_two_panel_boxplot_vertical.pdf",
           Figure)
 
 Figure = plot_grid(massplot, colplot, ncol = 2, align = "h",
-                    labels = c("A", "B"),
+                    labels = c("a", "b"),
                    rel_widths = c(1, 1.6))
 save_plot("plots/Mass_and_colonization_two_panel_boxplot.pdf",
           Figure, ncol = 2)

@@ -46,6 +46,8 @@ mycoCforN_justTt = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
 mycoCforN_justTt_table = summary(mycoCforN_justTt)
 class(mycoCforN_justTt) <- "lmerMod"
 r.squaredGLMM(mycoCforN_justTt)
+fitTt = as.data.frame(r.squaredGLMM(mycoCforN_justTt))
+fitTt_R2 = round(fitTt$R2c, 4)
 
 # This allows me to visualize the partial
 # residuals of my model -- basically subtracting
@@ -77,6 +79,8 @@ mycoCforN_justSp = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
 mycoCforN_justSp_table = summary(mycoCforN_justSp)
 class(mycoCforN_justSp) <- "lmerMod"
 r.squaredGLMM(mycoCforN_justSp)
+fitSp = as.data.frame(r.squaredGLMM(mycoCforN_justSp))
+fitSp_R2 = round(fitSp$R2c, 4)
 
 
 sink("stats_tables/mycoCforN_justSp_lmer.html")
@@ -103,6 +107,8 @@ stargazer(mycoCforN_justTt,
           digit.separator = "",
           ci = TRUE,
           star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2, fitSp_R2)),
           summary = TRUE)
 
 sink()
@@ -157,6 +163,13 @@ stargazer(NforN_justSp,
 
 sink()
 
+
+fitTt = as.data.frame(r.squaredGLMM(NforN_justTt))
+fitTt_R2 = round(fitTt$R2c, 4)
+fitSp = as.data.frame(r.squaredGLMM(NforN_justSp))
+fitSp_R2 = round(fitSp$R2c, 4)
+
+
 sink("stats_tables/NforN_TtvsSp_lmer.html")
 
 stargazer(NforN_justTt, 
@@ -171,13 +184,15 @@ stargazer(NforN_justTt,
           digit.separator = "",
           ci = TRUE,
           star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2, fitSp_R2)),
           summary = TRUE)
 
 sink()
 
 ### 3: Plant C goes to hyphae in Tt ####
 
-hyphalCformycoC_plot_nooutlier = ggplot(data = subset(carboninfo, compartment_fungus == "Tt")) +
+hyphalCformycoC_plot = ggplot(data = subset(carboninfo, compartment_fungus == "Tt")) +
   geom_point(aes(x = mycologC13,
                  y = log(hyphae.ppm13Cexcess), 
                  color = N_level)) +
@@ -201,6 +216,8 @@ class(CforC_justTt) <- "lmerMod"
 summary(CforC_justTt)
 r.squaredGLMM(CforC_justTt)
 
+fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
+fitTt_R2 = round(fitTt$R2c, 4)
 
 sink("stats_tables/CforC_justTt_lmer.html")
 
@@ -214,6 +231,8 @@ stargazer(CforC_justTt, type = "html",
           digit.separator = "",
           ci = TRUE,
           star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2)),
           summary = TRUE)
 
 sink()
@@ -225,13 +244,13 @@ ByfungusCforNmyco_nolegend = ByfungusCforNmyco +
 ByfungusNforNroots_nolegend = ByfungusNforNroots +
   theme(legend.position = "none")
 
-hyphalCformycoC_plot_nooutlier_legendbelow = hyphalCformycoC_plot_nooutlier +
+hyphalCformycoC_plot_legendbelow = hyphalCformycoC_plot_nooutlier +
   theme(legend.position = "bottom")
 
 threepanels_horiz = plot_grid(ByfungusCforNmyco_nolegend, 
                               ByfungusNforNroots_nolegend,
-                              hyphalCformycoC_plot_nooutlier,
-                              labels = c("A", "B", "C"),
+                              hyphalCformycoC_plot,
+                              labels = c("a", "b", "c"),
                               align = "h",
                               axis = "b",
                               nrow = 1,
@@ -245,8 +264,8 @@ save_plot("plots/horizontal_three_panel_plot_CforN_relationships_fig1.pdf",
 
 threepanels_vertical = plot_grid(ByfungusCforNmyco_nolegend, 
                               ByfungusNforNroots_nolegend,
-                              hyphalCformycoC_plot_nooutlier_legendbelow,
-                              labels = c("A", "B", "C"),
+                              hyphalCformycoC_plot_legendbelow,
+                              labels = c("a", "b", "c"),
                               align = "v",
                               axis = "l",
                               nrow = 3,
@@ -257,6 +276,7 @@ save_plot("plots/vertical_three_panel_plot_CforN_relationships_fig1.pdf",
           threepanels_vertical,
           base_height = 12,
           base_width = 5)
+
 
 
 
@@ -357,3 +377,176 @@ lmer_model_mycoCforN = lmer(mycologC13 ~ mycologN15*compartment_fungus*N_level +
 summary(lmer_model_mycoCforN) #NS
 anova(lmer_model_mycoCforN) # mycologN15 significant
 #### INCLUDING EXTREME VALUE ####
+
+### 1:  N15 in mycos predicts C13 in mycos, but only for Thelephora ####
+ByfungusCforNmyco = ggplot(data = nitrogeninfo) +
+  geom_point(aes(x = mycologN15,
+                 y = mycologC13, 
+                 color = N_level)) +
+  geom_smooth(method = "lm",
+              formula = y ~ x,
+              data = subset(nitrogeninfo, compartment_fungus == "Tt"),
+              aes(x = mycologN15,
+                  y = mycologC13),
+              color = "black",
+              size = 0.5) +
+  ylab(bquote(atop("Mycorrhizal "^13*"C (ln ppm excess)"))) +
+  xlab(bquote(atop("Mycorrhizal "^15*"N (ln ppm excess)"))) +
+  scale_color_manual(values = c("steelblue4", "steelblue1"),
+                     name = "N level") +
+  facet_grid(. ~ compartment_fungus) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+
+mycoCforN_justTt_includingextreme = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
+                        data = subset(nitrogeninfo, compartment_fungus == "Tt"))
+mycoCforN_justTt_table_ie = summary(mycoCforN_justTt_includingextreme)
+class(mycoCforN_justTt_includingextreme) <- "lmerMod"
+fitTt = as.data.frame(r.squaredGLMM(mycoCforN_justTt_includingextreme))
+fitTt_R2 = round(fitTt$R2c, 4)
+
+
+mycoCforN_justSp_ie = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
+                        data = subset(nitrogeninfo, compartment_fungus == "Sp"))
+mycoCforN_justSp_table_ie = summary(mycoCforN_justSp_ie)
+class(mycoCforN_justSp_ie) <- "lmerMod"
+fitSp = as.data.frame(r.squaredGLMM(mycoCforN_justSp_ie))
+fitSp_R2 = round(fitSp$R2c, 4)
+
+
+# sink("stats_tables/mycoCforN_TtvsSp_lmer_includingextreme.html")
+
+models_CforNmycos_includingextreme = 
+  stargazer(mycoCforN_justTt_includingextreme, 
+          mycoCforN_justSp_ie, 
+          type = "html",
+          dep.var.labels = "Mycorrhizal [13C] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [15N] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [15N]:N level"),
+          column.labels = c("Tt", "Sp"),
+          digits = 3,
+          digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2, fitSp_R2)),
+          summary = TRUE)
+
+cat(models_CforNmycos_includingextreme, 
+    sep = '\n', 
+    file = "stats_tables/mycoCforN_TtvsSp_lmer_includingextreme.html")
+
+# sink()
+
+### 2: Fungal N goes to NM roots, but only for Tt ####
+
+ByfungusNforNroots = ggplot(data = nitrogeninfo) +
+  geom_point(aes(x = mycologN15,
+                 y = nmlogN15, 
+                 color = N_level)) +
+  geom_smooth(method = "lm",
+              formula = y ~ x,
+              data = subset(nitrogeninfo, compartment_fungus == "Tt"),
+              aes(x = mycologN15,
+                  y = nmlogN15),
+              color = "black",
+              size = 0.5) +
+  xlab(bquote(atop("Mycorrhizal "^15*"N (ln ppm excess)"))) +
+  ylab(bquote(atop("Root "^15*"N (ln ppm excess)"))) +
+  scale_color_manual(values = c("steelblue4", "steelblue1"),
+                     name = "N level") +
+  facet_grid(. ~ compartment_fungus) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+
+NforN_justTt_ie = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
+                    data = subset(nitrogeninfo, compartment_fungus == "Tt"))
+class(NforN_justTt_ie) <- "lmerMod"
+r.squaredGLMM(NforN_justTt_ie)
+fitTt = as.data.frame(r.squaredGLMM(NforN_justTt_ie))
+fitTt_R2 = round(fitTt$R2c, 4)
+
+
+NforN_justSp_ie = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
+                    data = subset(nitrogeninfo, compartment_fungus == "Sp"))
+class(NforN_justSp_ie) <- "lmerMod"
+r.squaredGLMM(NforN_justSp_ie)
+fitSp = as.data.frame(r.squaredGLMM(NforN_justSp_ie))
+fitSp_R2 = round(fitSp$R2c, 4)
+
+sink("stats_tables/NforN_TtvsSp_lmer_includingextreme.html")
+
+stargazer(NforN_justTt_ie, 
+          NforN_justSp_ie, 
+          type = "html",
+          dep.var.labels = "Uncolonized root [15N] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [15N] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [15N]:N level"),
+          column.labels = c("Tt", "Sp"),
+          digits = 3,
+          digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2, fitSp_R2)),
+          summary = TRUE)
+
+sink()
+
+### Two panels including extreme value ####
+
+ByfungusCforNmyco_ie = ggplot(data = nitrogeninfo) +
+  geom_point(aes(x = mycologN15,
+                 y = mycologC13, 
+                 color = N_level)) +
+  geom_smooth(method = "lm",
+              formula = y ~ x,
+              data = subset(nitrogeninfo, compartment_fungus == "Tt"),
+              aes(x = mycologN15,
+                  y = mycologC13),
+              color = "black",
+              size = 0.5) +
+  ylab(bquote(atop("Mycorrhizal "^13*"C (ln ppm excess)"))) +
+  xlab(bquote(atop("Mycorrhizal "^15*"N (ln ppm excess)"))) +
+  scale_color_manual(values = c("steelblue4", "steelblue1"),
+                     name = "N level") +
+  facet_grid(. ~ compartment_fungus) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+
+ByfungusNforNroots_ie = ggplot(data = nitrogeninfo) +
+  geom_point(aes(x = mycologN15,
+                 y = nmlogN15, 
+                 color = N_level)) +
+  geom_smooth(method = "lm",
+              formula = y ~ x,
+              data = subset(nitrogeninfo, compartment_fungus == "Tt"),
+              aes(x = mycologN15,
+                  y = nmlogN15),
+              color = "black",
+              size = 0.5) +
+  xlab(bquote(atop("Mycorrhizal "^15*"N (ln ppm excess)"))) +
+  ylab(bquote(atop("Root "^15*"N (ln ppm excess)"))) +
+  scale_color_manual(values = c("steelblue4", "steelblue1"),
+                     name = "N level") +
+  facet_grid(. ~ compartment_fungus) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+
+ByfungusCforNmyco_ie_nolegend = ByfungusCforNmyco_ie +
+  theme(legend.position = "none")
+
+ByfungusNforNroots_ie_legendbelow = ByfungusNforNroots_ie +
+  theme(legend.position = "bottom")
+
+twopanels_vertical = plot_grid(ByfungusCforNmyco_ie_nolegend, 
+                                 ByfungusNforNroots_ie_legendbelow,
+                                 labels = c("a", "b"),
+                                 align = "v",
+                                 axis = "l",
+                                 nrow = 2,
+                                 ncol = 1,
+                                 rel_heights = c(1,1))
+
+save_plot("plots/vertical_TWO_panel_plot_CforN_relationships_includingextreme_forsupp.pdf", 
+          twopanels_vertical,
+          base_height = 8,
+          base_width = 5)

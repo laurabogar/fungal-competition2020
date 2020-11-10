@@ -69,14 +69,14 @@ sink()
 # CforN = lmer(logmycoCforN ~ mycofungus * N_level * versus3 + (1|Batch/Plant),
 #              data = justmycos)
 
-CforN = lmer(logmycoCforN ~ mycofungus * N_level * versus3 + (1|Batch),
+CforN = lmer(logmycoCforN ~ compartment_fungus * N_level * versus + (1|Batch),
              data = justmycos_nomixed)
 
 summary(CforN)
 
 CforN.anova = anova(CforN)
 
-CforNposthoc = emmeans(CforN, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+CforNposthoc = emmeans(CforN, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
 
 sink("stats_tables/CforN_exchangerates_anova.html")
 
@@ -288,16 +288,16 @@ collabels = data.frame(N_level = c("High", "High", "Low", "Low"),
                        y1 = c(4, 6.5, 5.6, 4), 
                        y2 = c(4, 6.5, 5.6, 4),
                        xstar = c(1, 2, 1, 2), ystar = c(4.3, 6.8, 5.9, 4.3),
-                       lab = c("ab", "b", "ab", "a"))
+                       lab = c("a", "b", "ab", "a"))
 
-margsig = data.frame(N_level = "High",
-                     x1 = 1,
-                     x2 = 2,
-                     xstar = 1.5,
-                     y1 = 7.2,
-                     y2 = 7.2,
-                     ystar = 7.9,
-                     lab = ".")
+# margsig = data.frame(N_level = "High",
+#                      x1 = 1,
+#                      x2 = 2,
+#                      xstar = 1.5,
+#                      y1 = 7.2,
+#                      y2 = 7.2,
+#                      ystar = 7.9,
+#                      lab = ".")
 
 labels = c(High = "High N", Low = "Low N")
 nitrogencomparison_mycos_withcomp = ggplot(data = justmycos_nomixed) +
@@ -321,11 +321,11 @@ nitrogencomparison_mycos_withcomp = ggplot(data = justmycos_nomixed) +
   geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
   geom_segment(data = collabels, aes(x = x1, xend = x2,
                                      y = y1, yend = y2),
-               colour = "black") +
-  geom_text(data = margsig, size = 10, aes(x = xstar,  y = ystar, label = lab)) +
-  geom_segment(data = margsig, aes(x = x1, xend = x2,
-                                   y = y1, yend = y2),
                colour = "black")
+  # geom_text(data = margsig, size = 10, aes(x = xstar,  y = ystar, label = lab)) +
+  # geom_segment(data = margsig, aes(x = x1, xend = x2,
+  #                                  y = y1, yend = y2),
+  #              colour = "black")
 
 carboncomparison_withcompetition_nolegend = carboncomparison_withcompetition +
   theme(legend.position = "none")
@@ -339,7 +339,7 @@ exchangerate_plot_legendbelow = exchangerate_plot +
 threepanels_horiz = plot_grid(carboncomparison_withcompetition_nolegend, 
                         nitrogencomparison_mycos_withcomp_nolegend,
                         exchangerate_plot,
-                        labels = c("A", "B", "C"),
+                        labels = c("a", "b", "c"),
                         align = "h",
                         # nrow = 1,
                         ncol = 3,
@@ -352,7 +352,7 @@ save_plot("plots/horizontal_three_panel_plot_CC_NN_CN_withcompetition.pdf",
 threepanels_vertical = plot_grid(carboncomparison_withcompetition_nolegend, 
                               nitrogencomparison_mycos_withcomp_nolegend,
                               exchangerate_plot_legendbelow,
-                              labels = c("A", "B", "C"),
+                              labels = c("a", "b", "c"),
                               align = "v",
                               nrow = 3,
                               ncol = 1,

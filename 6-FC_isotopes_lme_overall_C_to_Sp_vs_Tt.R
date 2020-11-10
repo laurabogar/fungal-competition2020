@@ -23,7 +23,7 @@ library(emmeans)
 library(stargazer)
 
 # Data:
-together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
 
 # Shouldn't model mycorrhiza-specific phenomena with NM plants
 
@@ -87,7 +87,7 @@ excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
 #                 data = nonm) 
 
 
-c13.full = lmer(mycologC13 ~ compartment_fungus * versus3 * N_level + (1|Batch/Plant),
+c13.full = lmer(mycologC13 ~ compartment_fungus * versus * N_level + (1|Batch/Plant),
                 data = excluding_mixed) # I don't have any random effects here that I don't think I need
 
 summary(c13.full)
@@ -108,7 +108,7 @@ sink()
 
 Cbyfungusposthoc = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
 
-Cbyfungusposthoc_withversus = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level*versus3), adjust = "tukey")
+Cbyfungusposthoc_withversus = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level*versus), adjust = "tukey")
 
 sink("stats_tables/C_by_fungus_competition_N_lme_anova_posthoc_withversus.txt")
 
