@@ -190,95 +190,116 @@ stargazer(NforN_justTt,
 
 sink()
 
-### 3: Plant C goes to hyphae in Tt ####
+# ### 3: Plant C goes to hyphae in Tt ####
+# 
+# hyphalCformycoC_plot = ggplot(data = subset(carboninfo, compartment_fungus == "Tt")) +
+#   geom_point(aes(x = mycologC13,
+#                  y = log(hyphae.ppm13Cexcess), 
+#                  color = N_level)) +
+#   geom_smooth(method = "lm", 
+#               aes(x = mycologC13,
+#                   y = log(hyphae.ppm13Cexcess)),
+#               color = "black",
+#               size = 0.5) +
+#   scale_color_manual(values = c("steelblue4", "steelblue1"),
+#                      name = "N level") +
+#   scale_shape_manual(values = c(17, 15),
+#                      name = "Fungus") +
+#   ylab(expression("Hyphal "^13*"C in Tt (ln ppm excess)")) +
+#   xlab(expression("Mycorrhizal "^13*"C in Tt (ln ppm excess)")) +
+#   theme(plot.margin = unit(c(1,1,1,1), "cm")) 
+# test = lm(hyphalog13C ~ mycologC13*N_level, data = carboninfo_nooutlier)
+# plot(test)
+# CforC_justTt = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
+#                     data = subset(carboninfo, compartment_fungus == "Tt"))
+# class(CforC_justTt) <- "lmerMod"
+# summary(CforC_justTt)
+# r.squaredGLMM(CforC_justTt)
+# 
+# fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
+# fitTt_R2 = round(fitTt$R2c, 4)
+# 
+# sink("stats_tables/CforC_justTt_lmer.html")
+# 
+# stargazer(CforC_justTt, type = "html",
+#           dep.var.labels = "Hyphal [13C] (ln ppm excess)",
+#           covariate.labels = c("Mycorrhizal [13C] (ln ppm excess)",
+#                                "N level",
+#                                "Mycorrhizal [13C]:N level"),
+#           column.labels = c("Tt", "Sp"),
+#           digits = 3,
+#           digit.separator = "",
+#           ci = TRUE,
+#           star.cutoffs = c(0.05, 0.01, 0.001),
+#           add.lines = list(c("Conditional pseudo-$R2$",
+#                              fitTt_R2)),
+#           summary = TRUE)
+# 
+# sink()
 
-hyphalCformycoC_plot = ggplot(data = subset(carboninfo, compartment_fungus == "Tt")) +
-  geom_point(aes(x = mycologC13,
-                 y = log(hyphae.ppm13Cexcess), 
-                 color = N_level)) +
-  geom_smooth(method = "lm", 
-              aes(x = mycologC13,
-                  y = log(hyphae.ppm13Cexcess)),
-              color = "black",
-              size = 0.5) +
-  scale_color_manual(values = c("steelblue4", "steelblue1"),
-                     name = "N level") +
-  scale_shape_manual(values = c(17, 15),
-                     name = "Fungus") +
-  ylab(expression("Hyphal "^13*"C in Tt (ln ppm excess)")) +
-  xlab(expression("Mycorrhizal "^13*"C in Tt (ln ppm excess)")) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) 
-test = lm(hyphalog13C ~ mycologC13*N_level, data = carboninfo_nooutlier)
-plot(test)
-CforC_justTt = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
-                    data = subset(carboninfo, compartment_fungus == "Tt"))
-class(CforC_justTt) <- "lmerMod"
-summary(CforC_justTt)
-r.squaredGLMM(CforC_justTt)
+# ### Bringing together for three panel figure ####
+# ByfungusCforNmyco_nolegend = ByfungusCforNmyco +
+#   theme(legend.position = "none")
+# 
+# ByfungusNforNroots_nolegend = ByfungusNforNroots +
+#   theme(legend.position = "none")
+# 
+# hyphalCformycoC_plot_legendbelow = hyphalCformycoC_plot_nooutlier +
+#   theme(legend.position = "bottom")
+# 
+# threepanels_horiz = plot_grid(ByfungusCforNmyco_nolegend, 
+#                               ByfungusNforNroots_nolegend,
+#                               hyphalCformycoC_plot,
+#                               labels = c("a", "b", "c"),
+#                               align = "h",
+#                               axis = "b",
+#                               nrow = 1,
+#                               ncol = 3,
+#                               rel_widths = c(1, 1, .9))
+# 
+# 
+# save_plot("plots/horizontal_three_panel_plot_CforN_relationships_fig1.pdf", 
+#           threepanels_horiz,
+#           base_width = 15)
+# 
+# threepanels_vertical = plot_grid(ByfungusCforNmyco_nolegend, 
+#                               ByfungusNforNroots_nolegend,
+#                               hyphalCformycoC_plot_legendbelow,
+#                               labels = c("a", "b", "c"),
+#                               align = "v",
+#                               axis = "l",
+#                               nrow = 3,
+#                               ncol = 1,
+#                               rel_heights = c(1,1,1))
+# 
+# save_plot("plots/vertical_three_panel_plot_CforN_relationships_fig1.pdf", 
+#           threepanels_vertical,
+#           base_height = 12,
+#           base_width = 5)
 
-fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
-fitTt_R2 = round(fitTt$R2c, 4)
 
-sink("stats_tables/CforC_justTt_lmer.html")
 
-stargazer(CforC_justTt, type = "html",
-          dep.var.labels = "Hyphal [13C] (ln ppm excess)",
-          covariate.labels = c("Mycorrhizal [13C] (ln ppm excess)",
-                               "N level",
-                               "Mycorrhizal [13C]:N level"),
-          column.labels = c("Tt", "Sp"),
-          digits = 3,
-          digit.separator = "",
-          ci = TRUE,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          add.lines = list(c("Conditional pseudo-$R2$",
-                             fitTt_R2)),
-          summary = TRUE)
+### Two panels excluding extreme value ####
 
-sink()
-
-### Bringing together for three panel figure ####
 ByfungusCforNmyco_nolegend = ByfungusCforNmyco +
   theme(legend.position = "none")
 
-ByfungusNforNroots_nolegend = ByfungusNforNroots +
-  theme(legend.position = "none")
-
-hyphalCformycoC_plot_legendbelow = hyphalCformycoC_plot_nooutlier +
+ByfungusNforNroots_legendbelow = ByfungusNforNroots +
   theme(legend.position = "bottom")
 
-threepanels_horiz = plot_grid(ByfungusCforNmyco_nolegend, 
-                              ByfungusNforNroots_nolegend,
-                              hyphalCformycoC_plot,
-                              labels = c("a", "b", "c"),
-                              align = "h",
-                              axis = "b",
-                              nrow = 1,
-                              ncol = 3,
-                              rel_widths = c(1, 1, .9))
+twopanels_vertical_noextreme = plot_grid(ByfungusCforNmyco_nolegend, 
+                               ByfungusNforNroots_legendbelow,
+                               labels = c("a", "b"),
+                               align = "v",
+                               axis = "l",
+                               nrow = 2,
+                               ncol = 1,
+                               rel_heights = c(1,1))
 
-
-save_plot("plots/horizontal_three_panel_plot_CforN_relationships_fig1.pdf", 
-          threepanels_horiz,
-          base_width = 15)
-
-threepanels_vertical = plot_grid(ByfungusCforNmyco_nolegend, 
-                              ByfungusNforNroots_nolegend,
-                              hyphalCformycoC_plot_legendbelow,
-                              labels = c("a", "b", "c"),
-                              align = "v",
-                              axis = "l",
-                              nrow = 3,
-                              ncol = 1,
-                              rel_heights = c(1,1,1))
-
-save_plot("plots/vertical_three_panel_plot_CforN_relationships_fig1.pdf", 
-          threepanels_vertical,
-          base_height = 12,
+save_plot("plots/vertical_TWO_panel_plot_CforN_relationships_noextreme_forsupp.pdf", 
+          twopanels_vertical_noextreme,
+          base_height = 8,
           base_width = 5)
-
-
-
 
 #### extra stuff ####
 
@@ -379,7 +400,7 @@ anova(lmer_model_mycoCforN) # mycologN15 significant
 #### INCLUDING EXTREME VALUE ####
 
 ### 1:  N15 in mycos predicts C13 in mycos, but only for Thelephora ####
-ByfungusCforNmyco = ggplot(data = nitrogeninfo) +
+ByfungusCforNmyco_ie = ggplot(data = nitrogeninfo) +
   geom_point(aes(x = mycologN15,
                  y = mycologC13, 
                  color = N_level)) +
@@ -440,7 +461,7 @@ cat(models_CforNmycos_includingextreme,
 
 ### 2: Fungal N goes to NM roots, but only for Tt ####
 
-ByfungusNforNroots = ggplot(data = nitrogeninfo) +
+ByfungusNforNroots_ie = ggplot(data = nitrogeninfo) +
   geom_point(aes(x = mycologN15,
                  y = nmlogN15, 
                  color = N_level)) +
@@ -492,6 +513,95 @@ stargazer(NforN_justTt_ie,
           summary = TRUE)
 
 sink()
+
+### 3: Plant C goes to hyphae in Tt ####
+
+hyphalCformycoC_plot = ggplot(data = subset(carboninfo, compartment_fungus == "Tt")) +
+  geom_point(aes(x = mycologC13,
+                 y = log(hyphae.ppm13Cexcess), 
+                 color = N_level)) +
+  geom_smooth(method = "lm", 
+              aes(x = mycologC13,
+                  y = log(hyphae.ppm13Cexcess)),
+              color = "black",
+              size = 0.5) +
+  scale_color_manual(values = c("steelblue4", "steelblue1"),
+                     name = "N level") +
+  scale_shape_manual(values = c(17, 15),
+                     name = "Fungus") +
+  ylab(expression("Hyphal "^13*"C in Tt (ln ppm excess)")) +
+  xlab(expression("Mycorrhizal "^13*"C in Tt (ln ppm excess)")) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) 
+test = lm(hyphalog13C ~ mycologC13*N_level, data = carboninfo_nooutlier)
+plot(test)
+CforC_justTt = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
+                    data = subset(carboninfo, compartment_fungus == "Tt"))
+class(CforC_justTt) <- "lmerMod"
+summary(CforC_justTt)
+r.squaredGLMM(CforC_justTt)
+
+fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
+fitTt_R2 = round(fitTt$R2c, 4)
+
+sink("stats_tables/CforC_justTt_lmer.html")
+
+stargazer(CforC_justTt, type = "html",
+          dep.var.labels = "Hyphal [13C] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [13C] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [13C]:N level"),
+          column.labels = c("Tt", "Sp"),
+          digits = 3,
+          digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2)),
+          summary = TRUE)
+
+sink()
+
+### Bringing together for three panel figure ####
+ByfungusCforNmyco_nolegend = ByfungusCforNmyco_ie +
+  theme(legend.position = "none")
+
+ByfungusNforNroots_nolegend = ByfungusNforNroots_ie +
+  theme(legend.position = "none")
+
+hyphalCformycoC_plot_legendbelow = hyphalCformycoC_plot +
+  theme(legend.position = "bottom")
+
+threepanels_horiz = plot_grid(ByfungusCforNmyco_nolegend, 
+                              ByfungusNforNroots_nolegend,
+                              hyphalCformycoC_plot,
+                              labels = c("a", "b", "c"),
+                              align = "h",
+                              axis = "b",
+                              nrow = 1,
+                              ncol = 3,
+                              rel_widths = c(1, 1, .9))
+
+
+save_plot("plots/horizontal_three_panel_plot_CforN_relationships_fig1.pdf", 
+          threepanels_horiz,
+          base_width = 15)
+
+threepanels_vertical = plot_grid(ByfungusCforNmyco_nolegend, 
+                                 ByfungusNforNroots_nolegend,
+                                 hyphalCformycoC_plot_legendbelow,
+                                 labels = c("a", "b", "c"),
+                                 align = "v",
+                                 axis = "l",
+                                 nrow = 3,
+                                 ncol = 1,
+                                 rel_heights = c(1,1,1))
+
+save_plot("plots/vertical_three_panel_plot_CforN_relationships_fig1.pdf", 
+          threepanels_vertical,
+          base_height = 12,
+          base_width = 5)
+
+
 
 ### Two panels including extreme value ####
 
