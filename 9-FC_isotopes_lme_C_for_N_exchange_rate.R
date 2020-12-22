@@ -3,7 +3,7 @@
 # Using an LME framework to more rigorously calculate how C for N 
 # exchange rates varied in this experiment.
 
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Load required packages
 library(agricolae)
@@ -150,13 +150,14 @@ exchangerate_plot = ggplot(data = justmycos_nomixed) +
                aes(x = mycofungus, 
                    y = logmycoCforN,
                    fill = versus3)) +
-  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
              aes(x = mycofungus, 
                  y = logmycoCforN,
                  fill = versus3)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas") +
+  ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
   scale_fill_manual(values = c("lightgray", "gray42", "white")) +
@@ -263,7 +264,8 @@ carboncomparison_withcompetition = ggplot(data = excluding_mixed) +
                aes(x = compartment_fungus, 
                    y = mycologC13,
                    fill = versus3)) +
-  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
              aes(x = compartment_fungus, 
                  y = mycologC13,
                  fill = versus3)) +
@@ -306,7 +308,8 @@ nitrogencomparison_mycos_withcomp = ggplot(data = justmycos_nomixed) +
                aes(x = mycofungus, 
                    y = mycologN15,
                    fill = versus3)) +
-  geom_point(position = position_jitterdodge(jitter.width = 0.15),
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
              aes(x = mycofungus, 
                  y = mycologN15,
                  fill = versus3)) +
@@ -364,6 +367,155 @@ save_plot("plots/vertical_three_panel_plot_CC_NN_CN_withcompetition_test.pdf",
           threepanels_vertical,
           base_height = 10,
           base_aspect_ratio = .5)
+
+#### Looking at percent N ####
+# Overall, the patterns in percent N look pretty similar to the patterns
+# that we can see with the N15 label. Overall, Tt (whether
+# mycos or adjacent fine roots) has the most N (in this case,
+# as a percent of tissue contents) in the high N tx, trailed
+# by Sp in high N, then Sp in low N and Tt in low N.
+# The percent N data indicate possible hoarding by Tt in high N,
+# when competing versus Suillus? (lower percent N in fine roots
+# than in other competition treatments)
+
+
+
+
+includingall = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
+all_nomix = includingall[-grep("MIXED", includingall$competitors),]
+all_nomix = all_nomix[!is.na(all_nomix$competitors),]
+# problem: this includes each plant twice.
+
+forpct = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
+
+# forpct = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withpctN.csv")
+forpct_nomix = forpct[-grep("MIXED", forpct$competitors),]
+
+granular_data_bycompt = read_csv("processeddata/granular_mass_and_colonization_data_by_compartment.csv")
+granular_nomix = granular_data_bycompt[-grep("MIXED", granular_data_bycompt$competitors),]
+granular_nomix$Side = tolower(granular_nomix$Side)
+granular_nomix = subset(granular_nomix, compartment_fungus != "Failed")
+granular_tojoin = select(granular_nomix, Plant, Side, 
+                         total_root_biomass_compartment,
+                         compartment_fungus)
+
+tojoin = select(forpct_nomix, Plant, Side, uncolonized_roots.pctN, mycorrhizas.pctN,
+                mycofungus, competition_treatment, N_level)
+scalingNbymass = left_join(tojoin, granular_tojoin) %>% distinct()
+scalingNbymass$g_N = scalingNbymass$uncolonized_roots.pctN*scalingNbymass$total_root_biomass_compartment
+
+scalingNbymass = subset(scalingNbymass, 
+                        competition_treatment != "Mixed" &
+                          competition_treatment != 0)
+
+labels = c(High = "High N", Low = "Low N")
+nitrogenbymass = ggplot(data = scalingNbymass) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = compartment_fungus, 
+                   y = g_N)) +
+  geom_jitter(aes(x = compartment_fungus, 
+                 y = g_N)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Total g N in roots\n(by compartment)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") 
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  # scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  # labs(fill = "Competitor")
+
+labels = c(High = "High N", Low = "Low N")
+nitrogen_withcomp = ggplot(data = forpct_nomix) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = mycorrhizas.pctN,
+                   fill = versus)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
+             aes(x = mycofungus, 
+                 y = mycorrhizas.pctN,
+                 fill = versus)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Percent N in mycorrhizas") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
+
+nitrogenhoarding_mycos_withcomp = ggplot(data = forpct_nomix) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = log(mycorrhizas.pctN/uncolonized_roots.pctN),
+                   fill = versus)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
+             aes(x = mycofungus, 
+                 y = log(mycorrhizas.pctN/uncolonized_roots.pctN),
+                 fill = versus)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Log ratio of N in mycorrhizas\nto N in adjacent roots") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
+
+percentN_roots_withcomp = ggplot(data = forpct_nomix) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = uncolonized_roots.pctN,
+                   fill = versus)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
+             aes(x = mycofungus, 
+                 y = uncolonized_roots.pctN,
+                 fill = versus)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Percent N in fine roots\nadjacent to mycorrhizas") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
+
+# Can I look at total N in the root system?
+tojoin = select(newcomp, Plant, Side, comp_root_mass)
+tojoin$Side = tolower(tojoin$Side)
+Nwithmass = left_join(forpct, tojoin)
+Ntouse = Nwithmass %>% distinct(Plant, Side, 
+                                mycorrhizas.pctN, 
+                                uncolonized_roots.pctN,
+                                comp_root_mass)
+
+
+labels = c(High = "High N", Low = "Low N")
+nitrogenpctcomparison_mycos_withcomp = ggplot(data = Nwithmass) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = mycorrhizas.pctN,
+                   fill = versus)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
+             aes(x = mycofungus, 
+                 y = mycorrhizas.pctN,
+                 fill = versus)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Percent N in mycorrhizas") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  # geom_text(data = annotations, aes(x, y, label = labs)) +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
 
 #### JUST ROOT N: Nitrogen plot ####
 

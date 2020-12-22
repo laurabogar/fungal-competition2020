@@ -16,6 +16,7 @@ library(stargazer)
 
 alldata = read_csv("processeddata/percent_col_and_mass_data_by_plant.csv")
 compdata = read_csv("processeddata/percent_colonization_and_mass_data_by_compartment.csv")
+granular_data_bycompt = read_csv("processeddata/granular_mass_and_colonization_data_by_compartment.csv")
 
 
 #### BIOMASS ####
@@ -63,25 +64,40 @@ ggsave("plots/Biomass_boxplot.jpeg", plot = massplot,
 # except 6105, which is a plant for which I don't have colonization
 # data -- I think I harvested it before I had developed that protocol? 
 # Either that or I lost the relevant tissue envelopes.
-colforplot = compdata[!is.na(compdata$compartment_fungus),]
-colforplot = subset(colforplot, compartment_fungus != "MIXED" &
-                      compartment_fungus != "OTHER" &
+colforplot = granular_data_bycompt[-grep("MIXED", granular_data_bycompt$competitors),]
+colforplot = subset(colforplot, competitors != "FAILED" &
                       competitors != "THETE" &
-                      competitors != "FAILED")
-colforplot = colforplot[-grep("MIXED", colforplot$competitors),]
-colforplot = subset(colforplot, N_level != "None" &
-                      compartment_fungus != "Failed")
-colforplot$compartment_fungus = recode(colforplot$compartment_fungus,
-                                        "NM" = "None",
-                                        "SUIPU" = "Sp",
-                                        "THETE" = "Tt")
-colforplot$bettercomp = fct_relevel(colforplot$attempted,
-                                   "None/None",
-                                   "Sp/None",
-                                   "Sp/Sp",
-                                   "Tt/Sp",
-                                   "Tt/None",
-                                   "Tt/Tt")
+                      N_level != "None")
+
+### something is wrong here.
+
+percent_col = colforplot %>%
+  group_by(Plant, Side, competitors,
+           compartment_fungus, N_level) %>%
+  summarize(percent_col = (100*(sum(Sp_myco_mass, Tt_myco_mass, na.rm = TRUE))/uncolonized_root_mass))
+
+# colforplot = full_join(colforplot, percent_col) %>% distinct()
+
+# 
+# colforplot = compdata[!is.na(compdata$compartment_fungus),]
+# colforplot = subset(colforplot, compartment_fungus != "MIXED" &
+#                       compartment_fungus != "OTHER" &
+#                       competitors != "THETE" &
+#                       competitors != "FAILED")
+# colforplot = colforplot[-grep("MIXED", colforplot$competitors),]
+# colforplot = subset(colforplot, N_level != "None" &
+#                       compartment_fungus != "Failed")
+# colforplot$compartment_fungus = recode(colforplot$compartment_fungus,
+#                                         "NM" = "None",
+#                                         "SUIPU" = "Sp",
+#                                         "THETE" = "Tt")
+# colforplot$bettercomp = fct_relevel(colforplot$attempted,
+#                                    "None/None",
+#                                    "Sp/None",
+#                                    "Sp/Sp",
+#                                    "Tt/Sp",
+#                                    "Tt/None",
+#                                    "Tt/Tt")
 colforplot$competitors_reordered = fct_relevel(colforplot$competitors,
                                     "None/None",
                                     "Sp/None",
@@ -90,12 +106,12 @@ colforplot$competitors_reordered = fct_relevel(colforplot$competitors,
                                     "Tt/None",
                                     "Tt/Tt")
 
-colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "A"] = "Tt" # why not in data? unclear
-colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "B"] = "Sp"
+# colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "A"] = "Tt" # why not in data? unclear
+# colforplot$Fungus_attempted[colforplot$Plant == 6106 & colforplot$Side == "B"] = "Sp"
 
-dead_mycos = colforplot %>% group_by(N_level, Fungus_attempted, mycofungus) %>% 
-  filter(dead_tissue > 0) %>%
-  summarize(n(), sum(dead_tissue))
+# dead_mycos = colforplot %>% group_by(N_level, Fungus_attempted, mycofungus) %>% 
+#   filter(dead_tissue > 0) %>%
+#   summarize(n(), sum(dead_tissue))
 
 # If including mixed:
 # dead_mycos = colforplot %>% group_by(N_level, Fungus_attempted, compartment_fungus) %>% 
@@ -119,6 +135,10 @@ mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
 # Okay, actually there are no significant pairwise differences here.
 # Maybe no need for the Tukey labels.
 
+# What's up with the Suillus compartments that were supposedly
+# 100% colonized?
+
+hundredpercent = percent_col[percent_col$percent_col == max(colforplot$percent_col),]
 
 collabels = data.frame(N_level = c("High", "Low"),
                        x1 = c(1, 1), x2 = c(6, 6), y1 = c(95, 70), y2 = c(95, 71),
@@ -126,14 +146,15 @@ collabels = data.frame(N_level = c("High", "Low"),
                        lab = c("a", "b"))
 
 
-colplot = ggplot(data = colforplot) +
+colplot = ggplot(data = percent_col) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = competitors, y = percent_col,
                    fill = compartment_fungus)) +
-  geom_point(aes(x = competitors, y = percent_col,
+  geom_point(position = position_jitterdodge(dodge.width = 0.9,
+                                             jitter.width = 0.15),
+             aes(x = competitors, y = percent_col,
                   fill = compartment_fungus,
-                  shape = compartment_fungus),
-             position = position_jitterdodge()) +
+                  shape = compartment_fungus)) +
   # geom_line(aes(group = as.factor(Plant))) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
