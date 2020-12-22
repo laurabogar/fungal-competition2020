@@ -39,7 +39,7 @@ massplot = ggplot(data = alldata) +
   geom_jitter(width = 0.20,
               aes(x = Fungi, y = total_biomass)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   ylab("Total plant biomass (g)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   geom_text(data = anothertry, aes(x, y, label = labs)) +

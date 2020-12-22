@@ -156,7 +156,7 @@ exchangerate_plot = ggplot(data = justmycos_nomixed) +
                  y = logmycoCforN,
                  fill = versus3)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
@@ -270,7 +270,7 @@ carboncomparison_withcompetition = ggplot(data = excluding_mixed) +
                  y = mycologC13,
                  fill = versus3)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
@@ -314,7 +314,7 @@ nitrogencomparison_mycos_withcomp = ggplot(data = justmycos_nomixed) +
                  y = mycologN15,
                  fill = versus3)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   ylab("Labeled N in mycorrhizas\n(ln ppm excess)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
@@ -349,7 +349,7 @@ threepanels_horiz = plot_grid(carboncomparison_withcompetition_nolegend,
                         rel_widths = c(1, 1, 1.6))
 
 
-save_plot("plots/horizontal_three_panel_plot_CC_NN_CN_withcompetition.pdf", 
+save_plot("plots/horizontal_three_panel_plot_CC_NN_CN_withcompetition_updated.pdf", 
           threepanels)
 
 threepanels_vertical = plot_grid(carboncomparison_withcompetition_nolegend, 
@@ -363,7 +363,7 @@ threepanels_vertical = plot_grid(carboncomparison_withcompetition_nolegend,
 
 
 
-save_plot("plots/vertical_three_panel_plot_CC_NN_CN_withcompetition_test.pdf", 
+save_plot("plots/vertical_three_panel_plot_CC_NN_CN_withcompetition_updated.pdf", 
           threepanels_vertical,
           base_height = 10,
           base_aspect_ratio = .5)
@@ -584,7 +584,7 @@ carboncomparison = ggplot(data = excluding_mixed) +
               aes(x = compartment_fungus, 
                   y = mycologC13)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
   # theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
@@ -607,7 +607,7 @@ nitrogencomparison_mycos = ggplot(data = justmycos) +
               aes(x = mycofungus, 
                   y = mycologN15)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   ylab("Labeled N in mycorrhizas\n(ln ppm excess)") +
   # theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
