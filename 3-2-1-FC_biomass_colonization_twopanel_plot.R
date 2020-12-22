@@ -1,7 +1,5 @@
 # 3-2-1 Combining biomass and colonization plots into one figure
 
-#### BIOMASS ####
-
 # significance labels determined by anova for interaction between N level and fungal treatment.
 
 # setwd("~/Documents/Fungal competition project/fungal-competition2020/")
@@ -69,12 +67,12 @@ colforplot = subset(colforplot, competitors != "FAILED" &
                       competitors != "THETE" &
                       N_level != "None")
 
-### something is wrong here.
-
 percent_col = colforplot %>%
   group_by(Plant, Side, competitors,
            compartment_fungus, N_level) %>%
-  summarize(percent_col = (100*(sum(Sp_myco_mass, Tt_myco_mass, na.rm = TRUE))/uncolonized_root_mass))
+  summarize(percent_col = (100*(sum(Sp_myco_mass, Tt_myco_mass, na.rm = TRUE))/sum(uncolonized_root_mass, Sp_myco_mass, Tt_myco_mass, na.rm = TRUE)))
+
+colforplot = percent_col
 
 # colforplot = full_join(colforplot, percent_col) %>% distinct()
 
@@ -146,7 +144,7 @@ collabels = data.frame(N_level = c("High", "Low"),
                        lab = c("a", "b"))
 
 
-colplot = ggplot(data = percent_col) +
+colplot = ggplot(data = colforplot) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = competitors, y = percent_col,
                    fill = compartment_fungus)) +
@@ -157,7 +155,7 @@ colplot = ggplot(data = percent_col) +
                   shape = compartment_fungus)) +
   # geom_line(aes(group = as.factor(Plant))) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
   ylab("Percent fungal colonization of\nroots by compartment") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungi on roots at harvest") +
@@ -170,7 +168,7 @@ colplot = ggplot(data = percent_col) +
   #                                    y = y1, yend = y2),
   #              colour = "black")
 
-save_plot("plots/Colonization_boxplot_by_compartment.pdf",
+save_plot("plots/Colonization_boxplot_by_compartment_updated.pdf",
           colplot,
           base_aspect_ratio = 1.8)
 
@@ -181,13 +179,13 @@ Figure = plot_grid(massplot, colplot,
                    axis = "l",
                    rel_heights = c(2,2),
                    labels = c("a", "b"))
-save_plot("plots/Mass_and_colonization_two_panel_boxplot_vertical.pdf",
+save_plot("plots/Mass_and_colonization_two_panel_boxplot_vertical_updated.pdf",
           Figure)
 
 Figure = plot_grid(massplot, colplot, ncol = 2, align = "h",
                     labels = c("a", "b"),
                    rel_widths = c(1, 1.6))
-save_plot("plots/Mass_and_colonization_two_panel_boxplot.pdf",
+save_plot("plots/Mass_and_colonization_two_panel_boxplot_updated.pdf",
           Figure, ncol = 2)
 
 ### Trying out col plot with color indicating intended fungi ####
@@ -288,9 +286,9 @@ colfortest = subset(colfortest, compartment_fungus != "None") # exclude compartm
 colonization_test = lmer(percent_col ~ compartment_fungus * N_level * versus + (1|Plant),
                          data = colfortest)
 anovaresults = anova(colonization_test)
-summary(anovaresults)
+anovaresults
 
-sink("stats_tables/colonization_by_compartment_lme_anova.html")
+sink("stats_tables/colonization_by_compartment_lme_anova_updated.html")
 
 stargazer(anovaresults, type = "html",
           digits = 3,
