@@ -70,6 +70,16 @@ percent_N_mycos_plot = ggplot(subset(data, tissue == "mycorrhizas" &
                  y = pctN,
                  color = N_level))
 
+granular_data_bycompt = read_csv("processeddata/granular_mass_and_colonization_data_by_compartment.csv")
+granular_nomix = granular_data_bycompt[-grep("MIXED", granular_data_bycompt$competitors),]
+granular_nomix$Side = tolower(granular_nomix$Side)
+granular_nomix = subset(granular_nomix, compartment_fungus != "Failed")
+granular_tojoin = select(granular_nomix, Plant, Side, 
+                         total_root_biomass_compartment,
+                         compartment_fungus)
+scalingN = right_join(data, granular_tojoin) %>% distinct()
+
+
 percent_N_roots_plot = ggplot(subset(data, tissue == "uncolonized_roots" &
                 Actual_fungus_by_compartment != "MIXED" &
                 Actual_fungus_by_compartment != "OTHER" &
@@ -81,7 +91,8 @@ percent_N_roots_plot = ggplot(subset(data, tissue == "uncolonized_roots" &
   geom_point(position = position_jitterdodge(jitter.width = 0.15),
              aes(x = Actual_fungus_by_compartment,
                   y = pctN,
-                  color = N_level))
+                  color = N_level)) +
+  ylab("Percent N in uncolonized roots")
 
 ggplotly(percent_N_roots_plot) # helpful for exploring extreme values, but kinda
 # weird looking as a plot.

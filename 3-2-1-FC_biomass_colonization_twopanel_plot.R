@@ -15,17 +15,168 @@ library(stargazer)
 alldata = read_csv("processeddata/percent_col_and_mass_data_by_plant.csv")
 compdata = read_csv("processeddata/percent_colonization_and_mass_data_by_compartment.csv")
 granular_data_bycompt = read_csv("processeddata/granular_mass_and_colonization_data_by_compartment.csv")
-
+# Note: The below file is produced when you run this script; you could also just start with "colfortest" below.
+colfortest = read_csv("processeddata/colonization_and_biomass_data_by_compartment_with_competition.csv")
 
 #### BIOMASS ####
-# This function maybe does automatic letters?
+
+## Stats ##
+biomass_lme = lmer(total_biomass ~ N_level * Fungi * percent_col + (1|Batch), data = alldata)
+anovaresults = anova(biomass_lme)
+anovaresults # Hmm. I should have anticipated: Type III ANOVA table shows 
+# only N level having a significant impact on biomass,
+# probably because I have such poor replication for Suillus.
+summary(biomass_lme)
+
+anotherway = lmer(total_biomass ~ N_level * Fungi + (1|percent_col), data = alldata)
+anotheranova = anova(anotherway) # okay, now everything is HIGHLY significant
+summary(anotherway)
+
+justNandF = lmer(total_biomass ~ N_level * Fungi + (1|Batch), data = alldata)
+anovaagain = anova(justNandF) # super significant again.
+
+# Having compared the models WITH percent colonization
+# to those without, I think it looks like Tt plants were
+# bigger BECAUSE they had much higher % colonization
+# (as far as the model is concerned)
+
+# Would it make more sense to model biomass as a function
+# of %Tt, %Sp, and N_level, instead?
+
+# Let's add percent colonization info by fungus to the whole dataset
+
+bio_formodel = granular_data_bycompt[-grep("MIXED", granular_data_bycompt$competitors),]
+bio_formodel = subset(bio_formodel, competitors != "FAILED" &
+                      competitors != "THETE" &
+                      N_level != "None")
+
+bio_and_col = bio_formodel %>%
+  group_by(Plant, Side, competitors,
+           compartment_fungus, N_level,
+           total_root_biomass_compartment) %>%
+  summarize(percent_col_overall = 
+              (100*(sum(Sp_myco_mass, Tt_myco_mass, na.rm = TRUE))/sum(uncolonized_root_mass, Sp_myco_mass, Tt_myco_mass, na.rm = TRUE)),
+            percent_col_Sp = 
+              (100*(sum(Sp_myco_mass, na.rm = TRUE))/sum(uncolonized_root_mass, Sp_myco_mass, Tt_myco_mass, na.rm = TRUE)),
+            percent_col_Tt = 
+              (100*(sum(Tt_myco_mass, na.rm = TRUE))/sum(uncolonized_root_mass, Sp_myco_mass, Tt_myco_mass, na.rm = TRUE)))
+
+bio_and_col_byplant = bio_formodel %>%
+  group_by(Plant, competitors, N_level, competitors_attempted) %>%
+  summarize(total_root_mass = sum(total_root_biomass_compartment),
+            percent_col_overall = 
+              (100*(sum(Sp_myco_mass, Tt_myco_mass, na.rm = TRUE))/sum(uncolonized_root_mass, Sp_myco_mass, Tt_myco_mass, na.rm = TRUE)),
+            percent_col_Sp = 
+              (100*(sum(Sp_myco_mass, na.rm = TRUE))/sum(uncolonized_root_mass, Sp_myco_mass, Tt_myco_mass, na.rm = TRUE)),
+            percent_col_Tt = 
+              (100*(sum(Tt_myco_mass, na.rm = TRUE))/sum(uncolonized_root_mass, Sp_myco_mass, Tt_myco_mass, na.rm = TRUE)))
+
+justmass = select(alldata, Plant, total_biomass, Batch)
+
+bio_and_col_byplant = left_join(bio_and_col_byplant, justmass)
+
+# Stats with the linear framework:
+
+biomass_by_colonization = lmer(total_biomass ~ N_level * percent_col_Sp * percent_col_Tt + (1|Batch), data = bio_and_col_byplant)
+summary(biomass_by_colonization)
+bioanova = anova(biomass_by_colonization) 
+# Okay, here we have N level as a highly significant predictor
+# of biomass, and percent colonization by Tt as marginally significant
+# This seems pretty reasonable.
+
+biomass_simple = lm(total_biomass ~ N_level * percent_col_Sp * percent_col_Tt, data = bio_and_col_byplant)
+summary(biomass_simple)
+
+
+# Is it reasonable for me to use the random effect?
+# Found this suggestion on Stack Overflow:
+biomass_lmer = lmer(total_biomass ~ N_level * percent_col_Sp * percent_col_Tt + (1|Batch), 
+                    data = bio_and_col_byplant, REML = FALSE)
+
+AIC(biomass_lmer, biomass_simple)
+# Lower AIC for the lmer model, let's do that.
+
+class(biomass_by_colonization) = "lmerMod"
+
+sink("stats_tables/biomass_lmer.html")
+
+stargazer(biomass_by_colonization, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.10, 0.05, 0.01),
+          star.char = c("+", "*", "**"),
+          digit.separator = "",
+          summary = TRUE,
+          no.space = TRUE,
+          notes = c("+ p<0.1; * p<0.05; ** p<0.01"),
+          notes.append=FALSE)
+
+sink()
+
+# Now, let's see if being a contaminated plant makes a differences
+# for biomass OR colonization.
+
+bio_and_col_byplant$uncontaminated = bio_and_col_byplant$competitors_attempted == bio_and_col_byplant$competitors
+bio_and_col_onlyintended = subset(bio_and_col_byplant, uncontaminated == TRUE)
+
+biomass_by_colonization_contamtest = lmer(total_biomass ~ N_level * 
+                                 percent_col_Sp * percent_col_Tt *
+                                 uncontaminated + 
+                                 (1|Batch), data = bio_and_col_byplant)
+summary(biomass_by_colonization_contamtest)
+anova(biomass_by_colonization_contamtest)
+
+# Well, it looks like the contaminated ones are indeed different.
+# Specifically, we've got significant interactions between percent TT and 
+# contamination, as well as with N level.
+
+### This is not entirely correct: I only want to know which ones got Tt that
+# weren't supposed to... but I think all of these were those actually.
+
+# could I define this contamination a little more specifically?
+# Contamination by Tt represents only the following transitions:
+# None/None -> anything with Tt
+# Tt/None --> Tt/Tt
+# Tt/Sp --> Tt/Tt
+# Sp/Sp --> anything with Tt
+# Sp/None --> anything with Tt
+
+grepl("Tt/Tt", bio_and_col_byplant$competitors_attempted[1])
+
+bio_and_col_byplant$contaminated = numeric(nrow(bio_and_col_byplant))
+bio_and_col_byplant$contaminated = FALSE
+
+for (i in 1:nrow(bio_and_col_byplant)) {
+  if (bio_and_col_byplant$competitors_attempted[i] == "None/None" |
+      bio_and_col_byplant$competitors_attempted[i] == "Sp/None" |
+      bio_and_col_byplant$competitors_attempted[i] == "Sp/Sp") {
+    bio_and_col_byplant$contaminated[i] = grepl("Tt", bio_and_col_byplant$competitors[i])
+  } else if (bio_and_col_byplant$competitors_attempted[i] == "Tt/None" |
+             bio_and_col_byplant$competitors_attempted[i] == "Tt/Sp") {
+    bio_and_col_byplant$contaminated[i] = grepl("Tt/Tt", bio_and_col_byplant$competitors[i])
+    }
+  }
+
+bio_and_col_onlyclean = subset(bio_and_col_byplant, contaminated == FALSE)
+plantlist = select(bio_and_col_onlyclean, Plant)
+write_csv(plantlist, "processeddata/Plants_with_no_Tt_contamination.csv")
+
+
+
+biomass_by_colonization_onlyclean = lmer(total_biomass ~ N_level * 
+                                            percent_col_Sp * percent_col_Tt +
+                                            (1|Batch), data = bio_and_col_onlyclean)
+summary(biomass_by_colonization_onlyclean)
+anova(biomass_by_colonization_onlyclean)
+
+
+### Plot ###
+
+# This function  does automatic letters
 tx = with(alldata, interaction(N_level, Fungi))
 anovaforplot = aov(total_biomass ~ tx, data = alldata)
 
 # from "agricolae" package
 mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
-# Oh thank goodness this matches my prior
-# results and simplifies my life a lot.
 
 anothertry = data.frame(x = c((1:6), (1:6)),
                         y = c(4, 4, 4, 6, 6, 7.5, 4, 4, 4, 4, 4, 4),
@@ -45,6 +196,29 @@ massplot = ggplot(data = alldata) +
   geom_text(data = anothertry, aes(x, y, label = labs)) +
   xlab("Fungi on roots at harvest")
 
+massplot_noletters = ggplot(data = bio_and_col_onlyclean) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = competitors, y = total_biomass)) +
+  geom_jitter(width = 0.20,
+              aes(x = competitors, y = total_biomass)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ylab("Total plant biomass (g)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungi on roots at harvest")
+
+massplot_noletters_onlyintended = ggplot(data = bio_and_col_onlyintended) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = competitors, y = total_biomass)) +
+  geom_jitter(width = 0.20,
+              aes(x = competitors, y = total_biomass)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ylab("Total plant biomass (g)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungi on roots at harvest")
+
+
 pdf("plots/Biomass_boxplot.pdf", width = 9, height = 5)
 massplot
 dev.off()
@@ -52,6 +226,7 @@ dev.off()
 ggsave("plots/Biomass_boxplot.jpeg", plot = massplot,
        device = "jpeg",
        width = 9, height = 5, units = "in")
+
 
 #### COLONIZATION ####
 
@@ -116,6 +291,12 @@ colforplot$competitors_reordered = fct_relevel(colforplot$competitors,
 #   filter(dead_tissue > 0) %>%
 #   summarize(n(), sum(dead_tissue))
 
+# what happens if we use only plants that were NOT contaminated by errant Thelephora?
+
+col_onlyclean = subset(colforplot, Plant %in% bio_and_col_onlyclean$Plant)
+
+col_onlyintended = subset(colforplot, Plant %in% bio_and_col_onlyintended$Plant)
+
 
 labels = c(High = "High N", Low = "Low N")
 
@@ -167,6 +348,46 @@ colplot = ggplot(data = colforplot) +
   # geom_segment(data = collabels, aes(x = x1, xend = x2,
   #                                    y = y1, yend = y2),
   #              colour = "black")
+
+colplot_onlyclean = ggplot(data = col_onlyclean) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = competitors, y = percent_col,
+                   fill = compartment_fungus)) +
+  geom_point(position = position_jitterdodge(dodge.width = 0.9,
+                                             jitter.width = 0.15),
+             aes(x = competitors, y = percent_col,
+                 fill = compartment_fungus,
+                 shape = compartment_fungus)) +
+  # geom_line(aes(group = as.factor(Plant))) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
+  ylab("Percent root mass colonized\nby compartment") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungi on roots at harvest") +
+  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+  scale_shape_manual(values = c(1, 16, 2)) +
+  labs(shape = "Fungus", fill = "Fungus") +
+  ylim(-2, 105)
+
+colplot_onlyintended = ggplot(data = col_onlyintended) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = competitors, y = percent_col,
+                   fill = compartment_fungus)) +
+  geom_point(position = position_jitterdodge(dodge.width = 0.9,
+                                             jitter.width = 0.15),
+             aes(x = competitors, y = percent_col,
+                 fill = compartment_fungus,
+                 shape = compartment_fungus)) +
+  # geom_line(aes(group = as.factor(Plant))) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
+  ylab("Percent root mass colonized\nby compartment") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungi on roots at harvest") +
+  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+  scale_shape_manual(values = c(1, 16, 2)) +
+  labs(shape = "Fungus", fill = "Fungus") +
+  ylim(-2, 105)
 
 save_plot("plots/Colonization_boxplot_by_compartment_updated.pdf",
           colplot,

@@ -16,6 +16,7 @@ carboninfo$hyphalog13C = log(carboninfo$hyphae.ppm13Cexcess)
 nitrogeninfo$hyphae.ppm13Cexcess =  nitrogeninfo$hyphae.APE13C*10^4
 nitrogeninfo$hyphae.ppm15Nexcess =  nitrogeninfo$hyphae.APE15N*10^4
 
+nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
 
 nitrogeninfo_nooutlier = subset(nitrogeninfo, Plant != 6041)
 carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b
@@ -398,6 +399,9 @@ lmer_model_mycoCforN = lmer(mycologC13 ~ mycologN15*compartment_fungus*N_level +
 summary(lmer_model_mycoCforN) #NS
 anova(lmer_model_mycoCforN) # mycologN15 significant
 #### INCLUDING EXTREME VALUE ####
+
+nitrogen_nocontam = subset(nitrogeninfo, Plant %in% nocontam$Plant)
+# if you do this, you lose 21 samples of 59 total. This is definitely not worth it.
 
 ### 1:  N15 in mycos predicts C13 in mycos, but only for Thelephora ####
 ByfungusCforNmyco_ie = ggplot(data = nitrogeninfo) +
