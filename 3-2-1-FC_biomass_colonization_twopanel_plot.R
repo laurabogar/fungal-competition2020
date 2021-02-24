@@ -5,10 +5,12 @@
 # setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(agricolae)
+library(effects)
 library(emmeans)
 library(cowplot)
 library(lme4)
 library(lmerTest)
+library(MuMIn)
 library(tidyverse)
 library(stargazer)
 
@@ -79,7 +81,7 @@ bio_and_col_byplant = left_join(bio_and_col_byplant, justmass)
 
 biomass_by_colonization = lmer(total_biomass ~ N_level * percent_col_Sp * percent_col_Tt + (1|Batch), data = bio_and_col_byplant)
 summary(biomass_by_colonization)
-bioanova = anova(biomass_by_colonization) 
+biomass_rsquared = round(r.squaredGLMM(biomass_by_colonization)[2], 4)
 # Okay, here we have N level as a highly significant predictor
 # of biomass, and percent colonization by Tt as marginally significant
 # This seems pretty reasonable.
@@ -96,21 +98,7 @@ biomass_lmer = lmer(total_biomass ~ N_level * percent_col_Sp * percent_col_Tt + 
 AIC(biomass_lmer, biomass_simple)
 # Lower AIC for the lmer model, let's do that.
 
-class(biomass_by_colonization) = "lmerMod"
 
-sink("stats_tables/biomass_lmer.html")
-
-stargazer(biomass_by_colonization, type = "html",
-          digits = 3,
-          star.cutoffs = c(0.10, 0.05, 0.01),
-          star.char = c("+", "*", "**"),
-          digit.separator = "",
-          summary = TRUE,
-          no.space = TRUE,
-          notes = c("+ p<0.1; * p<0.05; ** p<0.01"),
-          notes.append=FALSE)
-
-sink()
 
 # Now, let's see if being a contaminated plant makes a differences
 # for biomass OR colonization.
@@ -166,8 +154,38 @@ biomass_by_colonization_onlyclean = lmer(total_biomass ~ N_level *
                                             percent_col_Sp * percent_col_Tt +
                                             (1|Batch), data = bio_and_col_onlyclean)
 summary(biomass_by_colonization_onlyclean)
-anova(biomass_by_colonization_onlyclean)
+biomass_rsquared = round(r.squaredGLMM(biomass_by_colonization_onlyclean)[2], 4)
 
+plot(allEffects(biomass_by_colonization_onlyclean))
+plot(predictorEffect("percent_col_Sp", biomass_by_colonization_onlyclean),
+     lines = list(multiline = FALSE))
+
+
+class(biomass_by_colonization_onlyclean) = "lmerMod"
+
+sink("stats_tables/biomass_lmer_noTtcontam.html")
+
+stargazer(biomass_by_colonization_onlyclean, type = "html",
+          dep.var.labels = "Total plant biomass (g)",
+          covariate.labels = c("N level (low)",
+                               "Percent root mass colonized by Sp",
+                               "Percent root mass colonized by Tt",
+                               "N level (low):Percent Sp",
+                               "N level (low):Percent Tt",
+                               "Percent Sp:Percent Tt",
+                               "N level (low):Percent Sp:Percent Tt"),
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          star.char = c("*", "**", "***"),
+          digit.separator = "",
+          summary = TRUE,
+          no.space = TRUE,
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             biomass_rsquared)),
+          ci = TRUE,
+          notes.append=FALSE)
+
+sink()
 
 ### Plot ###
 
@@ -207,16 +225,6 @@ massplot_noletters = ggplot(data = bio_and_col_onlyclean) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungi on roots at harvest")
 
-massplot_noletters_onlyintended = ggplot(data = bio_and_col_onlyintended) +
-  geom_boxplot(outlier.alpha = 0,
-               aes(x = competitors, y = total_biomass)) +
-  geom_jitter(width = 0.20,
-              aes(x = competitors, y = total_biomass)) +
-  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-  ylab("Total plant biomass (g)") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungi on roots at harvest")
 
 
 pdf("plots/Biomass_boxplot.pdf", width = 9, height = 5)
@@ -351,6 +359,7 @@ colplot = ggplot(data = colforplot) +
 
 colplot_onlyclean = ggplot(data = col_onlyclean) +
   geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(0.9),
                aes(x = competitors, y = percent_col,
                    fill = compartment_fungus)) +
   geom_point(position = position_jitterdodge(dodge.width = 0.9,
@@ -403,7 +412,7 @@ Figure = plot_grid(massplot, colplot,
 save_plot("plots/Mass_and_colonization_two_panel_boxplot_vertical_updated.pdf",
           Figure)
 
-Figure = plot_grid(massplot, colplot, ncol = 2, align = "h",
+Figure = plot_grid(massplot_noletters, colplot_onlyclean, ncol = 2, align = "h",
                     labels = c("a", "b"),
                    rel_widths = c(1, 1.6))
 save_plot("plots/Mass_and_colonization_two_panel_boxplot_updated.pdf",
@@ -457,7 +466,8 @@ colplot_color_bycompt = ggplot(data = colforplot) +
 
 
 #### COLONIZATION STATS ####
-colfortest = colforplot
+# colfortest = colforplot
+colfortest = col_onlyclean
 colfortest$versus = numeric(nrow(colfortest))
 
 for (i in 1:nrow(colfortest)) {
@@ -506,12 +516,22 @@ colfortest = subset(colfortest, compartment_fungus != "None") # exclude compartm
 
 colonization_test = lmer(percent_col ~ compartment_fungus * N_level * versus + (1|Plant),
                          data = colfortest)
-anovaresults = anova(colonization_test)
+
+summary(colonization_test) # nothing significant.
+anovaresults = anova(colonization_test) #comopartment fungus highly significant,
+#marginal interaction with competitor identity
 anovaresults
 
 sink("stats_tables/colonization_by_compartment_lme_anova_updated.html")
 
 stargazer(anovaresults, type = "html",
+          # covariate.labels = c("compartment fungus",
+          #                      "N level",
+          #                      "competitor",
+          #                      "compartment fungus:N level",
+          #                      "compartment fungus:competitor",
+          #                      "N level:competitor",
+          #                      "compartment fungus:N level:competitor"),
           digits = 3,
           star.cutoffs = c(0.05, 0.01, 0.001),
           digit.separator = "",
