@@ -33,6 +33,9 @@ evencleaner$mycofungus[evencleaner$Plant == 6059 & evencleaner$Side == "b"] = "T
 evencleaner$Actual_fungus_by_compartment[evencleaner$Plant == 6059 & evencleaner$Side == "b"] = "THETE" # found in notes; roots were dead but collected THETE rhizomorphs
 evencleaner$Actual_fungi_at_harvest[evencleaner$Plant == 6059 & evencleaner$Side == "b"] = "THETE" # found in notes; roots were dead but collected THETE rhizomorphs
 
+evencleaner$Actual_fungi_at_harvest[evencleaner$Plant == 6061 & evencleaner$Side == "b"] = "THETE/NM" # coded wrong, but notes clearly define side a as NM and b as THETE.
+
+
 # evencleaner$mycofungus[evencleaner$tissue != "mycorrhizas"] = NA
 # I'm not super sure what I meant by this... Keep it in for
 # now, I guess.
