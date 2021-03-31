@@ -20,6 +20,7 @@ granular_data_bycompt = read_csv("processeddata/granular_mass_and_colonization_d
 # Note: The below file is produced when you run this script; you could also just start with "colfortest" below.
 colfortest = read_csv("processeddata/colonization_and_biomass_data_by_compartment_with_competition.csv")
 
+
 #### BIOMASS ####
 
 ## Stats ##
@@ -518,7 +519,7 @@ colonization_test = lmer(percent_col ~ compartment_fungus * N_level * versus + (
                          data = colfortest)
 
 summary(colonization_test) # nothing significant.
-anovaresults = anova(colonization_test) #comopartment fungus highly significant,
+anovaresults = anova(colonization_test) #compartment fungus highly significant,
 #marginal interaction with competitor identity
 anovaresults
 

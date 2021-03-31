@@ -9,6 +9,7 @@ library(cowplot)
 library(agricolae) # for automatic Tukey labels
 
 allisotopes = read_csv("processeddata/isotopes_two_rows_per_plant_updated_with_pctCN.csv")
+# From script 2-FC_isotopes_generating_one_row_per_plant
 
 # Old version as of October 28, 2020:
 # allisotopes = read_csv("processeddata/isotopes_one_row_per_plant_including_unenriched_July.csv")
@@ -17,7 +18,11 @@ allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6033] = "SUIPU/SUIPU"
 
 isotopes_forN = read_csv("processeddata/isotope_data_one_row_per_plant_July.csv")
 minimally_processed_isotopes = read_csv("processeddata/Cleaned_processed_FC_isotope_data_July.csv")
+minimally_processed_isotopes$Actual_fungi_at_harvest[minimally_processed_isotopes$Plant == 6061] = "THETE/NM"
+# ^ correcting an error in the notes
 percent_col = read_csv("processeddata/percent_colonization_and_mass_data_by_compartment.csv")
+percent_col$competitors[percent_col$Plant == 6061] = "Tt/None"
+# ^ correcting an error in the notes
 metadata_byplant = read_csv("processeddata/percent_col_and_mass_data_by_plant.csv")
 
 allisotopes = rename(allisotopes, compartment_fungus = Actual_fungus_by_compartment)
@@ -202,6 +207,8 @@ write_csv(carboninfo, "processeddata/data_for_carbon_only_analyses_withpctC.csv"
 ### Making data frame for N15 analyses ###
 
 nitrogeninfo = subset(together, received15N == "Y" & Batch != "NA" & mycorrhizas.APE13C != "NA" & mycorrhizas.APE15N != "NA")
+# ^ this is the point where I lose plants 6013 and 6072, the orphan compartments
+# whose partners got lost at the isotope center.
 nitrogeninfo = subset(nitrogeninfo, compartment_fungus != "Mixed")
 
 # In order to understand these data, I'm going to need to 

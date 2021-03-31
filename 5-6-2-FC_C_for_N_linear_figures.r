@@ -9,7 +9,7 @@ library(lmerTest)
 library(emmeans)
 library(MuMIn)
 
-carboninfo = read_csv("processeddata/data_for_carbon_only_analyses_withpctC.csv")
+carboninfo = read_csv("processeddata/data_for_carbon_only_analyses_withpctC.csv") # from script 4-alternative
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withpctN.csv")
 
 carboninfo$hyphalog13C = log(carboninfo$hyphae.ppm13Cexcess)

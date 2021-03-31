@@ -14,7 +14,7 @@ library(lmerTest)
 library(stargazer)
 
 # Loading required data
-together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
 
 
 #### How does the allocation ratio to Tt change with competition? ####
@@ -63,8 +63,28 @@ allocratios = allocratios[!is.na(allocratios$allocratio),]
 
 allocratios$logallocratio = log(allocratios$allocratio)
 
+plantlist = allocratios %>% group_by(competitors, N_level) %>% summarize(list(Plant))
+totalplantlist = together %>% group_by(competitors, N_level) %>% summarize(list(Plant))
+
+unlist(plantlist[2,3])
+unlist(totalplantlist[14,3])
+
+unlist(plantlist[6,3])
+# We lose plant 6030 between the full data and the allocation ratios. Why?
+# Based on my notes, it had "lame mycos" (probably old and not numerous) at harvest.
+# And I see no evidence of our ever having tin-balled that sample, or sent for analysis.
+# It's unclear if the envelope was lost in the shuffle, or what happened, but it can't be included.
+length(unlist(totalplantlist[18,3])) # okay, weird, plant 6072 shows up only once here.
+# Ah! It's because UCSC lost the samples from side B of that root system,
+# so I couldn't use it for pairwise comparison.
 
 
+test = together %>% filter(Plant == 6072)
+
+nomixed = together %>% filter(!str_detect(versus, "Mixed"), 
+                              !str_detect(competitors, "MIXED"), 
+                              str_detect(compartment_fungus, "Tt"))
+nomixed %>% group_by(competitors, N_level) %>% summarize(n())
 ### Statistical test with lmerTest ###
 allocation_ratio.full = lmer(logallocratio ~ versus * N_level + (1|Batch), 
                 data = allocratios)

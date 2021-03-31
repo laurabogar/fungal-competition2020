@@ -315,7 +315,7 @@ nitrogencomparison_mycos_withcomp = ggplot(data = justmycos_nomixed) +
                  fill = versus3)) +
   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-  ylab("Labeled N in mycorrhizas\n(ln ppm excess)") +
+  ylab("Fungal N in mycorrhizas\n(ln ppm excess)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungus") +
   # geom_text(data = annotations, aes(x, y, label = labs)) +
@@ -350,7 +350,7 @@ threepanels_horiz = plot_grid(carboncomparison_withcompetition_nolegend,
 
 
 save_plot("plots/horizontal_three_panel_plot_CC_NN_CN_withcompetition_updated.pdf", 
-          threepanels)
+          threepanels_horiz)
 
 threepanels_vertical = plot_grid(carboncomparison_withcompetition_nolegend, 
                               nitrogencomparison_mycos_withcomp_nolegend,
