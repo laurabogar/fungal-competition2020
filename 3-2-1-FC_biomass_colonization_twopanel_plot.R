@@ -148,7 +148,7 @@ for (i in 1:nrow(bio_and_col_byplant)) {
 bio_and_col_onlyclean = subset(bio_and_col_byplant, contaminated == FALSE)
 plantlist = select(bio_and_col_onlyclean, Plant)
 write_csv(plantlist, "processeddata/Plants_with_no_Tt_contamination.csv")
-
+write_csv(bio_and_col_onlyclean, "processeddata/Biomass_and_colonization_forplants_with_no_Tt_contamination.csv")
 
 
 biomass_by_colonization_onlyclean = lmer(total_biomass ~ N_level * 
@@ -226,7 +226,13 @@ massplot_noletters = ggplot(data = bio_and_col_onlyclean) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
   xlab("Fungi on roots at harvest")
 
+save_plot("plots/Biomass_boxplot_noletters.pdf",
+          massplot_noletters,
+          base_aspect_ratio = 1.8)
 
+save_plot("plots/Biomass_boxplot_noletters.png",
+          massplot_noletters,
+          base_aspect_ratio = 1.8)
 
 pdf("plots/Biomass_boxplot.pdf", width = 9, height = 5)
 massplot

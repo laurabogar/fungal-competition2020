@@ -1,0 +1,13 @@
+N_level,competitors,count
+High,None/None,1
+High,Sp/None,1
+High,Sp/Sp,2
+High,Tt/None,4
+High,Tt/Sp,3
+High,Tt/Tt,7
+Low,None/None,2
+Low,Sp/None,5
+Low,Sp/Sp,8
+Low,Tt/None,5
+Low,Tt/Sp,5
+Low,Tt/Tt,8

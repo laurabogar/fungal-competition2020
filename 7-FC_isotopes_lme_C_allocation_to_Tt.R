@@ -89,7 +89,6 @@ nomixed %>% group_by(competitors, N_level) %>% summarize(n())
 allocation_ratio.full = lmer(logallocratio ~ versus * N_level + (1|Batch), 
                 data = allocratios)
 
-# Boundary(singular) fit... but may not be wrong.
 
 allocanova = anova(allocation_ratio.full)
 allocposthoc = emmeans(allocation_ratio.full, list(pairwise ~ versus*N_level), adjust = "tukey")

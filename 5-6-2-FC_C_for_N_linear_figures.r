@@ -12,6 +12,7 @@ library(MuMIn)
 carboninfo = read_csv("processeddata/data_for_carbon_only_analyses_withpctC.csv") # from script 4-alternative
 nitrogeninfo = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates_withpctN.csv")
 
+
 carboninfo$hyphalog13C = log(carboninfo$hyphae.ppm13Cexcess)
 nitrogeninfo$hyphae.ppm13Cexcess =  nitrogeninfo$hyphae.APE13C*10^4
 nitrogeninfo$hyphae.ppm15Nexcess =  nitrogeninfo$hyphae.APE15N*10^4
@@ -41,6 +42,29 @@ ByfungusCforNmyco = ggplot(data = nitrogeninfo_nooutlier) +
                      name = "N level") +
   facet_grid(. ~ compartment_fungus) +
   theme(plot.margin = unit(c(1,1,1,1), "cm"))
+
+# Version for talk:
+ByfungusCforNmyco_purple = ggplot(data = nitrogeninfo_nooutlier) +
+  geom_point(aes(x = mycologN15,
+                 y = mycologC13, 
+                 color = N_level)) +
+  geom_smooth(method = "lm",
+              formula = y ~ x,
+              data = subset(nitrogeninfo_nooutlier, compartment_fungus == "Tt"),
+              aes(x = mycologN15,
+                  y = mycologC13),
+              color = "black",
+              size = 0.5) +
+  ylab(bquote(atop("Mycorrhizal "^13*"C (ln ppm excess)"))) +
+  xlab(bquote(atop("Mycorrhizal "^15*"N (ln ppm excess)"))) +
+  scale_color_manual(values = c("mediumpurple", "thistle3"),
+                     name = "N level") +
+  facet_grid(. ~ compartment_fungus) +
+  theme(plot.margin = unit(c(1,1,1,1), "cm"))
+
+save_plot("plots/Myco_C_for_N_purple_for_talk.pdf",
+          ByfungusCforNmyco_purple,
+          base_aspect_ratio = 1.7)
 
 mycoCforN_justTt = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
                             data = subset(nitrogeninfo_nooutlier, compartment_fungus == "Tt"))
@@ -547,7 +571,7 @@ r.squaredGLMM(CforC_justTt)
 fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
 fitTt_R2 = round(fitTt$R2c, 4)
 
-sink("stats_tables/CforC_justTt_lmer.html")
+sink("stats_tables/CforC_justTt_lmer2.html")
 
 stargazer(CforC_justTt, type = "html",
           dep.var.labels = "Hyphal [13C] (ln ppm excess)",
