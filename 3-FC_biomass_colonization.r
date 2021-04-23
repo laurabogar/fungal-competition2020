@@ -602,7 +602,7 @@ percentages = granular_byplant %>%
   group_by(Plant) %>% 
   summarize(percent_Tt = 100*(Tt_myco_mass_wholesystem/percent_col_denominator),
             percent_Sp = 100*(Sp_myco_mass_wholesystem/percent_col_denominator),
-            percent_Tt_dead = 00*(Tt_dead_mass_wholesystem/percent_col_denominator),
+            percent_Tt_dead = 100*(Tt_dead_mass_wholesystem/percent_col_denominator),
             percent_Sp_dead = 100*(Sp_dead_mass_wholesystem/percent_col_denominator))
 
 granular_byplant_with_percent = left_join(granular_byplant, percentages)
@@ -625,7 +625,7 @@ alldata_byplant = left_join(granular_byplant_with_percent, meta_by_plant_withsho
 
 write_csv(alldata_byplant, "processeddata/granular_mass_and_colonization_data_by_plant.csv")
 
-#### UNUSED INFO FROM HERE ON ####
+
 
 # Ideally, at this point I would rearrange the matrix
 # so that each compartment has one row.
@@ -638,9 +638,37 @@ write_csv(alldata_byplant, "processeddata/granular_mass_and_colonization_data_by
 
 test = wide_bycompt %>% spread(mycofungus, percent_col)
 
+wide_bycompt$Plantside = paste(wide_bycompt$Plant, wide_bycompt$Side)
 
-write_csv(wide_bycompt, "processeddata/percent_colonization_and_mass_data_by_compartment.csv")
+mydupes = wide_bycompt$Plantside[duplicated(cbind(wide_bycompt$Plant, wide_bycompt$Side))]
+wholething = wide_bycompt[wide_bycompt$Plantside %in% mydupes,]
+nomix = wholething %>% filter(compartment_fungus != "Mixed")
 
+# I've got some rows that didn't merge correctly.
+
+for (i in 1:nrow(wide_bycompt)) {
+  for (j in 1:nrow(wide_bycompt)) {
+    if (wide_bycompt$Plantside[i] %in% nomix$Plantside &
+      wide_bycompt$Plantside[j] == wide_bycompt$Plantside[i]) {
+        if (wide_bycompt$mycorrhizas[i] == 0) {
+          wide_bycompt$mycorrhizas[i] <- wide_bycompt$mycorrhizas[j]
+        } else if (is.na(wide_bycompt$dead_tissue[i])) {
+          wide_bycompt$dead_tissue[i] <- wide_bycompt$dead_tissue[j]
+        } else if (is.na(wide_bycompt$roots[i])) {
+          wide_bycompt$roots[i] <- wide_bycompt$roots[j]
+        }
+      }
+  } 
+}
+
+wide_bycompt$percent_col[wide_bycompt$Plantside %in% nomix$Plantside] = NA # percent col numbers here don't make sense, turn to NAs for now
+
+nomorerepeatrows = wide_bycompt %>% distinct()
+
+write_csv(nomorerepeatrows, "processeddata/percent_colonization_and_mass_data_by_compartment.csv")
+
+
+#### UNUSED INFO FROM HERE ON ####
 # #### Did plant repress colonization by less helpful fungus? ####
 # 
 # wide_bycompt$compartment_fungus
