@@ -18,6 +18,9 @@ nitrogeninfo$hyphae.ppm13Cexcess =  nitrogeninfo$hyphae.APE13C*10^4
 nitrogeninfo$hyphae.ppm15Nexcess =  nitrogeninfo$hyphae.APE15N*10^4
 
 nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+nitrogeninfo = mutate(nitrogeninfo, clean = nitrogeninfo$Plant %in% nocontam$Plant)
+carboninfo = mutate(carboninfo, clean = carboninfo$Plant %in% nocontam$Plant)
+
 
 nitrogeninfo_nooutlier = subset(nitrogeninfo, Plant != 6041)
 carboninfo_nooutlier = carboninfo[!carboninfo$hyphae.APE13C == max(carboninfo$hyphae.APE13C),] # omit outlier 6024b
@@ -74,6 +77,16 @@ r.squaredGLMM(mycoCforN_justTt)
 fitTt = as.data.frame(r.squaredGLMM(mycoCforN_justTt))
 fitTt_R2 = round(fitTt$R2c, 4)
 
+# Does it change if we only use uncontaminated plants?
+
+mycoCforN_justTt_onlyclean = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
+                        data = subset(nitrogeninfo_nooutlier, compartment_fungus == "Tt" & clean == TRUE))
+mycoCforN_justTt_table = summary(mycoCforN_justTt_onlyclean)
+class(mycoCforN_justTt_onlyclean) <- "lmerMod"
+r.squaredGLMM(mycoCforN_justTt_onlyclean)
+fitTt = as.data.frame(r.squaredGLMM(mycoCforN_justTt_onlyclean))
+fitTt_R2 = round(fitTt$R2c, 4) #fit is slightly better with just clean plants, patterns the same
+
 # This allows me to visualize the partial
 # residuals of my model -- basically subtracting
 # out the influence of N level and its interaction with
@@ -107,6 +120,16 @@ r.squaredGLMM(mycoCforN_justSp)
 fitSp = as.data.frame(r.squaredGLMM(mycoCforN_justSp))
 fitSp_R2 = round(fitSp$R2c, 4)
 
+# Does it look the same if we eliminate plants with any Tt contamination?
+
+mycoCforN_justSp_onlyclean = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
+                        data = subset(nitrogeninfo_nooutlier, compartment_fungus == "Sp" & clean == TRUE))
+mycoCforN_justSp_onlyclean_table = summary(mycoCforN_justSp_onlyclean)
+class(mycoCforN_justSp_onlyclean) <- "lmerMod"
+r.squaredGLMM(mycoCforN_justSp_onlyclean)
+fitSp = as.data.frame(r.squaredGLMM(mycoCforN_justSp_onlyclean))
+fitSp_R2 = round(fitSp$R2c, 4)
+# Fit gets a little better, but patterns are the same.
 
 sink("stats_tables/mycoCforN_justSp_lmer.html")
 
@@ -162,6 +185,13 @@ NforN_justTt = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
                         data = subset(nitrogeninfo_nooutlier, compartment_fungus == "Tt"))
 class(NforN_justTt) <- "lmerMod"
 r.squaredGLMM(NforN_justTt)
+
+# with only uncontaminated plants?
+NforN_justTt_onlyclean = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
+                    data = subset(nitrogeninfo_nooutlier, compartment_fungus == "Tt" & clean == TRUE))
+class(NforN_justTt_onlyclean) <- "lmerMod"
+r.squaredGLMM(NforN_justTt_onlyclean)
+# fit gets a little worse, but pattern is the same
 
 sink("stats_tables/NforN_justTt_lmer.html")
 
@@ -461,6 +491,22 @@ class(mycoCforN_justSp_ie) <- "lmerMod"
 fitSp = as.data.frame(r.squaredGLMM(mycoCforN_justSp_ie))
 fitSp_R2 = round(fitSp$R2c, 4)
 
+# If we use only uncontaminated plants?
+mycoCforN_justTt_includingextreme_onlyclean = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
+                                         data = subset(nitrogeninfo, compartment_fungus == "Tt" & clean == TRUE))
+mycoCforN_justTt_table_ie_onlyclean = summary(mycoCforN_justTt_includingextreme_onlyclean)
+class(mycoCforN_justTt_includingextreme_onlyclean) <- "lmerMod"
+fitTt_onlyclean = as.data.frame(r.squaredGLMM(mycoCforN_justTt_includingextreme_onlyclean))
+fitTt_R2_onlyclean = round(fitTt_onlyclean$R2c, 4)
+# Fit for Tt is about the same, significance patterns & relationships also the same
+
+mycoCforN_justSp_ie_onlyclean = lmer(mycologC13 ~ mycologN15*N_level + (1|Batch),
+                           data = subset(nitrogeninfo, compartment_fungus == "Sp" & clean == TRUE))
+mycoCforN_justSp_table_ie_onlyclean = summary(mycoCforN_justSp_ie_onlyclean)
+class(mycoCforN_justSp_ie_onlyclean) <- "lmerMod"
+fitSp_onlyclean = as.data.frame(r.squaredGLMM(mycoCforN_justSp_ie_onlyclean))
+fitSp_R2_onlyclean = round(fitSp_onlyclean$R2c, 4)
+# Improves fit a bit but patterns the same for Sp.
 
 # sink("stats_tables/mycoCforN_TtvsSp_lmer_includingextreme.html")
 
@@ -509,6 +555,7 @@ ByfungusNforNroots_ie = ggplot(data = nitrogeninfo) +
 
 NforN_justTt_ie = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
                     data = subset(nitrogeninfo, compartment_fungus == "Tt"))
+summary(NforN_justTt_ie)
 class(NforN_justTt_ie) <- "lmerMod"
 r.squaredGLMM(NforN_justTt_ie)
 fitTt = as.data.frame(r.squaredGLMM(NforN_justTt_ie))
@@ -517,10 +564,31 @@ fitTt_R2 = round(fitTt$R2c, 4)
 
 NforN_justSp_ie = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
                     data = subset(nitrogeninfo, compartment_fungus == "Sp"))
+summary(NforN_justSp_ie)
 class(NforN_justSp_ie) <- "lmerMod"
 r.squaredGLMM(NforN_justSp_ie)
 fitSp = as.data.frame(r.squaredGLMM(NforN_justSp_ie))
 fitSp_R2 = round(fitSp$R2c, 4)
+
+# What if I only include uncontaminated plants?
+NforN_justTt_ie_onlyclean = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
+                       data = subset(nitrogeninfo, compartment_fungus == "Tt" & clean == TRUE))
+summary(NforN_justTt_ie_onlyclean)
+class(NforN_justTt_ie_onlyclean) <- "lmerMod"
+r.squaredGLMM(NforN_justTt_ie_onlyclean)
+fitTt_onlyclean = as.data.frame(r.squaredGLMM(NforN_justTt_ie_onlyclean))
+fitTt_R2 = round(fitTt_onlyclean$R2c, 4)
+# better fit here, only myco N15 is a significant predictor anymore (no marginal effects)
+
+
+NforN_justSp_ie_onlyclean = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
+                       data = subset(nitrogeninfo, compartment_fungus == "Sp" & clean == TRUE))
+summary(NforN_justSp_ie_onlyclean)
+class(NforN_justSp_ie_onlyclean) <- "lmerMod"
+r.squaredGLMM(NforN_justSp_ie_onlyclean)
+fitSp_onlyclean = as.data.frame(r.squaredGLMM(NforN_justSp_ie_onlyclean))
+fitSp_R2_onlyclean = round(fitSp_onlyclean$R2c, 4)
+# this model is equally worthless to the first one. (rsq is 0.05)
 
 sink("stats_tables/NforN_TtvsSp_lmer_includingextreme.html")
 
@@ -560,13 +628,29 @@ hyphalCformycoC_plot = ggplot(data = subset(carboninfo, compartment_fungus == "T
   ylab(expression("Hyphal "^13*"C in Tt (ln ppm excess)")) +
   xlab(expression("Mycorrhizal "^13*"C in Tt (ln ppm excess)")) +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) 
+
+
 test = lm(hyphalog13C ~ mycologC13*N_level, data = carboninfo_nooutlier)
 plot(test)
+
+
 CforC_justTt = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
                     data = subset(carboninfo, compartment_fungus == "Tt"))
-class(CforC_justTt) <- "lmerMod"
 summary(CforC_justTt)
+class(CforC_justTt) <- "lmerMod"
 r.squaredGLMM(CforC_justTt)
+
+fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
+fitTt_R2 = round(fitTt$R2c, 4)
+
+# what if we use only uncontaminated microcosms?
+
+CforC_justTt_onlyclean = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
+                    data = subset(carboninfo, compartment_fungus == "Tt" & clean == TRUE))
+summary(CforC_justTt_onlyclean)
+class(CforC_justTt_onlyclean) <- "lmerMod"
+r.squaredGLMM(CforC_justTt_onlyclean)
+# slightly better fit, same overall pattern.
 
 fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
 fitTt_R2 = round(fitTt$R2c, 4)

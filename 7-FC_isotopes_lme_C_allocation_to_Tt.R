@@ -15,6 +15,8 @@ library(stargazer)
 
 # Loading required data
 together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
+nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+together = mutate(together, clean = together$Plant %in% nocontam$Plant)
 
 
 #### How does the allocation ratio to Tt change with competition? ####
@@ -23,7 +25,20 @@ together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_c
 # When vs. Tt, log alloc ratio should be zero.
 
 allocratios = together[-grep("MIXED", together$Fungi),]
-allocratios = allocratios[-grep("Mixed", allocratios$versus),]
+# allocratios = allocratios[-grep("Mixed", allocratios$versus),]
+allocratios = allocratios[-grep("MIXED", allocratios$competitors),]
+
+# missing some values for competitors, should match across both halves of plant.
+for (i in 1:nrow(allocratios)) {
+  for (j in 1:nrow(allocratios)) {
+    if (allocratios$Plant[i] == allocratios$Plant[j]) {
+      if (is.na(allocratios$competitors[j])) {
+        allocratios$competitors[j] <- allocratios$competitors[i]
+      }
+    }
+  }
+}
+
 
 allocratios$allocratio = rep(NA, nrow(allocratios))
 
@@ -85,13 +100,30 @@ nomixed = together %>% filter(!str_detect(versus, "Mixed"),
                               !str_detect(competitors, "MIXED"), 
                               str_detect(compartment_fungus, "Tt"))
 nomixed %>% group_by(competitors, N_level) %>% summarize(n())
+
+
+
 ### Statistical test with lmerTest ###
+
+allocratios$versus = "Tt"
+allocratios$versus[grep("None", allocratios$competitors)] = "None"
+allocratios$versus[grep("Sp", allocratios$competitors)] = "Sp"
+
 allocation_ratio.full = lmer(logallocratio ~ versus * N_level + (1|Batch), 
                 data = allocratios)
-
+summary(allocation_ratio.full)
 
 allocanova = anova(allocation_ratio.full)
 allocposthoc = emmeans(allocation_ratio.full, list(pairwise ~ versus*N_level), adjust = "tukey")
+
+# excluding accidental Tt contaminated plants
+allocation_ratio.full.onlyclean = lmer(logallocratio ~ versus * N_level + (1|Batch), 
+                             data = subset(allocratios, clean == TRUE))
+
+
+allocanova = anova(allocation_ratio.full.onlyclean)
+allocposthoc = emmeans(allocation_ratio.full.onlyclean, list(pairwise ~ versus*N_level), adjust = "tukey")
+
 
 sink("stats_tables/Relative_C_allocation_anova.html")
 
@@ -126,7 +158,7 @@ annotations = data.frame(x = c((1:3), (1:3)),
                          N_level = c(rep("High", 3), rep("Low", 3)),
                          labs = c(paste(c("a", "a", "a")), paste(c("ab", "b", "a"))))
 
-myplot = ggplot(data = allocratios) +
+myplot = ggplot(data = (allocratios)) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = versus, y = logallocratio)) +
   geom_jitter(aes(x = versus, y = logallocratio),
