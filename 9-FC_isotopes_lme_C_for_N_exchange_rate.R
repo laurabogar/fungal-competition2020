@@ -35,6 +35,8 @@ justmycos$compartment_fungus = as.factor(justmycos$compartment_fungus)
 
 justmycos_nomixed = justmycos[-grep("MIXED", justmycos$competitors),]
 
+#### Statistical analyses ####
+
 # No competition
 # CforN = lmer(logmycoCforN ~ mycofungus * N_level + (1|Batch/Plant),
 #              data = justmycos)
@@ -90,6 +92,40 @@ stargazer(CforN.anova, type = "html",
 sink()
 
 sink("stats_tables/CforN_exchangerates_anova_posthoc.txt")
+
+CforNposthoc
+
+sink()
+
+# Excluding accidental Tt contamination
+nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+onlyclean = mutate(justmycos_nomixed, 
+                   clean = justmycos_nomixed$Plant %in% nocontam$Plant) %>%
+  filter(clean == TRUE)
+
+
+
+CforN.onlyclean = lmer(logmycoCforN ~ compartment_fungus * N_level * versus + (1|Batch),
+             data = onlyclean) # rank deficient, dropping one column/coefficient
+
+summary(CforN.onlyclean) # here, it's just N level and marginally fungal species, no sig. interaction
+
+CforN.anova = anova(CforN.onlyclean)
+
+CforNposthoc = emmeans(CforN.onlyclean, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
+
+sink("stats_tables/CforN_exchangerates_anova_onlyclean.html")
+
+stargazer(CforN.anova, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/CforN_exchangerates_anova_posthoc_onlyclean.txt")
 
 CforNposthoc
 
@@ -219,6 +255,10 @@ together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_c
 nonm = together[!is.na(together$mycorrhizas.APE13C),]
 nonm = subset(nonm, compartment_fungus != "None")
 excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
+
+nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+excluding_mixed_onlyclean = mutate(excluding_mixed, clean = excluding_mixed$Plant %in% nocontam$Plant)
+excluding_mixed_onlyclean = subset(excluding_mixed_onlyclean, clean == TRUE)
 
 # nonm$versus2 = nonm$versus
 # nonm$versus3 = nonm$versus
@@ -367,6 +407,115 @@ save_plot("plots/vertical_three_panel_plot_CC_NN_CN_withcompetition_updated.pdf"
           threepanels_vertical,
           base_height = 10,
           base_aspect_ratio = .5)
+
+#### Three panel plot with ONLY clean plants (no Tt contam) ####
+
+together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_betterversus.csv")
+nonm = together[!is.na(together$mycorrhizas.APE13C),]
+nonm = subset(nonm, compartment_fungus != "None")
+excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
+
+nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+excluding_mixed_onlyclean = mutate(excluding_mixed, clean = excluding_mixed$Plant %in% nocontam$Plant)
+excluding_mixed_onlyclean = subset(excluding_mixed_onlyclean, clean == TRUE)
+
+
+
+labels = c(High = "High N", Low = "Low N")
+
+### Carbon plot ####
+
+carboncomparison_withcompetition = ggplot(data = excluding_mixed_onlyclean) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = compartment_fungus, 
+                   y = mycologC13,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
+             aes(x = compartment_fungus, 
+                 y = mycologC13,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ylab("Plant C in mycorrhizas\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
+
+
+### Nitrogen plot ####
+
+labels = c(High = "High N", Low = "Low N")
+nitrogencomparison_mycos_withcomp = ggplot(data = onlyclean) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = mycologN15,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
+             aes(x = mycofungus, 
+                 y = mycologN15,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ylab("Fungal N in mycorrhizas\n(ln ppm excess)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
+
+### Exchange rate plot ###
+
+exchangerate_plot = ggplot(data = onlyclean) +
+  geom_boxplot(outlier.alpha = 0,
+               position = position_dodge(.9),
+               aes(x = mycofungus, 
+                   y = logmycoCforN,
+                   fill = versus3)) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.9),
+             aes(x = mycofungus, 
+                 y = logmycoCforN,
+                 fill = versus3)) +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ylab("Log exchange rate (plant C to\nfungal N in mycorrhizas)") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Fungus") +
+  scale_fill_manual(values = c("lightgray", "gray42", "white")) +
+  labs(fill = "Competitor")
+
+
+carboncomparison_withcompetition_nolegend = carboncomparison_withcompetition +
+  theme(legend.position = "none")
+
+nitrogencomparison_mycos_withcomp_nolegend = nitrogencomparison_mycos_withcomp +
+  theme(legend.position = "none")
+
+exchangerate_plot_legendbelow = exchangerate_plot +
+  theme(legend.position = "bottom")
+
+
+threepanels_vertical = plot_grid(carboncomparison_withcompetition_nolegend, 
+                                 nitrogencomparison_mycos_withcomp_nolegend,
+                                 exchangerate_plot_legendbelow,
+                                 labels = c("a", "b", "c"),
+                                 align = "v",
+                                 nrow = 3,
+                                 ncol = 1,
+                                 rel_heights = c(1, 1, 1.2))
+
+
+
+save_plot("plots/vertical_three_panel_plot_CC_NN_CN_withcompetition_onlyclean.pdf", 
+          threepanels_vertical,
+          base_height = 10,
+          base_aspect_ratio = .5)
+
+
 
 #### Looking at percent N ####
 # Overall, the patterns in percent N look pretty similar to the patterns

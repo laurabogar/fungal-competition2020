@@ -139,17 +139,41 @@ n15.myco.withcomp.posthoc
 
 sink()
 
-tx = with(justmycos, interaction(mycofungus, N_level))
-forlabels = aov(mycologN15~tx, data = justmycos)
-mylabels = HSD.test(forlabels, "tx", group = TRUE)
-# Dang, these don't match perfectly with my more 
-# sophisticated post-hoc results. Will have to annotate
-# manually.
+# Examining results when you omit accidentally Tt plants
+nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+justmycos_onlyclean = mutate(justmycos_nomixed, 
+                             clean = justmycos_nomixed$Plant %in% nocontam$Plant) %>%
+  filter(clean == TRUE)
 
-annotations = data.frame(x = c((1:2), (1:2)),
-                         y = c(4.5, 6.6, 5.6, 4.5),
-                         N_level = c(rep("High", 2), rep("Low", 2)),
-                         labs = c(paste(c("a", "b")), paste(c("ab", "a"))))
+n15.myco.withcomp.onlyclean = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch), 
+                         data = justmycos_onlyclean) # rank deficient, dropping 3 columns
+
+summary(n15.myco.withcomp.onlyclean)
+
+anovaresults = anova(n15.myco.withcomp.onlyclean) 
+# missing cells for: mycofungusTt:versus3None, N_levelHigh:versus3None, mycofungusSp:N_levelHigh:versus3None, mycofungusTt:N_levelHigh:versus3None, mycofungusTt:N_levelLow:versus3None.  
+# Interpret type III hypotheses with care.
+
+n15.myco.withcomp.posthoc.onlyclean = emmeans(n15.myco.withcomp.onlyclean, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+# NOTE: Results may be misleading due to involvement in interactions
+sink("stats_tables/N_by_fungus_competition_N_lme_results_mycos_onlyclean.html")
+
+stargazer(anovaresults, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc_onlyclean.txt")
+
+n15.myco.withcomp.posthoc.onlyclean
+
+sink()
+
+
 
 
 # Does the N-15 enrichment of NM roots depend on the species 
@@ -176,6 +200,12 @@ annotations = data.frame(x = c((1:2), (1:2)),
 
 #### Plot ####
 labels = c(High = "High N", Low = "Low N")
+annotations = data.frame(x = c((1:2), (1:2)),
+                         y = c(4.5, 6.6, 5.6, 4.5),
+                         N_level = c(rep("High", 2), rep("Low", 2)),
+                         labs = c(paste(c("a", "b")), paste(c("ab", "a"))))
+
+
 nitrogencomparison_mycos = ggplot(data = justmycos) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = mycofungus, 

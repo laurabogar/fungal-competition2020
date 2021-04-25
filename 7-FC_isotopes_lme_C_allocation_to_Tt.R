@@ -116,14 +116,6 @@ summary(allocation_ratio.full)
 allocanova = anova(allocation_ratio.full)
 allocposthoc = emmeans(allocation_ratio.full, list(pairwise ~ versus*N_level), adjust = "tukey")
 
-# excluding accidental Tt contaminated plants
-allocation_ratio.full.onlyclean = lmer(logallocratio ~ versus * N_level + (1|Batch), 
-                             data = subset(allocratios, clean == TRUE))
-
-
-allocanova = anova(allocation_ratio.full.onlyclean)
-allocposthoc = emmeans(allocation_ratio.full.onlyclean, list(pairwise ~ versus*N_level), adjust = "tukey")
-
 
 sink("stats_tables/Relative_C_allocation_anova.html")
 
@@ -139,6 +131,34 @@ sink()
 sink("stats_tables/Relative_C_allocation_anova_posthoc.txt")
 
 allocposthoc
+
+sink()
+
+
+
+# excluding accidental Tt contaminated plants
+allocation_ratio.full.onlyclean = lmer(logallocratio ~ versus * N_level + (1|Batch), 
+                                       data = subset(allocratios, clean == TRUE))
+
+
+allocanova.onlyclean = anova(allocation_ratio.full.onlyclean)
+allocposthoc.onlyclean = emmeans(allocation_ratio.full.onlyclean, list(pairwise ~ versus*N_level), adjust = "tukey")
+
+
+sink("stats_tables/Relative_C_allocation_anova_onlyclean.html")
+
+stargazer(allocanova.onlyclean, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+sink("stats_tables/Relative_C_allocation_anova_posthoc_onlyclean.txt")
+
+allocposthoc.onlyclean
 
 sink()
 
@@ -187,6 +207,28 @@ save_plot("plots/Relative_C_allocation_to_Tt.jpeg",
 # basically same amount vs itself.
 # Tt gets LESS N relative to Sp under low N,
 # basically same amount vs itself.
+
+# Plot much less revealing when you only have intentionally inoculated plants:
+
+labels = c(High = "High N", Low = "Low N")
+
+myplot = ggplot(data = subset(allocratios, clean == TRUE)) +
+  geom_boxplot(outlier.alpha = 0,
+               aes(x = versus, y = logallocratio)) +
+  geom_jitter(aes(x = versus, y = logallocratio),
+              width = 0.25) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+  ylab("Log C allocation ratio to Tt") +
+  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+  xlab("Competitor") +
+  scale_x_discrete(labels = c("None" = "None", 
+                              "Sp" = "Other",
+                              "Tt" = "Self"))
+
+save_plot("plots/preferential_allocation_plot_onlyclean.pdf", myplot)
+
+# exploration
 
 median(allocratios$logallocratio[allocratios$versus == "Sp" & allocratios$N_level == "High"]) # 0.658
 exp(0.658) #1.93 -- Tt got about 2x the carbon

@@ -531,6 +531,27 @@ cat(models_CforNmycos_includingextreme,
     sep = '\n', 
     file = "stats_tables/mycoCforN_TtvsSp_lmer_includingextreme.html")
 
+# no contam
+models_CforNmycos_includingextreme_onlyclean = 
+  stargazer(mycoCforN_justTt_includingextreme_onlyclean, 
+            mycoCforN_justSp_ie_onlyclean, 
+            type = "html",
+            dep.var.labels = "Mycorrhizal [13C] (ln ppm excess)",
+            covariate.labels = c("Mycorrhizal [15N] (ln ppm excess)",
+                                 "N level",
+                                 "Mycorrhizal [15N]:N level"),
+            column.labels = c("Tt", "Sp"),
+            digits = 3,
+            digit.separator = "",
+            ci = TRUE,
+            star.cutoffs = c(0.05, 0.01, 0.001),
+            add.lines = list(c("Conditional pseudo-$R2$",
+                               fitTt_R2_onlyclean, fitSp_R2_onlyclean)),
+            summary = TRUE)
+
+cat(models_CforNmycos_includingextreme_onlyclean, 
+    sep = '\n', 
+    file = "stats_tables/mycoCforN_TtvsSp_lmer_includingextreme_onlyclean.html")
 # sink()
 
 ### 2: Fungal N goes to NM roots, but only for Tt ####
@@ -570,25 +591,6 @@ r.squaredGLMM(NforN_justSp_ie)
 fitSp = as.data.frame(r.squaredGLMM(NforN_justSp_ie))
 fitSp_R2 = round(fitSp$R2c, 4)
 
-# What if I only include uncontaminated plants?
-NforN_justTt_ie_onlyclean = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
-                       data = subset(nitrogeninfo, compartment_fungus == "Tt" & clean == TRUE))
-summary(NforN_justTt_ie_onlyclean)
-class(NforN_justTt_ie_onlyclean) <- "lmerMod"
-r.squaredGLMM(NforN_justTt_ie_onlyclean)
-fitTt_onlyclean = as.data.frame(r.squaredGLMM(NforN_justTt_ie_onlyclean))
-fitTt_R2 = round(fitTt_onlyclean$R2c, 4)
-# better fit here, only myco N15 is a significant predictor anymore (no marginal effects)
-
-
-NforN_justSp_ie_onlyclean = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
-                       data = subset(nitrogeninfo, compartment_fungus == "Sp" & clean == TRUE))
-summary(NforN_justSp_ie_onlyclean)
-class(NforN_justSp_ie_onlyclean) <- "lmerMod"
-r.squaredGLMM(NforN_justSp_ie_onlyclean)
-fitSp_onlyclean = as.data.frame(r.squaredGLMM(NforN_justSp_ie_onlyclean))
-fitSp_R2_onlyclean = round(fitSp_onlyclean$R2c, 4)
-# this model is equally worthless to the first one. (rsq is 0.05)
 
 sink("stats_tables/NforN_TtvsSp_lmer_includingextreme.html")
 
@@ -606,6 +608,47 @@ stargazer(NforN_justTt_ie,
           star.cutoffs = c(0.05, 0.01, 0.001),
           add.lines = list(c("Conditional pseudo-$R2$",
                              fitTt_R2, fitSp_R2)),
+          summary = TRUE)
+
+sink()
+
+# What if I only include uncontaminated plants?
+NforN_justTt_ie_onlyclean = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
+                                 data = subset(nitrogeninfo, compartment_fungus == "Tt" & clean == TRUE))
+summary(NforN_justTt_ie_onlyclean)
+class(NforN_justTt_ie_onlyclean) <- "lmerMod"
+r.squaredGLMM(NforN_justTt_ie_onlyclean)
+fitTt_onlyclean = as.data.frame(r.squaredGLMM(NforN_justTt_ie_onlyclean))
+fitTt_R2 = round(fitTt_onlyclean$R2c, 4)
+# better fit here, only myco N15 is a significant predictor anymore (no marginal effects)
+
+
+NforN_justSp_ie_onlyclean = lmer(nmlogN15 ~ mycologN15*N_level + (1|Batch),
+                                 data = subset(nitrogeninfo, compartment_fungus == "Sp" & clean == TRUE))
+summary(NforN_justSp_ie_onlyclean)
+class(NforN_justSp_ie_onlyclean) <- "lmerMod"
+r.squaredGLMM(NforN_justSp_ie_onlyclean)
+fitSp_onlyclean = as.data.frame(r.squaredGLMM(NforN_justSp_ie_onlyclean))
+fitSp_R2_onlyclean = round(fitSp_onlyclean$R2c, 4)
+# this model is equally worthless to the first one. (rsq is 0.05)
+
+# only clean
+sink("stats_tables/NforN_TtvsSp_lmer_includingextreme_onlyclean.html")
+
+stargazer(NforN_justTt_ie_onlyclean, 
+          NforN_justSp_ie_onlyclean, 
+          type = "html",
+          dep.var.labels = "Uncolonized root [15N] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [15N] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [15N]:N level"),
+          column.labels = c("Tt", "Sp"),
+          digits = 3,
+          digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2_onlyclean, fitSp_R2_onlyclean)),
           summary = TRUE)
 
 sink()
@@ -643,17 +686,7 @@ r.squaredGLMM(CforC_justTt)
 fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
 fitTt_R2 = round(fitTt$R2c, 4)
 
-# what if we use only uncontaminated microcosms?
 
-CforC_justTt_onlyclean = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
-                    data = subset(carboninfo, compartment_fungus == "Tt" & clean == TRUE))
-summary(CforC_justTt_onlyclean)
-class(CforC_justTt_onlyclean) <- "lmerMod"
-r.squaredGLMM(CforC_justTt_onlyclean)
-# slightly better fit, same overall pattern.
-
-fitTt = as.data.frame(r.squaredGLMM(CforC_justTt))
-fitTt_R2 = round(fitTt$R2c, 4)
 
 sink("stats_tables/CforC_justTt_lmer2.html")
 
@@ -669,6 +702,36 @@ stargazer(CforC_justTt, type = "html",
           star.cutoffs = c(0.05, 0.01, 0.001),
           add.lines = list(c("Conditional pseudo-$R2$",
                              fitTt_R2)),
+          summary = TRUE)
+
+sink()
+
+# what if we use only uncontaminated microcosms?
+
+CforC_justTt_onlyclean = lmer(hyphalog13C ~ mycologC13*N_level + (1|Batch),
+                              data = subset(carboninfo, compartment_fungus == "Tt" & clean == TRUE))
+summary(CforC_justTt_onlyclean)
+class(CforC_justTt_onlyclean) <- "lmerMod"
+r.squaredGLMM(CforC_justTt_onlyclean)
+# slightly better fit, same overall pattern.
+
+fitTt_onlyclean = as.data.frame(r.squaredGLMM(CforC_justTt_onlyclean))
+fitTt_R2_onlyclean = round(fitTt$R2c, 4)
+
+sink("stats_tables/CforC_justTt_lmer_onlyclean.html")
+
+stargazer(CforC_justTt_onlyclean, type = "html",
+          dep.var.labels = "Hyphal [13C] (ln ppm excess)",
+          covariate.labels = c("Mycorrhizal [13C] (ln ppm excess)",
+                               "N level",
+                               "Mycorrhizal [13C]:N level"),
+          column.labels = c("Tt", "Sp"),
+          digits = 3,
+          digit.separator = "",
+          ci = TRUE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          add.lines = list(c("Conditional pseudo-$R2$",
+                             fitTt_R2_onlyclean)),
           summary = TRUE)
 
 sink()

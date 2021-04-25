@@ -53,7 +53,7 @@ for (i in 1:nrow(nonm)) {
 write_csv(nonm, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_betterversus.csv")
 
 # Should I exclude microcosms with mixed cultures?
-
+nonm = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_betterversus.csv")
 excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
 # excluding_mixed$versus = relevel(excluding_mixed$versus, levels = c("None", "Sp", "Tt"))
 
@@ -119,6 +119,46 @@ sink("stats_tables/C_by_fungus_competition_N_lme_anova_posthoc.txt")
 
 Cbyfungusposthoc
 sink()
+
+# Trying this with only plants that were never accidentally inoculated with Tt
+
+nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+excluding_mixed_onlyclean = mutate(excluding_mixed, clean = excluding_mixed$Plant %in% nocontam$Plant)
+excluding_mixed_onlyclean = filter(excluding_mixed_onlyclean, clean == TRUE)
+
+c13.full.onlyclean = lmer(mycologC13 ~ compartment_fungus * versus * N_level + (1|Batch/Plant),
+                data = excluding_mixed_onlyclean) # I don't have any random effects here that I don't think I need
+
+summary(c13.full.onlyclean)
+
+anovaresults = anova(c13.full.onlyclean)
+
+
+sink("stats_tables/C_by_fungus_competition_N_lme_anova_onlyclean.html")
+
+stargazer(anovaresults, type = "html",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "",
+          summary = FALSE,
+          no.space = TRUE)
+
+sink()
+
+Cbyfungusposthoc = emmeans(c13.full.onlyclean, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
+
+Cbyfungusposthoc_withversus = emmeans(c13.full.onlyclean, list(pairwise ~ compartment_fungus*N_level*versus), adjust = "tukey")
+
+sink("stats_tables/C_by_fungus_competition_N_lme_anova_posthoc_withversus_onlyclean.txt")
+
+Cbyfungusposthoc_withversus
+sink()
+
+sink("stats_tables/C_by_fungus_competition_N_lme_anova_posthoc_onlyclean.txt")
+
+Cbyfungusposthoc
+sink()
+
 
 # sink("stats_tables/C_by_fungus_competition_N_lme_results_noanova.html")
 # 
