@@ -28,6 +28,8 @@ allocratios = together[-grep("MIXED", together$Fungi),]
 # allocratios = allocratios[-grep("Mixed", allocratios$versus),]
 allocratios = allocratios[-grep("MIXED", allocratios$competitors),]
 
+test = allocratios[is.na(allocratios$percent_col),]
+
 # missing some values for competitors, should match across both halves of plant.
 for (i in 1:nrow(allocratios)) {
   for (j in 1:nrow(allocratios)) {
@@ -67,6 +69,33 @@ for (i in 1:nrow(allocratios)) {
   }
 }
 
+# experimenting with comparing colonization across the two sides of the root system, as well.
+# this is not working for now 4/25/21
+# allocratios$colratio = rep(NA, nrow(allocratios))
+# for (i in 1:nrow(allocratios)) {
+#   for (j in 1:nrow(allocratios)) {
+#     if (allocratios$Plant[i] == allocratios$Plant[j] &
+#         allocratios$Side[i] != allocratios$Side[j]) {
+#       if (allocratios$compartment_fungus[i] == "Tt") {
+#         if (allocratios$compartment_fungus[j] != "None") {
+#           allocratios$colratio[i] = (allocratios$percent_col[i]+1)/(allocratios$percent_col[j]+1)
+#           allocratios$colratio[j] = NA # to ensure one entry per plant
+#         } else if (allocratios$compartment_fungus[j] == "None") {
+#           allocratios$colratio[i] = (allocratios$percent_col[i]+1)/(allocratios$percent_col[j]+1)
+#         }
+#       } else if (allocratios$compartment_fungus[i] == "Sp") {
+#         if (allocratios$compartment_fungus[j] == "Sp") {
+#           allocratios$colratio[i] = (allocratios$percent_col[i]+1)/(allocratios$percent_col[j]+1)
+#           allocratios$colratio[j] = NA # to ensure one entry per plant
+#         } else if (allocratios$compartment_fungus[j] == "None") {
+#           allocratios$colratio[i] = (allocratios$percent_col[i]+1)/(allocratios$percent_col[j]+1)
+#         }
+#       }
+#     }
+#   }
+# }
+
+
 summary(allocratios$allocratio)
 
 spalloc = allocratios[grep("Sp", allocratios$compartment_fungus),]
@@ -77,6 +106,7 @@ allocratios = allocratios[grep("Tt", allocratios$compartment_fungus),]
 allocratios = allocratios[!is.na(allocratios$allocratio),]
 
 allocratios$logallocratio = log(allocratios$allocratio)
+# allocratios$logcolratio = log(allocratios$colratio)
 
 plantlist = allocratios %>% group_by(competitors, N_level) %>% summarize(list(Plant))
 totalplantlist = together %>% group_by(competitors, N_level) %>% summarize(list(Plant))
