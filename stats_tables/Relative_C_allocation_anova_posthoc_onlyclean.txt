@@ -1,0 +1,50 @@
+$`emmeans of versus, N_level`
+ versus N_level  emmean    SE   df lower.CL upper.CL
+ None   High     0.1759 0.297 21.2   -0.685    1.037
+ Sp     High    -0.1872 0.411 21.2   -1.378    1.004
+ Tt     High    -0.0678 0.265 14.0   -0.879    0.743
+ None   Low     -0.2021 0.266 21.1   -0.972    0.568
+ Sp     Low     -0.9599 0.266 21.1   -1.730   -0.190
+ Tt     Low      0.3098 0.245 19.3   -0.408    1.028
+
+Degrees-of-freedom method: satterthwaite 
+Confidence level used: 0.95 
+Conf-level adjustment: sidak method for 6 estimates 
+
+$`pairwise differences of versus, N_level`
+ contrast             estimate    SE    df t.ratio
+ None High - Sp High    0.3631 0.472 13.56  0.769 
+ None High - Tt High    0.2437 0.369 20.00  0.660 
+ None High - None Low   0.3780 0.398 21.20  0.949 
+ None High - Sp Low     1.1358 0.398 21.20  2.851 
+ None High - Tt Low    -0.1339 0.385 20.58 -0.348 
+ Sp High - Tt High     -0.1194 0.460 16.13 -0.260 
+ Sp High - None Low     0.0149 0.489 21.86  0.031 
+ Sp High - Sp Low       0.7727 0.489 21.86  1.580 
+ Sp High - Tt Low      -0.4970 0.478 21.95 -1.039 
+ Tt High - None Low     0.1343 0.375 17.89  0.358 
+ Tt High - Sp Low       0.8921 0.375 17.89  2.377 
+ Tt High - Tt Low      -0.3776 0.361 16.45 -1.045 
+ None Low - Sp Low      0.7578 0.330  9.34  2.299 
+ None Low - Tt Low     -0.5119 0.310  8.36 -1.651 
+ Sp Low - Tt Low       -1.2697 0.310  8.36 -4.095 
+ p.value
+ 0.9684 
+ 0.9844 
+ 0.9288 
+ 0.0873 
+ 0.9992 
+ 0.9998 
+ 1.0000 
+ 0.6193 
+ 0.8995 
+ 0.9991 
+ 0.2159 
+ 0.8955 
+ 0.2823 
+ 0.5915 
+ 0.0262 
+
+Degrees-of-freedom method: satterthwaite 
+P value adjustment: tukey method for comparing a family of 6 estimates 
+

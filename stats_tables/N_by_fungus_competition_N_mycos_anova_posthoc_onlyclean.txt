@@ -1,0 +1,25 @@
+$`emmeans of mycofungus, N_level`
+ mycofungus N_level emmean    SE df lower.CL upper.CL
+ Sp         High    nonEst    NA NA       NA       NA
+ Tt         High    nonEst    NA NA       NA       NA
+ Sp         Low        3.5 0.324 29     2.63     4.36
+ Tt         Low     nonEst    NA NA       NA       NA
+
+Results are averaged over the levels of: versus3 
+Degrees-of-freedom method: satterthwaite 
+Confidence level used: 0.95 
+Conf-level adjustment: sidak method for 4 estimates 
+
+$`pairwise differences of mycofungus, N_level`
+ contrast          estimate SE df z.ratio p.value
+ Sp High - Tt High   nonEst NA NA NA      NA     
+ Sp High - Sp Low    nonEst NA NA NA      NA     
+ Sp High - Tt Low    nonEst NA NA NA      NA     
+ Tt High - Sp Low    nonEst NA NA NA      NA     
+ Tt High - Tt Low    nonEst NA NA NA      NA     
+ Sp Low - Tt Low     nonEst NA NA NA      NA     
+
+Results are averaged over the levels of: versus3 
+Degrees-of-freedom method: satterthwaite 
+P value adjustment: tukey method for comparing a family of 4 estimates 
+
