@@ -224,7 +224,7 @@ massplot_noletters = ggplot(data = bio_and_col_onlyclean) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   ylab("Total plant biomass (g)") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungi on roots at harvest")
+  xlab("Fungal treatment")
 
 save_plot("plots/Biomass_boxplot_noletters.pdf",
           massplot_noletters,
@@ -310,7 +310,7 @@ colforplot$competitors_reordered = fct_relevel(colforplot$competitors,
 
 col_onlyclean = subset(colforplot, Plant %in% bio_and_col_onlyclean$Plant)
 
-col_onlyintended = subset(colforplot, Plant %in% bio_and_col_onlyintended$Plant)
+col_onlyintended = subset(colforplot, Plant %in% bio_and_col_onlyintended$Plant) # I believe this is the same as above.
 
 
 labels = c(High = "High N", Low = "Low N")
@@ -379,7 +379,7 @@ colplot_onlyclean = ggplot(data = col_onlyclean) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
   ylab("Percent root mass colonized\nby compartment") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungi on roots at harvest") +
+  xlab("Fungal treatment") +
   scale_fill_manual(values = c("lightgray", "gray46", "white")) +
   scale_shape_manual(values = c(1, 16, 2)) +
   labs(shape = "Fungus", fill = "Fungus") +
@@ -399,7 +399,7 @@ colplot_onlyintended = ggplot(data = col_onlyintended) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
   ylab("Percent root mass colonized\nby compartment") +
   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungi on roots at harvest") +
+  xlab("Fungal treatment") +
   scale_fill_manual(values = c("lightgray", "gray46", "white")) +
   scale_shape_manual(values = c(1, 16, 2)) +
   labs(shape = "Fungus", fill = "Fungus") +
@@ -422,7 +422,7 @@ save_plot("plots/Mass_and_colonization_two_panel_boxplot_vertical_updated.pdf",
 Figure = plot_grid(massplot_noletters, colplot_onlyclean, ncol = 2, align = "h",
                     labels = c("a", "b"),
                    rel_widths = c(1, 1.6))
-save_plot("plots/Mass_and_colonization_two_panel_boxplot_updated.pdf",
+save_plot("plots/Mass_and_colonization_two_panel_boxplot_onlyclean.pdf",
           Figure, ncol = 2)
 
 ### Trying out col plot with color indicating intended fungi ####
