@@ -1,4 +1,5 @@
-# 2-1 Leak check t test
+# Fungal competition: Checking to see if mesh panels
+# facilitated isotope leakage (independent of fungus-mediated transfer)
 
 # I'd like to perform a simple t-test to see if my mesh panels
 # allowed for passive leakage of 15N without fungal transport.

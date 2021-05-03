@@ -1,5 +1,8 @@
-# Re-doing C for N figures
-# 28 October 2020
+# Fungal competition: Producing figures and stats associated with Figure 2
+
+# Linear relationships between 13C and 15N in mycorrhizas;
+# 15N in mycorrhizas and 15N in uncolonized roots;
+# and 13C in mycorrhizas and 13C in hyphae.
 
 library(cowplot)
 library(tidyverse)

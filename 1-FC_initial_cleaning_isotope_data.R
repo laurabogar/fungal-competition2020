@@ -1,4 +1,4 @@
-# Taking a first look at the Fungal Competition Isotope Data.
+# Initial cleaning of isotope data for resource trading/"fungal competition" project
 
 # setwd("~/Documents/2018-2019/Fungal competition/")
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")

@@ -1,14 +1,7 @@
-# 8 - overall N to plant, Tt vs Sp
+# Fungal competition: Code and stats associated with Figure 3b
 
-# Trying to analyze FC isotopes in a more cohesive way
-# This is NOT currently one of my central scripts 8/19/2020
+# Comparing fungal N (15N) in mycorrhizas of Sp vs Tt, by N level and competition treatment
 
-# I have cool evidence of functional complementarity here, but
-# I need to rearrange my data frame to show this most effectively.
-# Probably best to leave this one for last, once the other analyses
-# are looking good.
-
-# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Libraries needed:
 library(cowplot)

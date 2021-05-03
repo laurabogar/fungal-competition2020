@@ -1,4 +1,5 @@
-# Fungal competition project: Isotope data analysis
+# Continued isotopic data wrangling, fungal competition project. 
+# Producing one-row-per-plant and one-row-per-compartment dataframes for analyses.
 
 # setwd("~/Documents/2018-2019/Fungal competition/")
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")

@@ -1,7 +1,6 @@
-# 7 - FC_isotopes_lme_C_allocation_to_Tt
-# June 2020
-# Using an LME framework to more rigorously calculate how C allocation ratios
-# to Tt shifted with competitive context
+# Fungal competition: Stats and figure code associated with figure 4
+
+# Plant C allocation to Tt across N levels and competition treatments.
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 

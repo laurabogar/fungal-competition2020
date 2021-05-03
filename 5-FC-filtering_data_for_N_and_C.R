@@ -1,5 +1,5 @@
-# Generating filtered data for FC (fungal competition) project
-# ALTERNATIVE TRACK: INCLUDING MIXED PLANTS
+# Generating filtered isotope data for FC (fungal competition) project
+# This script produces dataframes specifically aimed towards analyzing N and C movement.
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 

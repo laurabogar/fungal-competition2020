@@ -1,4 +1,5 @@
-# 3-2-1 Combining biomass and colonization plots into one figure
+# Fungal competition: Analyzing plant biomass and fungal colonization
+# outcomes (lme framework)
 
 # significance labels determined by anova for interaction between N level and fungal treatment.
 

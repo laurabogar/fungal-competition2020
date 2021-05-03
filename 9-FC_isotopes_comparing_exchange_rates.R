@@ -1,9 +1,7 @@
-# 7 - FC_isotopes_lme_C_for_N_exchange_rate
-# June 2020
-# Using an LME framework to more rigorously calculate how C for N 
-# exchange rates varied in this experiment.
+# Fungal competition: Code and stats associated with Figure 3c
 
-# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# Comparing exchange rates of plant C (13C) to fungal N (15N) in mycorrhizas of Sp vs Tt, 
+# by N level and competition treatment.
 
 # Load required packages
 library(agricolae)

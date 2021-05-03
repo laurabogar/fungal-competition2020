@@ -1,16 +1,10 @@
-# Trying to analyze FC isotopes in a more cohesive way
-# This is NOT currently one of my central scripts 8/19/2020
+# Fungal competition: Code and stats associated with Figure 3a
 
-# Attempting a linear mixed model a la Argüello et al. 2016
-# August 2019/June 2020
+# Comparing plant C allocated to Sp vs Tt, by N level and competition treatment
+
+
 
 # This tutorial was quite helpful: https://ourcodingclub.github.io/2017/03/15/mixed-models.html
-
-# THE PROCESS THAT HAS FINALLY WORKED:
-# 1) Load lme4 and then lmerTest
-# 2) Build full linear mixed effects model
-# 3) Call "anova()" on that model to get a normal looking ANOVA table
-# with significance labels.
 
 setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
