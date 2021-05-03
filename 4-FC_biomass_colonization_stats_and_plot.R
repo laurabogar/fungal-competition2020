@@ -474,43 +474,47 @@ colplot_color_bycompt = ggplot(data = colforplot) +
 
 #### COLONIZATION STATS ####
 # colfortest = colforplot
-colfortest = col_onlyclean
-colfortest$versus = numeric(nrow(colfortest))
+
+# Does this analysis make sense anymore, given new framework?
+colfortest = col_onlyclean %>% 
+  mutate(percent_col = percent_Sp_mycos + percent_Tt_mycos)
+
+colfortest$competitor = numeric(nrow(colfortest))
 
 for (i in 1:nrow(colfortest)) {
   if (colfortest$compartment_fungus[i] == "Sp") {
     if (colfortest$competitors[i] == "Sp/None") {
-      colfortest$versus[i] = "None"
+      colfortest$competitor[i] = "None"
     } else if (colfortest$competitors[i] == "Sp/Sp") {
-      colfortest$versus[i] = "Sp"
+      colfortest$competitor[i] = "Sp"
     } else if (colfortest$competitors[i] == "Tt/Sp") {
-      colfortest$versus[i] = "Tt"
+      colfortest$competitor[i] = "Tt"
     } else if (grepl("MIXED", colfortest$competitors[i])){
-      colfortest$versus[i] = "Mixed"
+      colfortest$competitor[i] = "Mixed"
     }
   } else if (colfortest$compartment_fungus[i] == "Tt") {
     if (colfortest$competitors[i] == "Tt/None") {
-      colfortest$versus[i] = "None"
+      colfortest$competitor[i] = "None"
     } else if (colfortest$competitors[i] == "Tt/Tt") {
-      colfortest$versus[i] = "Tt"
+      colfortest$competitor[i] = "Tt"
     } else if (colfortest$competitors[i] == "Tt/Sp") {
-      colfortest$versus[i] = "Sp"
+      colfortest$competitor[i] = "Sp"
     } else if (grepl("MIXED", colfortest$competitors[i])) {
-      colfortest$versus[i] = "Mixed"
+      colfortest$competitor[i] = "Mixed"
     }
   } else if (colfortest$compartment_fungus[i] == "None") {
     if (colfortest$competitors[i] == "Sp/None") {
-      colfortest$versus[i] = "Sp"
+      colfortest$competitor[i] = "Sp"
     } else if (colfortest$competitors[i] == "None/None") {
-      colfortest$versus[i] = "None"
+      colfortest$competitor[i] = "None"
     } else if (colfortest$competitors[i] == "Tt/None") {
-      colfortest$versus[i] = "Tt"
+      colfortest$competitor[i] = "Tt"
     }
   } else if (colfortest$compartment_fungus[i] == "MIXED") {
     if (colfortest$competitors[i] == "MIXED/Sp") {
-      colfortest$versus[i] = "Sp"
+      colfortest$competitor[i] = "Sp"
     } else if (colfortest$competitors[i] == "MIXED/Tt") {
-      colfortest$versus[i] = "Tt"
+      colfortest$competitor[i] = "Tt"
     }
   }
 }
@@ -521,13 +525,14 @@ colfortest = subset(colfortest, compartment_fungus != "None") # exclude compartm
 # since "significant differences" in colonization based on the no spores
 # vs yes spores compartments will not be informative.
 
-colonization_test = lmer(percent_col ~ compartment_fungus * N_level * versus + (1|Plant),
+colonization_test = lmer(percent_col ~ compartment_fungus * N_level * competitor + (1|Plant),
                          data = colfortest)
 
 summary(colonization_test) # nothing significant.
-anovaresults = anova(colonization_test) #compartment fungus highly significant,
-#marginal interaction with competitor identity
+anovaresults = anova(colonization_test) #compartment fungus significant,
+# nothing else, nor significant interactions.
 anovaresults
+
 
 sink("stats_tables/colonization_by_compartment_lme_anova_updated.html")
 
@@ -547,5 +552,13 @@ stargazer(anovaresults, type = "html",
 
 sink()
 
-colonizationposthoc = emmeans(colonization_test, list(pairwise ~ compartment_fungus*N_level*versus), adjust = "tukey")
+colonizationposthoc = emmeans(colonization_test, list(pairwise ~ compartment_fungus*N_level*competitor), adjust = "tukey")
+# No significant pairwise comparisons with full model, don't have enough replicates.
 
+
+colonization_nocompetitor = lmer(percent_col ~ compartment_fungus * N_level + (1|Plant),
+                                 data = colfortest)
+summary(colonization_nocompetitor)
+anova(colonization_nocompetitor) # compartment fungus still significant.
+colonizationposthoc_nocompetitor = emmeans(colonization_nocompetitor, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
+# Still no pairwise significance.
