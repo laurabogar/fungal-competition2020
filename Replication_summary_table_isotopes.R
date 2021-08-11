@@ -61,6 +61,13 @@ thetable = finaldata %>% group_by(competitors, compartment_fungus, N_level, rece
 
 write_csv(thetable, "processeddata/replication_summary_by_compartment.csv")
 
+plants_for_leaf_isotopes = finaldata %>% 
+  group_by(Plant) %>% 
+  select(Plant, N_level, competitors) %>%
+  unique()
+
+write_csv(plants_for_leaf_isotopes, "processeddata/plants_for_leaf_isotope_measurements.csv")
+
 # Other notes:
 
 # I am going to have to manually remove plant 6076 (Tt/None, low N) from 
