@@ -80,6 +80,7 @@ justmass = select(alldata, Plant, total_biomass, Batch)
 bio_and_col_byplant = left_join(bio_and_col_byplant, justmass)
 
 write_csv(bio_and_col_byplant, "processeddata/biomass_and_colonization_data_by_plant.csv")
+write_csv(bio_and_col, "processeddata/biomass_and_colonization_data_by_compartment.csv")
 
 # Stats with the linear framework:
 

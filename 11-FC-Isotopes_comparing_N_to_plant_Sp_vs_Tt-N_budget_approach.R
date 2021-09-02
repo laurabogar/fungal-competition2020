@@ -14,9 +14,87 @@ library(stargazer)
 # Data:
 
 bio_and_col_byplant = read_csv("processeddata/biomass_and_colonization_data_by_plant.csv")
+bio_and_col_bycompt = read_csv("processeddata/biomass_and_colonization_data_by_compartment.csv")
+isotopes = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
+isotopes_nomixed = isotopes[-grep("MIXED", isotopes$Fungi),]
 
 
+# Creating new data structure
 
+masses = bio_and_col_bycompt %>%
+  mutate(mass_Sp = (percent_col_Sp/100)*total_root_biomass_compartment,
+         mass_Tt = (percent_col_Tt/100)*total_root_biomass_compartment,
+         Side = tolower(Side)) %>%
+  mutate(mass_NM_roots = total_root_biomass_compartment - mass_Sp - mass_Tt) %>%
+  select(everything(), -percent_col_overall, -percent_col_Sp, -percent_col_Tt)
+
+iso_justroots = isotopes_nomixed %>%
+  select(Plant, Side, mycofungus, mycoC13ppmexcess, mycoN15ppmexcess, nmC13ppmexcess, nmN15ppmexcess, Batch)
+
+total_compt_biomass = masses %>%
+  select(Plant, Side, total_root_biomass_compartment) %>%
+  spread(Side, total_root_biomass_compartment) %>%
+  rename(total_root_biomass_compartment.a = a, total_root_biomass_compartment.b = b)
+
+total_Tt_mass = masses %>%
+  select(Plant, Side, mass_Tt) %>%
+  spread(Side, mass_Tt) %>%
+  rename(mass_Tt.a = a, mass_Tt.b = b)
+
+total_Sp_mass = masses %>%
+  select(Plant, Side, mass_Sp) %>%
+  spread(Side, mass_Sp) %>%
+  rename(mass_Sp.a = a, mass_Sp.b = b)
+
+total_NM_mass = masses %>%
+  select(Plant, Side, mass_NM_roots) %>%
+  spread(Side, mass_NM_roots) %>%
+  rename(mass_NM_roots.a = a, mass_NM_roots.b = b)
+
+allmasses = left_join(total_Tt_mass, total_Sp_mass) %>%
+  left_join(total_NM_mass)
+
+iso_sp = iso_justroots %>%
+  subset(mycofungus == "Sp")
+
+C_sp = iso_sp %>%
+  select(Plant, Side, mycoC13ppmexcess) %>%
+  spread(Side, mycoC13ppmexcess) %>%
+  rename(SpC13ppmexcess.a = a, SpC13ppmexcess.b = b)
+
+N_sp = iso_sp %>%
+  select(Plant, Side, mycoN15ppmexcess) %>%
+  spread(Side, mycoN15ppmexcess) %>%
+  rename(SpN15ppmexcess.a = a, SpN15ppmexcess.b = b)
+
+iso_tt = iso_justroots %>%
+  subset(mycofungus == "Tt")
+
+C_tt = iso_tt %>%
+  select(Plant, Side, mycoC13ppmexcess) %>%
+  spread(Side, mycoC13ppmexcess) %>%
+  rename(TtC13ppmexcess.a = a, TtC13ppmexcess.b = b)
+
+N_tt = iso_tt %>%
+  select(Plant, Side, mycoN15ppmexcess) %>%
+  spread(Side, mycoN15ppmexcess) %>%
+  rename(TtN15ppmexcess.a = a, TtN15ppmexcess.b = b)
+
+C_NM = iso_justroots %>%
+  select(Plant, Side, nmC13ppmexcess) %>%
+  spread(Side, nmC13ppmexcess) %>%
+  rename(nmC13ppmexcess.a = a, nmC13ppmexcess.b = b)
+
+N_NM = iso_justroots %>%
+  select(Plant, Side, nmN15ppmexcess) %>%
+  spread(Side, nmN15ppmexcess) %>%
+  rename(nmN15ppmexcess.a = a, nmN15ppmexcess.b = b)
+
+allisos = left_join(C_sp, C_tt) %>%
+  left_join(C_NM) %>%
+  left_join(N_sp) %>%
+  left_join(N_tt) %>%
+  left_join(N_NM)
 
 
 
