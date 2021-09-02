@@ -12,9 +12,16 @@ library(lmerTest)
 library(stargazer)
 
 # Data:
-# together = read_csv("./FCdata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
-# together = read_csv("processeddata/isotope_and_plant_metadata_FOR_N_ANALYSES_and_exchange_rates.csv")
-# together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly.csv")
+
+bio_and_col_byplant = read_csv("processeddata/biomass_and_colonization_data_by_plant.csv")
+
+
+
+
+
+
+
+
 together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
 
 ndata = subset(together, received15N == "Y")

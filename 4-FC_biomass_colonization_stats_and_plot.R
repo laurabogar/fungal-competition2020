@@ -79,6 +79,8 @@ justmass = select(alldata, Plant, total_biomass, Batch)
 
 bio_and_col_byplant = left_join(bio_and_col_byplant, justmass)
 
+write_csv(bio_and_col_byplant, "processeddata/biomass_and_colonization_data_by_plant.csv")
+
 # Stats with the linear framework:
 
 biomass_by_colonization = lmer(total_biomass ~ N_level * percent_col_Sp * percent_col_Tt + (1|Batch), data = bio_and_col_byplant)

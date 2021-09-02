@@ -1,12 +1,12 @@
 # Generating filtered isotope data for FC (fungal competition) project
 # This script produces dataframes specifically aimed towards analyzing N and C movement.
 
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 library(tidyverse)
 library(cowplot)
 
-library(agricolae) # for automatic Tukey labels
+# library(agricolae) # for automatic Tukey labels
 
 allisotopes = read_csv("processeddata/isotopes_two_rows_per_plant_updated_with_pctCN.csv")
 # From script 2-FC_isotopes_generating_one_row_per_plant
@@ -184,6 +184,11 @@ for (i in 1:nrow(together)){
 
 # write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
 write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
+
+### Adding biomass for full plant isotope budgets ####
+
+granular_data_bycompt = read_csv("processeddata/granular_mass_and_colonization_data_by_compartment.csv")
+
 
 # For any analysis involving ONLY C, it makes sense to include
 # 1) carbon data from root compartments that
