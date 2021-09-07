@@ -16,7 +16,11 @@ library(stargazer)
 bio_and_col_byplant = read_csv("processeddata/biomass_and_colonization_data_by_plant.csv")
 bio_and_col_bycompt = read_csv("processeddata/biomass_and_colonization_data_by_compartment.csv")
 isotopes = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
-isotopes_nomixed = isotopes[-grep("MIXED", isotopes$Fungi),]
+leaf_isotopes = read_csv("processeddata/Cleaned_processed_FC_leaf_isotopes.csv")
+
+isotopes_together = left_join(isotopes, leaf_isotopes)
+
+isotopes_nomixed = isotopes_together[-grep("MIXED", isotopes$Fungi),]
 
 
 # Creating new data structure
