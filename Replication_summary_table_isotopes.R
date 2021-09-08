@@ -68,6 +68,32 @@ write_csv(thetable, "processeddata/replication_summary_by_compartment.csv")
 
 ### Summarizing plants used for leaf isotopes ####
 
+leaveswithmeta = left_join(leafinfo, mydata)
+leaveswithmeta = leaveswithmeta[!duplicated(leaveswithmeta$Plant),] %>%
+  mutate(competitors = Actual_fungi_at_harvest)
+
+for (i in 1:nrow(leaveswithmeta)) {
+  if (is.na(leaveswithmeta$competitors[i])) {
+    leaveswithmeta$competitors[i] = leaveswithmeta$Fungal_treatment[i]
+  }
+}
+
+leaf_isotope_summary = leaveswithmeta %>%
+  group_by(N_level, competitors) %>%
+  summarize(count = n())
+
+sum(leaf_isotope_summary$count)
+
+# We have leaf data for one plant that had a mixed culture on one side of
+# its root system. However, the side of the root system that received
+# 15N label was Tt-only, so the 15N still tells us something about
+# the functioning of the specific symbiosis between Tt morphotypes and the seedling.
+# Worth retaining.
+
+write_csv(leaf_isotope_summary, "processeddata/leaf_isotope_summary.csv")
+
+
+# Identifying plants to seek for leaf isotopes in my stored tissues
 plants_for_leaf_isotopes = finaldata %>% 
   group_by(Plant) %>% 
   select(Plant, N_level, competitors) %>%
