@@ -5,6 +5,9 @@ library(cowplot)
 library(tidyverse)
 
 mydata = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv") # from script 4-alternative
+leafinfo = read_csv("processeddata/Cleaned_processed_FC_leaf_isotopes.csv")
+
+mydata = mydata %>% mutate(competitors = Fungi)
 
 mysummarydata = select(mydata, Plant, Side, N_level, competitors, compartment_fungus, received15N)
 
@@ -17,10 +20,11 @@ mysum_filtered = mysum_noNAs %>% distinct()
 mysummarydata_nomixed = mysum_filtered[!grepl("Mixed", mysum_filtered$compartment_fungus),]
 
 checking = mysummarydata_nomixed %>% group_by(Plant) %>% summarize(count = n()) %>%
-  filter(count != 2)
+  filter(count != 2) # This used to show just two plants; now there are 3, because of the mixed compt in 6043b.
 
 test = mydata[mydata$Plant %in% checking$Plant,]
-# why do I only have one entry each for plants 6013 and 6072?
+# 6043 was revealed to be a mixed compartment with DNA data.
+# But why do I only have one entry each for plants 6013 and 6072?
 
 # Based on my notes: Both plants were from the low N treatment.
 # 6013 was Sp/NM, and is missing the NM side. 
@@ -60,6 +64,9 @@ thetable = finaldata %>% group_by(competitors, compartment_fungus, N_level, rece
   summarize(count = n())
 
 write_csv(thetable, "processeddata/replication_summary_by_compartment.csv")
+
+
+### Summarizing plants used for leaf isotopes ####
 
 plants_for_leaf_isotopes = finaldata %>% 
   group_by(Plant) %>% 

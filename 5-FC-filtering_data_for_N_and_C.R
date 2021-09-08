@@ -14,15 +14,18 @@ allisotopes = read_csv("processeddata/isotopes_two_rows_per_plant_updated_with_p
 # correcting spreadsheet errors
 allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6033] = "SUIPU/SUIPU"
 allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6043] = "MIXED/SUIPU" # discovered with DNA data
-
+allisotopes$Actual_fungus_by_compartment[allisotopes$Plant == 6043 & allisotopes$Side == "b"] = "Mixed"
 isotopes_forN = read_csv("processeddata/isotope_data_one_row_per_plant_July.csv")
 minimally_processed_isotopes = read_csv("processeddata/Cleaned_processed_FC_isotope_data_July.csv")
 minimally_processed_isotopes$Actual_fungi_at_harvest[minimally_processed_isotopes$Plant == 6061] = "THETE/NM"
 minimally_processed_isotopes$Actual_fungi_at_harvest[minimally_processed_isotopes$Plant == 6043] = "MIXED/SUIPU"
+minimally_processed_isotopes$Actual_fungus_by_compartment[minimally_processed_isotopes$Plant == 6043 & minimally_processed_isotopes$Side == "b"] = "Mixed"
+
 # ^ correcting an error in the notes
 percent_col = read_csv("processeddata/percent_colonization_and_mass_data_by_compartment.csv")
 percent_col$competitors[percent_col$Plant == 6061] = "Tt/None"
-percent_col$competitors[percent_col$Plant == 6043] = "MIXED/None"
+percent_col$competitors[percent_col$Plant == 6043] = "MIXED/Sp"
+
 # ^ correcting an error in the notes
 metadata_byplant = read_csv("processeddata/percent_col_and_mass_data_by_plant.csv")
 
@@ -80,42 +83,43 @@ together$versus = numeric(nrow(together))
 
 for (i in 1:nrow(together)) {
   if (together$compartment_fungus[i] == "Sp") {
-    if (together$competitors[i] == "Sp/None") {
+    if (together$Fungi[i] == "Sp/None") {
       together$versus[i] = "None"
-    } else if (together$competitors[i] == "Sp/Sp") {
+    } else if (together$Fungi[i] == "Sp/Sp") {
       together$versus[i] = "Sp"
-    } else if (together$competitors[i] == "Tt/Sp") {
+    } else if (together$Fungi[i] == "Tt/Sp") {
       together$versus[i] = "Tt"
-    } else if (grepl("MIXED", together$competitors[i])){
+    } else if (grepl("MIXED", together$Fungi[i])){
       together$versus[i] = "Mixed"
     }
   } else if (together$compartment_fungus[i] == "Tt") {
-    if (together$competitors[i] == "Tt/None") {
+    if (together$Fungi[i] == "Tt/None") {
       together$versus[i] = "None"
-    } else if (together$competitors[i] == "Tt/Tt") {
+    } else if (together$Fungi[i] == "Tt/Tt") {
       together$versus[i] = "Tt"
-    } else if (together$competitors[i] == "Tt/Sp") {
+    } else if (together$Fungi[i] == "Tt/Sp") {
       together$versus[i] = "Sp"
-    } else if (grepl("MIXED", together$competitors[i])) {
+    } else if (grepl("MIXED", together$Fungi[i])) {
       together$versus[i] = "Mixed"
     }
   } else if (together$compartment_fungus[i] == "None") {
-    if (together$competitors[i] == "Sp/None") {
+    if (together$Fungi[i] == "Sp/None") {
       together$versus[i] = "Sp"
-    } else if (together$competitors[i] == "None/None") {
+    } else if (together$Fungi[i] == "None/None") {
       together$versus[i] = "None"
-    } else if (together$competitors[i] == "Tt/None") {
+    } else if (together$Fungi[i] == "Tt/None") {
       together$versus[i] = "Tt"
     }
   } else if (together$compartment_fungus[i] == "MIXED") {
-    if (together$competitors[i] == "MIXED/SUIPU") {
+    if (together$Fungi[i] == "MIXED/SUIPU") {
       together$versus[i] = "Sp"
-    } else if (together$competitors[i] == "MIXED/THETE") {
+    } else if (together$Fungi[i] == "MIXED/THETE") {
       together$versus[i] = "Tt"
     }
   }
 }
 
+together = together %>% select(everything(), -competitors)
 
 together$mycoC13ppmexcess = together$mycorrhizas.APE13C * (10^4)
 together$nmC13ppmexcess = together$uncolonized_roots.APE13C * (10^4)
@@ -183,6 +187,7 @@ for (i in 1:nrow(together)){
     }
   }
 }
+
 
 # write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED.csv")
 write_csv(together, "processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
