@@ -11,17 +11,18 @@ library(cowplot)
 allisotopes = read_csv("processeddata/isotopes_two_rows_per_plant_updated_with_pctCN.csv")
 # From script 2-FC_isotopes_generating_one_row_per_plant
 
-# Old version as of October 28, 2020:
-# allisotopes = read_csv("processeddata/isotopes_one_row_per_plant_including_unenriched_July.csv")
-# correcting a spreadsheet error
+# correcting spreadsheet errors
 allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6033] = "SUIPU/SUIPU"
+allisotopes$Actual_fungi_at_harvest[allisotopes$Plant == 6043] = "MIXED/SUIPU" # discovered with DNA data
 
 isotopes_forN = read_csv("processeddata/isotope_data_one_row_per_plant_July.csv")
 minimally_processed_isotopes = read_csv("processeddata/Cleaned_processed_FC_isotope_data_July.csv")
 minimally_processed_isotopes$Actual_fungi_at_harvest[minimally_processed_isotopes$Plant == 6061] = "THETE/NM"
+minimally_processed_isotopes$Actual_fungi_at_harvest[minimally_processed_isotopes$Plant == 6043] = "MIXED/SUIPU"
 # ^ correcting an error in the notes
 percent_col = read_csv("processeddata/percent_colonization_and_mass_data_by_compartment.csv")
 percent_col$competitors[percent_col$Plant == 6061] = "Tt/None"
+percent_col$competitors[percent_col$Plant == 6043] = "MIXED/None"
 # ^ correcting an error in the notes
 metadata_byplant = read_csv("processeddata/percent_col_and_mass_data_by_plant.csv")
 
@@ -133,6 +134,7 @@ min(together$mycoN15ppmexcess[!is.na(together$mycoN15ppmexcess)])
 min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)]) # this is more negative
 
 smallconstant = abs(min(together$nmN15ppmexcess[!is.na(together$nmN15ppmexcess)])) + 1 
+# 19.32042 ppm excess
 
 together$mycologN15 = log(together$mycoN15ppmexcess + smallconstant)
 together$nmlogN15 = log(together$nmN15ppmexcess + smallconstant)
