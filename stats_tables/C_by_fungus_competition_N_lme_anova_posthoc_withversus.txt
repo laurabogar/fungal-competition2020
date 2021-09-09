@@ -1,170 +1,170 @@
-$`emmeans of compartment_fungus, N_level, versus`
- compartment_fungus N_level versus emmean    SE   df
- Sp                 High    None     6.39 0.684 66.5
- Tt                 High    None     5.45 0.279 54.7
- Sp                 Low     None     4.95 0.314 64.7
- Tt                 Low     None     4.05 0.273 58.0
- Sp                 High    Sp       5.72 0.451 48.7
- Tt                 High    Sp       5.94 0.341 52.1
- Sp                 Low     Sp       4.92 0.240 40.9
- Tt                 Low     Sp       4.03 0.314 64.8
- Sp                 High    Tt       5.13 0.341 52.1
- Tt                 High    Tt       5.31 0.201 23.9
- Sp                 Low     Tt       5.01 0.308 60.1
- Tt                 Low     Tt       4.04 0.217 34.9
- lower.CL upper.CL
-     4.37     8.41
-     4.61     6.28
-     4.02     5.88
-     3.24     4.86
-     4.37     7.07
-     4.92     6.96
-     4.19     5.65
-     3.10     4.96
-     4.10     6.15
-     4.68     5.94
-     4.09     5.92
-     3.38     4.71
+$`emmeans of compartment_fungus, N_level, competitor`
+ compartment_fungus N_level competitor emmean    SE
+ Sp                 High    None         6.44 0.687
+ Tt                 High    None         5.46 0.278
+ Sp                 Low     None         4.95 0.313
+ Tt                 Low     None         4.06 0.260
+ Sp                 High    Sp           5.40 0.620
+ Tt                 High    Sp           5.94 0.340
+ Sp                 Low     Sp           4.90 0.241
+ Tt                 Low     Sp           4.04 0.313
+ Sp                 High    Tt           5.13 0.340
+ Tt                 High    Tt           5.30 0.199
+ Sp                 Low     Tt           5.04 0.313
+ Tt                 Low     Tt           4.04 0.214
+   df lower.CL upper.CL
+ 67.8     4.41     8.47
+ 55.0     4.63     6.29
+ 65.4     4.02     5.87
+ 54.0     3.29     4.84
+ 45.2     3.54     7.27
+ 52.6     4.92     6.96
+ 42.8     4.17     5.63
+ 65.5     3.11     4.96
+ 52.6     4.11     6.14
+ 23.3     4.68     5.93
+ 65.5     4.11     5.96
+ 34.1     3.38     4.70
 
 Degrees-of-freedom method: satterthwaite 
 Confidence level used: 0.95 
 Conf-level adjustment: sidak method for 12 estimates 
 
-$`pairwise differences of compartment_fungus, N_level, versus`
- contrast                    estimate    SE   df t.ratio
- Sp High None - Tt High None  0.94364 0.705 60.6  1.339 
- Sp High None - Sp Low None   1.44252 0.753 67.2  1.916 
- Sp High None - Tt Low None   2.34010 0.737 67.3  3.176 
- Sp High None - Sp High Sp    0.67048 0.770 51.1  0.871 
- Sp High None - Tt High Sp    0.44901 0.735 62.1  0.611 
- Sp High None - Sp Low Sp     1.46998 0.725 65.3  2.027 
- Sp High None - Tt Low Sp     2.35635 0.753 67.2  3.130 
- Sp High None - Sp High Tt    1.26465 0.735 62.1  1.720 
- Sp High None - Tt High Tt    1.08039 0.705 64.6  1.532 
- Sp High None - Sp Low Tt     1.38195 0.750 66.3  1.842 
- Sp High None - Tt Low Tt     2.34682 0.718 66.0  3.270 
- Tt High None - Sp Low None   0.49888 0.420 60.9  1.188 
- Tt High None - Tt Low None   1.39646 0.390 56.3  3.577 
- Tt High None - Sp High Sp   -0.27316 0.490 45.8 -0.557 
- Tt High None - Tt High Sp   -0.49463 0.412 66.0 -1.201 
- Tt High None - Sp Low Sp     0.52633 0.368 48.4  1.431 
- Tt High None - Tt Low Sp     1.41271 0.420 60.9  3.363 
- Tt High None - Sp High Tt    0.32101 0.412 66.0  0.780 
- Tt High None - Tt High Tt    0.13675 0.308 59.9  0.444 
- Tt High None - Sp Low Tt     0.43830 0.416 58.4  1.055 
- Tt High None - Tt Low Tt     1.40318 0.353 46.2  3.974 
- Sp Low None - Tt Low None    0.89758 0.374 54.9  2.401 
- Sp Low None - Sp High Sp    -0.77204 0.550 54.1 -1.405 
- Sp Low None - Tt High Sp    -0.99351 0.464 58.5 -2.141 
- Sp Low None - Sp Low Sp      0.02746 0.361 51.5  0.076 
- Sp Low None - Tt Low Sp      0.91384 0.417 59.9  2.191 
- Sp Low None - Sp High Tt    -0.17787 0.464 58.5 -0.383 
- Sp Low None - Tt High Tt    -0.36213 0.373 50.9 -0.971 
- Sp Low None - Sp Low Tt     -0.06057 0.413 57.6 -0.147 
- Sp Low None - Tt Low Tt      0.90431 0.344 52.9  2.630 
- Tt Low None - Sp High Sp    -1.66962 0.527 52.7 -3.166 
- Tt Low None - Tt High Sp    -1.89109 0.437 54.4 -4.324 
- Tt Low None - Sp Low Sp     -0.87012 0.322 48.9 -2.702 
- Tt Low None - Tt Low Sp      0.01626 0.383 58.6  0.042 
- Tt Low None - Sp High Tt    -1.07545 0.437 54.4 -2.459 
- Tt Low None - Tt High Tt    -1.25971 0.339 42.8 -3.715 
- Tt Low None - Sp Low Tt     -0.95815 0.378 56.1 -2.536 
- Tt Low None - Tt Low Tt      0.00673 0.308 52.1  0.022 
- Sp High Sp - Tt High Sp     -0.22147 0.526 48.5 -0.421 
- Sp High Sp - Sp Low Sp       0.79949 0.511 48.5  1.565 
- Sp High Sp - Tt Low Sp       1.68587 0.550 54.1  3.067 
- Sp High Sp - Sp High Tt      0.59417 0.526 48.5  1.130 
- Sp High Sp - Tt High Tt      0.40991 0.478 47.7  0.858 
- Sp High Sp - Sp Low Tt       0.71146 0.546 52.6  1.303 
- Sp High Sp - Tt Low Tt       1.67634 0.500 48.8  3.351 
- Tt High Sp - Sp Low Sp       1.02097 0.417 48.1  2.446 
- Tt High Sp - Tt Low Sp       1.90735 0.464 58.5  4.111 
- Tt High Sp - Sp High Tt      0.81564 0.240 44.0  3.399 
- Tt High Sp - Tt High Tt      0.63138 0.373 60.1  1.693 
- Tt High Sp - Sp Low Tt       0.93294 0.460 56.5  2.029 
- Tt High Sp - Tt Low Tt       1.89782 0.404 46.4  4.694 
- Sp Low Sp - Tt Low Sp        0.88638 0.354 49.3  2.505 
- Sp Low Sp - Sp High Tt      -0.20533 0.417 48.1 -0.492 
- Sp Low Sp - Tt High Tt      -0.38959 0.313 33.4 -1.245 
- Sp Low Sp - Sp Low Tt       -0.08803 0.348 46.2 -0.253 
- Sp Low Sp - Tt Low Tt        0.87685 0.277 40.0  3.166 
- Tt Low Sp - Sp High Tt      -1.09171 0.464 58.5 -2.353 
- Tt Low Sp - Tt High Tt      -1.27597 0.373 50.9 -3.422 
- Tt Low Sp - Sp Low Tt       -0.97441 0.232 44.3 -4.201 
- Tt Low Sp - Tt Low Tt       -0.00953 0.342 52.5 -0.028 
- Sp High Tt - Tt High Tt     -0.18426 0.373 60.1 -0.494 
- Sp High Tt - Sp Low Tt       0.11730 0.460 56.5  0.255 
- Sp High Tt - Tt Low Tt       1.08218 0.404 46.4  2.676 
- Tt High Tt - Sp Low Tt       0.30156 0.368 48.1  0.820 
- Tt High Tt - Tt Low Tt       1.26644 0.295 29.3  4.289 
- Sp Low Tt - Tt Low Tt        0.96488 0.335 48.4  2.877 
- p.value
- 0.9702 
- 0.7451 
- 0.0861 
- 0.9991 
- 1.0000 
- 0.6735 
- 0.0966 
- 0.8520 
- 0.9259 
- 0.7891 
- 0.0682 
- 0.9880 
- 0.0318 
- 1.0000 
- 0.9871 
- 0.9512 
- 0.0549 
- 0.9997 
- 1.0000 
- 0.9955 
- 0.0117 
- 0.4224 
- 0.9576 
- 0.5965 
- 1.0000 
- 0.5621 
- 1.0000 
- 0.9977 
- 1.0000 
- 0.2897 
- 0.0938 
- 0.0035 
- 0.2562 
- 1.0000 
- 0.3865 
- 0.0254 
- 0.3404 
- 1.0000 
- 1.0000 
- 0.9131 
- 0.1175 
- 0.9916 
- 0.9992 
- 0.9752 
- 0.0613 
- 0.3966 
- 0.0064 
- 0.0566 
- 0.8642 
- 0.6726 
- 0.0013 
- 0.3609 
- 1.0000 
- 0.9806 
- 1.0000 
- 0.1019 
- 0.4530 
- 0.0502 
- 0.0063 
- 1.0000 
- 1.0000 
- 1.0000 
- 0.2699 
- 0.9995 
- 0.0081 
- 0.1818 
+$`pairwise differences of compartment_fungus, N_level, competitor`
+ contrast                    estimate    SE   df
+ Sp High None - Tt High None  0.98654 0.706 62.4
+ Sp High None - Sp Low None   1.49796 0.755 68.1
+ Sp High None - Tt Low None   2.38085 0.734 68.2
+ Sp High None - Sp High Sp    1.03872 0.916 54.6
+ Sp High None - Tt High Sp    0.50230 0.737 63.9
+ Sp High None - Sp Low Sp     1.54515 0.728 66.4
+ Sp High None - Tt Low Sp     2.40754 0.755 68.2
+ Sp High None - Sp High Tt    1.31794 0.737 63.9
+ Sp High None - Tt High Tt    1.13844 0.708 66.0
+ Sp High None - Sp Low Tt     1.40793 0.755 68.2
+ Sp High None - Tt Low Tt     2.40328 0.719 66.8
+ Tt High None - Sp Low None   0.51143 0.419 61.4
+ Tt High None - Tt Low None   1.39432 0.381 54.6
+ Tt High None - Sp High Sp    0.05218 0.657 44.9
+ Tt High None - Tt High Sp   -0.48423 0.411 66.4
+ Tt High None - Sp Low Sp     0.55862 0.368 49.5
+ Tt High None - Tt Low Sp     1.42101 0.419 61.5
+ Tt High None - Sp High Tt    0.33141 0.411 66.4
+ Tt High None - Tt High Tt    0.15190 0.307 59.9
+ Tt High None - Sp Low Tt     0.42140 0.419 61.5
+ Tt High None - Tt Low Tt     1.41675 0.351 46.1
+ Sp Low None - Tt Low None    0.88289 0.363 55.5
+ Sp Low None - Sp High Sp    -0.45924 0.695 49.7
+ Sp Low None - Tt High Sp    -0.99566 0.463 59.1
+ Sp Low None - Sp Low Sp      0.04719 0.361 52.9
+ Sp Low None - Tt Low Sp      0.90958 0.416 60.5
+ Sp Low None - Sp High Tt    -0.18002 0.463 59.1
+ Sp Low None - Tt High Tt    -0.35953 0.371 51.0
+ Sp Low None - Sp Low Tt     -0.09003 0.416 60.5
+ Sp Low None - Tt Low Tt      0.90532 0.342 53.0
+ Tt Low None - Sp High Sp    -1.34213 0.672 48.7
+ Tt Low None - Tt High Sp    -1.87855 0.428 53.1
+ Tt Low None - Sp Low Sp     -0.83570 0.312 50.0
+ Tt Low None - Tt Low Sp      0.02669 0.375 60.1
+ Tt Low None - Sp High Tt    -1.06291 0.428 53.1
+ Tt Low None - Tt High Tt    -1.24242 0.327 39.5
+ Tt Low None - Sp Low Tt     -0.97292 0.375 60.1
+ Tt Low None - Tt Low Tt      0.02243 0.295 52.2
+ Sp High Sp - Tt High Sp     -0.53642 0.677 45.4
+ Sp High Sp - Sp Low Sp       0.50643 0.665 46.7
+ Sp High Sp - Tt Low Sp       1.36882 0.695 49.7
+ Sp High Sp - Sp High Tt      0.27922 0.677 45.4
+ Sp High Sp - Tt High Tt      0.09971 0.635 43.6
+ Sp High Sp - Sp Low Tt       0.36921 0.695 49.7
+ Sp High Sp - Tt Low Tt       1.36456 0.656 46.6
+ Tt High Sp - Sp Low Sp       1.04285 0.417 49.2
+ Tt High Sp - Tt Low Sp       1.90524 0.463 59.1
+ Tt High Sp - Sp High Tt      0.81564 0.254 36.9
+ Tt High Sp - Tt High Tt      0.63613 0.371 60.1
+ Tt High Sp - Sp Low Tt       0.90563 0.463 59.1
+ Tt High Sp - Tt Low Tt       1.90098 0.402 46.5
+ Sp Low Sp - Tt Low Sp        0.86239 0.354 50.5
+ Sp Low Sp - Sp High Tt      -0.22721 0.417 49.2
+ Sp Low Sp - Tt High Tt      -0.40672 0.312 34.0
+ Sp Low Sp - Sp Low Tt       -0.13722 0.354 50.5
+ Sp Low Sp - Tt Low Tt        0.85813 0.277 41.2
+ Tt Low Sp - Sp High Tt      -1.08960 0.463 59.1
+ Tt Low Sp - Tt High Tt      -1.26911 0.371 51.0
+ Tt Low Sp - Sp Low Tt       -0.99961 0.254 36.9
+ Tt Low Sp - Tt Low Tt       -0.00426 0.340 52.5
+ Sp High Tt - Tt High Tt     -0.17951 0.371 60.1
+ Sp High Tt - Sp Low Tt       0.08999 0.463 59.1
+ Sp High Tt - Tt Low Tt       1.08534 0.402 46.5
+ Tt High Tt - Sp Low Tt       0.26950 0.371 51.0
+ Tt High Tt - Tt Low Tt       1.26485 0.292 28.6
+ Sp Low Tt - Tt Low Tt        0.99535 0.340 52.5
+ t.ratio p.value
+  1.397  0.9598 
+  1.985  0.7017 
+  3.244  0.0724 
+  1.134  0.9916 
+  0.682  0.9999 
+  2.124  0.6084 
+  3.190  0.0829 
+  1.788  0.8181 
+  1.609  0.8997 
+  1.866  0.7755 
+  3.341  0.0564 
+  1.220  0.9853 
+  3.662  0.0254 
+  0.079  1.0000 
+ -1.179  0.9889 
+  1.517  0.9286 
+  3.390  0.0510 
+  0.807  0.9996 
+  0.495  1.0000 
+  1.005  0.9970 
+  4.033  0.0099 
+  2.430  0.4044 
+ -0.661  0.9999 
+ -2.152  0.5895 
+  0.131  1.0000 
+  2.185  0.5663 
+ -0.389  1.0000 
+ -0.969  0.9978 
+ -0.216  1.0000 
+  2.645  0.2820 
+ -1.996  0.6937 
+ -4.387  0.0029 
+ -2.681  0.2656 
+  0.071  1.0000 
+ -2.482  0.3728 
+ -3.799  0.0215 
+ -2.598  0.3041 
+  0.076  1.0000 
+ -0.792  0.9996 
+  0.761  0.9998 
+  1.970  0.7105 
+  0.412  1.0000 
+  0.157  1.0000 
+  0.531  1.0000 
+  2.079  0.6390 
+  2.500  0.3639 
+  4.117  0.0062 
+  3.208  0.0954 
+  1.715  0.8544 
+  1.957  0.7190 
+  4.726  0.0012 
+  2.434  0.4034 
+ -0.545  1.0000 
+ -1.302  0.9732 
+ -0.387  1.0000 
+  3.097  0.1178 
+ -2.355  0.4516 
+ -3.420  0.0505 
+ -3.932  0.0160 
+ -0.013  1.0000 
+ -0.484  1.0000 
+  0.194  1.0000 
+  2.698  0.2593 
+  0.726  0.9998 
+  4.328  0.0076 
+  2.928  0.1611 
 
 Degrees-of-freedom method: satterthwaite 
 P value adjustment: tukey method for comparing a family of 12 estimates 

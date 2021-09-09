@@ -1,37 +1,30 @@
 $`emmeans of compartment_fungus, N_level`
- compartment_fungus N_level emmean    SE   df
- Sp                 High      5.75 0.326 48.5
- Tt                 High      5.57 0.182 21.1
- Sp                 Low       4.96 0.192 26.8
- Tt                 Low       4.03 0.186 24.0
- lower.CL upper.CL
-     4.90     6.59
-     5.07     6.06
-     4.45     5.47
-     3.53     4.53
+ compartment_fungus N_level emmean    SE   df lower.CL
+ Sp                 High      5.66 0.346 53.9     4.77
+ Tt                 High      5.57 0.182 21.1     5.07
+ Sp                 Low       4.96 0.193 27.8     4.45
+ Tt                 Low       4.05 0.180 22.0     3.56
+ upper.CL
+     6.55
+     6.06
+     5.47
+     4.53
 
-Results are averaged over the levels of: versus 
+Results are averaged over the levels of: competitor 
 Degrees-of-freedom method: satterthwaite 
 Confidence level used: 0.95 
 Conf-level adjustment: sidak method for 4 estimates 
 
 $`pairwise differences of compartment_fungus, N_level`
- contrast          estimate    SE   df t.ratio
- Sp High - Tt High    0.180 0.304 69.0 0.591  
- Sp High - Sp Low     0.788 0.378 42.1 2.085  
- Sp High - Tt Low     1.714 0.375 41.4 4.570  
- Tt High - Sp Low     0.608 0.265 23.9 2.297  
- Tt High - Tt Low     1.534 0.261 22.5 5.886  
- Sp Low - Tt Low      0.926 0.175 70.2 5.292  
- p.value
- 0.9345 
- 0.1745 
- 0.0002 
- 0.1269 
- <.0001 
- <.0001 
+ contrast          estimate    SE   df t.ratio p.value
+ Sp High - Tt High   0.0902 0.328 61.8 0.275   0.9926 
+ Sp High - Sp Low    0.6981 0.396 48.1 1.764   0.3029 
+ Sp High - Tt Low    1.6117 0.390 46.8 4.136   0.0008 
+ Tt High - Sp Low    0.6079 0.265 24.4 2.293   0.1275 
+ Tt High - Tt Low    1.5215 0.256 21.6 5.942   <.0001 
+ Sp Low - Tt Low     0.9135 0.173 73.3 5.273   <.0001 
 
-Results are averaged over the levels of: versus 
+Results are averaged over the levels of: competitor 
 Degrees-of-freedom method: satterthwaite 
 P value adjustment: tukey method for comparing a family of 4 estimates 
 

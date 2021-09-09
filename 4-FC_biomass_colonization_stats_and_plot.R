@@ -21,6 +21,13 @@ granular_data_bycompt = read_csv("processeddata/granular_mass_and_colonization_d
 # Note: The below file is produced when you run this script; you could also just start with "colfortest" below.
 colfortest = read_csv("processeddata/colonization_and_biomass_data_by_compartment_with_competition.csv")
 
+# Correction based on DNA data: Plant 6043 had a mixed culture on
+# side B of its root system, must exclude.
+
+alldata = filter(alldata, Plant != 6043)
+granular_data_bycompt$compartment_fungus[granular_data_bycompt$Plant == 6043 &
+                                           granular_data_bycompt$Side == "B"] = "Mixed"
+granular_data_bycompt$competitors[granular_data_bycompt$Plant == 6043] = "MIXED/Sp"
 
 #### BIOMASS ####
 
@@ -162,8 +169,14 @@ summary(biomass_by_colonization_onlyclean)
 biomass_rsquared = round(r.squaredGLMM(biomass_by_colonization_onlyclean)[2], 4)
 
 plot(allEffects(biomass_by_colonization_onlyclean))
-plot(predictorEffect("percent_col_Sp", biomass_by_colonization_onlyclean),
-     lines = list(multiline = FALSE))
+predictor_plot = plot(predictorEffect("percent_col_Sp", biomass_by_colonization_onlyclean),
+                      lines = list(multiline = TRUE))
+pdf(file = "plots/predictorEffect_colonization_biomass_plot.pdf",
+    width = 7, height = 6)
+predictor_plot
+dev.off()
+
+
 
 
 class(biomass_by_colonization_onlyclean) = "lmerMod"
@@ -195,11 +208,11 @@ sink()
 ### Plot ###
 
 # This function  does automatic letters
-tx = with(alldata, interaction(N_level, Fungi))
-anovaforplot = aov(total_biomass ~ tx, data = alldata)
-
-# from "agricolae" package
-mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
+# tx = with(alldata, interaction(N_level, Fungi))
+# anovaforplot = aov(total_biomass ~ tx, data = alldata)
+# 
+# # from "agricolae" package
+# mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
 
 anothertry = data.frame(x = c((1:6), (1:6)),
                         y = c(4, 4, 4, 6, 6, 7.5, 4, 4, 4, 4, 4, 4),
@@ -207,7 +220,7 @@ anothertry = data.frame(x = c((1:6), (1:6)),
                         labs = c(paste(c("bc", "c", "bc", "b", "b", "a")), paste(c("c", "c", "c", "c", "c", "c"))))
 
 labels = c(High = "High N", Low = "Low N")
-massplot = ggplot(data = alldata) +
+massplot = ggplot(data = bio_and_col_onlyclean) +
   geom_boxplot(outlier.alpha = 0,
                aes(x = Fungi, y = total_biomass)) +
   geom_jitter(width = 0.20,
@@ -319,11 +332,11 @@ col_onlyintended = subset(colforplot, Plant %in% bio_and_col_onlyintended$Plant)
 
 labels = c(High = "High N", Low = "Low N")
 
-tx = with(colforplot, interaction(N_level, Fungi))
-anovaforplot = aov(percent_col ~ tx, data = colforplot)
-
-# from "agricolae" package
-mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
+# tx = with(colforplot, interaction(N_level, Fungi))
+# anovaforplot = aov(percent_col ~ tx, data = colforplot)
+# 
+# # from "agricolae" package
+# mylabels = HSD.test(anovaforplot, "tx", group = TRUE)
 
 # anothertry = data.frame(x = c((1:6), (1:6)),
 #                         y = c(4, 4, 4, 6, 6, 7.5, 5, 4, 5, 4, 4, 4),
@@ -344,25 +357,25 @@ collabels = data.frame(N_level = c("High", "Low"),
                        lab = c("a", "b"))
 
 
-colplot = ggplot(data = colforplot) +
-  geom_boxplot(outlier.alpha = 0,
-               aes(x = competitors, y = percent_col,
-                   fill = compartment_fungus)) +
-  geom_point(position = position_jitterdodge(dodge.width = 0.9,
-                                             jitter.width = 0.15),
-             aes(x = competitors, y = percent_col,
-                  fill = compartment_fungus,
-                  shape = compartment_fungus)) +
-  # geom_line(aes(group = as.factor(Plant))) +
-  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
-  ylab("Percent fungal colonization of\nroots by compartment") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungi on roots at harvest") +
-  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
-  scale_shape_manual(values = c(1, 16, 2)) +
-  labs(shape = "Fungus", fill = "Fungus") +
-  ylim(-2, 105)
+# colplot = ggplot(data = colforplot) +
+#   geom_boxplot(outlier.alpha = 0,
+#                aes(x = competitors, y = percent_col,
+#                    fill = compartment_fungus)) +
+#   geom_point(position = position_jitterdodge(dodge.width = 0.9,
+#                                              jitter.width = 0.15),
+#              aes(x = competitors, y = percent_col,
+#                   fill = compartment_fungus,
+#                   shape = compartment_fungus)) +
+#   # geom_line(aes(group = as.factor(Plant))) +
+#   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
+#   ylab("Percent fungal colonization of\nroots by compartment") +
+#   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+#   xlab("Fungi on roots at harvest") +
+#   scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+#   scale_shape_manual(values = c(1, 16, 2)) +
+#   labs(shape = "Fungus", fill = "Fungus") +
+#   ylim(-2, 105)
   # geom_text(data = collabels, aes(x = xstar,  y = ystar, label = lab)) +
   # geom_segment(data = collabels, aes(x = x1, xend = x2,
   #                                    y = y1, yend = y2),
@@ -389,31 +402,31 @@ colplot_onlyclean = ggplot(data = col_onlyclean) +
   labs(shape = "Fungus", fill = "Fungus") +
   ylim(-2, 105)
 
-colplot_onlyintended = ggplot(data = col_onlyintended) +
-  geom_boxplot(outlier.alpha = 0,
-               aes(x = competitors, y = percent_col,
-                   fill = compartment_fungus)) +
-  geom_point(position = position_jitterdodge(dodge.width = 0.9,
-                                             jitter.width = 0.15),
-             aes(x = competitors, y = percent_col,
-                 fill = compartment_fungus,
-                 shape = compartment_fungus)) +
-  # geom_line(aes(group = as.factor(Plant))) +
-  facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
-  ylab("Percent root mass colonized\nby compartment") +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) +
-  xlab("Fungal treatment") +
-  scale_fill_manual(values = c("lightgray", "gray46", "white")) +
-  scale_shape_manual(values = c(1, 16, 2)) +
-  labs(shape = "Fungus", fill = "Fungus") +
-  ylim(-2, 105)
+# colplot_onlyintended = ggplot(data = col_onlyintended) +
+#   geom_boxplot(outlier.alpha = 0,
+#                aes(x = competitors, y = percent_col,
+#                    fill = compartment_fungus)) +
+#   geom_point(position = position_jitterdodge(dodge.width = 0.9,
+#                                              jitter.width = 0.15),
+#              aes(x = competitors, y = percent_col,
+#                  fill = compartment_fungus,
+#                  shape = compartment_fungus)) +
+#   # geom_line(aes(group = as.factor(Plant))) +
+#   facet_grid(. ~ N_level, labeller = labeller(N_level = labels)) +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
+#   ylab("Percent root mass colonized\nby compartment") +
+#   theme(plot.margin = unit(c(1,1,1,1), "cm")) +
+#   xlab("Fungal treatment") +
+#   scale_fill_manual(values = c("lightgray", "gray46", "white")) +
+#   scale_shape_manual(values = c(1, 16, 2)) +
+#   labs(shape = "Fungus", fill = "Fungus") +
+#   ylim(-2, 105)
 
 save_plot("plots/Colonization_boxplot_by_compartment_updated.pdf",
-          colplot,
+          colplot_onlyclean,
           base_aspect_ratio = 1.8)
 
-Figure = plot_grid(massplot, colplot, 
+Figure = plot_grid(massplot, colplot_onlyclean, 
                    nrow = 2,
                    ncol = 1,
                    align = "v",
@@ -429,7 +442,7 @@ Figure = plot_grid(massplot_noletters, colplot_onlyclean, ncol = 2, align = "h",
 save_plot("plots/Mass_and_colonization_two_panel_boxplot_onlyclean.pdf",
           Figure, ncol = 2)
 
-### Trying out col plot with color indicating intended fungi ####
+### Trying out col plot with color indicating intended fungi DIDN'T USE ####
 
 colplot_color = ggplot(data = colforplot) +
   geom_boxplot(outlier.alpha = 0,

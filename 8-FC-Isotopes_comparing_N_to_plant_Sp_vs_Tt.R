@@ -61,8 +61,11 @@ excluding_mixed = ndata[-grep("Mixed", ndata$compartment_fungus),]
 excluding_mixed$versus = as.factor(excluding_mixed$versus)
 # relevel(excluding_mixed$versus, levels = c("None", "Sp", "Tt"))
 
+excluding_mixed = rename(excluding_mixed, competitor = versus)
+
 justmycos = subset(ndata, mycofungus != "None")
-justmycos_nomixed = justmycos[-grep("MIXED", justmycos$competitors),]
+justmycos_nomixed = justmycos[-grep("MIXED", justmycos$Fungi),]
+justmycos_nomixed = rename(justmycos_nomixed, competitor = versus)
 
 #### N-15 enrichment of mycos by species ####
 # Does the N-15 enrichment of mycorrhizas depend on the species
@@ -72,7 +75,7 @@ justmycos_nomixed = justmycos[-grep("MIXED", justmycos$competitors),]
 # n15.myco.full = lmer(mycologN15 ~ mycofungus * N_level + (1|Batch/Plant), 
 #                      data = justmycos) # I don't have any random effects here that I don't think I need
 
-n15.myco.full = lmerTest::lmer(mycologN15 ~ compartment_fungus * N_level * versus + (1|Batch), 
+n15.myco.full = lmerTest::lmer(mycologN15 ~ compartment_fungus * N_level * competitor + (1|Batch), 
                      data = justmycos_nomixed)
 
 # class(n15.myco.full) = "lmerMod"
@@ -103,84 +106,20 @@ n15.myco.posthoc.interpretable
 
 sink()
 
-### Including competition again ####
-# n15.myco.withcomp = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch/Plant), 
-#                      data = justmycos) # I don't have any random effects here that I don't think I need
-
-n15.myco.withcomp = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch), 
-                         data = justmycos_nomixed)
-
-summary(n15.myco.withcomp)
-
-anovaresults = anova(n15.myco.withcomp)
-
-n15.myco.withcomp.posthoc = emmeans(n15.myco.withcomp, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
-
-sink("stats_tables/N_by_fungus_competition_N_lme_results_mycos.html")
-
-stargazer(anovaresults, type = "html",
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "",
-          summary = FALSE,
-          no.space = TRUE)
-
-sink()
-
-sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc.txt")
-
-n15.myco.withcomp.posthoc
-
-sink()
-
-# Examining results when you omit accidentally Tt plants
-nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
-justmycos_onlyclean = mutate(justmycos_nomixed, 
-                             clean = justmycos_nomixed$Plant %in% nocontam$Plant) %>%
-  filter(clean == TRUE)
-
-n15.myco.withcomp.onlyclean = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch), 
-                         data = justmycos_onlyclean) # rank deficient, dropping 3 columns
-
-summary(n15.myco.withcomp.onlyclean)
-
-anovaresults = anova(n15.myco.withcomp.onlyclean) 
-# missing cells for: mycofungusTt:versus3None, N_levelHigh:versus3None, mycofungusSp:N_levelHigh:versus3None, mycofungusTt:N_levelHigh:versus3None, mycofungusTt:N_levelLow:versus3None.  
-# Interpret type III hypotheses with care.
-
-n15.myco.withcomp.posthoc.onlyclean = emmeans(n15.myco.withcomp.onlyclean, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
-# NOTE: Results may be misleading due to involvement in interactions
-sink("stats_tables/N_by_fungus_competition_N_lme_results_mycos_onlyclean.html")
-
-stargazer(anovaresults, type = "html",
-          digits = 3,
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          digit.separator = "",
-          summary = FALSE,
-          no.space = TRUE)
-
-sink()
-
-sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc_onlyclean.txt")
-
-n15.myco.withcomp.posthoc.onlyclean
-
-sink()
-
-
-
-
-# Does the N-15 enrichment of NM roots depend on the species 
-# of fungi in a given root compartment?
-# n15.nm.full = lmer(nmlogN15 ~ compartment_fungus * N_level + (1|Batch), 
-#                 data = ndata) # I don't have any random effects here that I don't think I need
+# ### Including competition again ####
+# # n15.myco.withcomp = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch/Plant), 
+# #                      data = justmycos) # I don't have any random effects here that I don't think I need
 # 
-# summary(n15.nm.full)
-
-# anovaresults = anova(n15.nm.full)
+# n15.myco.withcomp = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch), 
+#                          data = justmycos_nomixed)
 # 
+# summary(n15.myco.withcomp)
 # 
-# sink("stats_tables/C_by_fungus_competition_N_lme_results_nmroots.html")
+# anovaresults = anova(n15.myco.withcomp)
+# 
+# n15.myco.withcomp.posthoc = emmeans(n15.myco.withcomp, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+# 
+# sink("stats_tables/N_by_fungus_competition_N_lme_results_mycos.html")
 # 
 # stargazer(anovaresults, type = "html",
 #           digits = 3,
@@ -190,6 +129,70 @@ sink()
 #           no.space = TRUE)
 # 
 # sink()
+# 
+# sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc.txt")
+# 
+# n15.myco.withcomp.posthoc
+# 
+# sink()
+# 
+# # Examining results when you omit accidentally Tt plants
+# nocontam = read_csv("processeddata/Plants_with_no_Tt_contamination.csv")
+# justmycos_onlyclean = mutate(justmycos_nomixed, 
+#                              clean = justmycos_nomixed$Plant %in% nocontam$Plant) %>%
+#   filter(clean == TRUE)
+# 
+# n15.myco.withcomp.onlyclean = lmer(mycologN15 ~ mycofungus * N_level * versus3 + (1|Batch), 
+#                          data = justmycos_onlyclean) # rank deficient, dropping 3 columns
+# 
+# summary(n15.myco.withcomp.onlyclean)
+# 
+# anovaresults = anova(n15.myco.withcomp.onlyclean) 
+# # missing cells for: mycofungusTt:versus3None, N_levelHigh:versus3None, mycofungusSp:N_levelHigh:versus3None, mycofungusTt:N_levelHigh:versus3None, mycofungusTt:N_levelLow:versus3None.  
+# # Interpret type III hypotheses with care.
+# 
+# n15.myco.withcomp.posthoc.onlyclean = emmeans(n15.myco.withcomp.onlyclean, list(pairwise ~ mycofungus*N_level), adjust = "tukey")
+# # NOTE: Results may be misleading due to involvement in interactions
+# sink("stats_tables/N_by_fungus_competition_N_lme_results_mycos_onlyclean.html")
+# 
+# stargazer(anovaresults, type = "html",
+#           digits = 3,
+#           star.cutoffs = c(0.05, 0.01, 0.001),
+#           digit.separator = "",
+#           summary = FALSE,
+#           no.space = TRUE)
+# 
+# sink()
+# 
+# sink("stats_tables/N_by_fungus_competition_N_mycos_anova_posthoc_onlyclean.txt")
+# 
+# n15.myco.withcomp.posthoc.onlyclean
+# 
+# sink()
+# 
+# 
+# 
+# 
+# # Does the N-15 enrichment of NM roots depend on the species 
+# # of fungi in a given root compartment?
+# # n15.nm.full = lmer(nmlogN15 ~ compartment_fungus * N_level + (1|Batch), 
+# #                 data = ndata) # I don't have any random effects here that I don't think I need
+# # 
+# # summary(n15.nm.full)
+# 
+# # anovaresults = anova(n15.nm.full)
+# # 
+# # 
+# # sink("stats_tables/C_by_fungus_competition_N_lme_results_nmroots.html")
+# # 
+# # stargazer(anovaresults, type = "html",
+# #           digits = 3,
+# #           star.cutoffs = c(0.05, 0.01, 0.001),
+# #           digit.separator = "",
+# #           summary = FALSE,
+# #           no.space = TRUE)
+# # 
+# # sink()
 
 
 #### Plot ####

@@ -32,10 +32,11 @@ justmycos$mycofungus = factor(justmycos$mycofungus, levels = c("Sp", "Tt"))
 justmycos$compartment_fungus = as.factor(justmycos$compartment_fungus)
 
 justmycos_nomixed = justmycos[-grep("MIXED", justmycos$competitors),]
+justmycos_nomixed = rename(justmycos_nomixed, competitor = versus)
 
 #### Statistical analyses ####
 
-# No competition
+### No competition -- not used in paper ####
 # CforN = lmer(logmycoCforN ~ mycofungus * N_level + (1|Batch/Plant),
 #              data = justmycos)
 
@@ -65,11 +66,11 @@ CforNposthoc
 
 sink()
 
-# WITH competition
+### WITH competition -- approach used in paper ####
 # CforN = lmer(logmycoCforN ~ mycofungus * N_level * versus3 + (1|Batch/Plant),
 #              data = justmycos)
 
-CforN = lmer(logmycoCforN ~ compartment_fungus * N_level * versus + (1|Batch),
+CforN = lmer(logmycoCforN ~ compartment_fungus * N_level * competitor + (1|Batch),
              data = justmycos_nomixed)
 
 summary(CforN)
@@ -166,12 +167,12 @@ sink()
 # mylabels = HSD.test(forlabels, "tx", group = TRUE)
 # These match my lme posthoc results above.
 
-### Plot exchange rates (plant C to fungal N) in mycorrhizas ###
+### Exchange rate plot (plant C to fungal N) in mycorrhizas ####
 labels = c(High = "High N", Low = "Low N")
 annotations = data.frame(x = c((1:2), (1:2)),
                          y = c(4.3, 4, 3.3, 3.3),
                          N_level = c(rep("High", 2), rep("Low", 2)),
-                         labs = c(paste(c("a", "b")), paste(c("b", "b"))),
+                         labs = c(paste(c("a", "b")), paste(c("ab", "b"))),
                          x1 = c(0.6, 1.6, 0.6, 1.6), 
                          x2 = c(1.4, 2.4, 1.4, 2.4), 
                          y1 = c(4, 3.7, 3, 3), 

@@ -6,7 +6,7 @@
 
 # This tutorial was quite helpful: https://ourcodingclub.github.io/2017/03/15/mixed-models.html
 
-setwd("~/Documents/Fungal competition project/fungal-competition2020/")
+# setwd("~/Documents/Fungal competition project/fungal-competition2020/")
 
 # Libraries needed:
 library(tidyverse)
@@ -18,6 +18,7 @@ library(stargazer)
 
 # Data:
 together = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_and_pctCN.csv")
+together = mutate(together, competitors = Fungi)
 
 # Shouldn't model mycorrhiza-specific phenomena with NM plants
 
@@ -49,6 +50,7 @@ write_csv(nonm, "processeddata/isotope_and_plant_metadata_with_competition_coded
 # Should I exclude microcosms with mixed cultures?
 nonm = read_csv("processeddata/isotope_and_plant_metadata_with_competition_coded_clearly_INCLUDING_MIXED_betterversus.csv")
 excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
+excluding_mixed = rename(excluding_mixed, competitor = versus)
 # excluding_mixed$versus = relevel(excluding_mixed$versus, levels = c("None", "Sp", "Tt"))
 
 #### C-13 enrichment of mycos by species ####
@@ -81,7 +83,7 @@ excluding_mixed = nonm[-grep("MIXED", nonm$competitors),]
 #                 data = nonm) 
 
 
-c13.full = lmer(mycologC13 ~ compartment_fungus * versus * N_level + (1|Batch/Plant),
+c13.full = lmer(mycologC13 ~ compartment_fungus * competitor * N_level + (1|Batch/Plant),
                 data = excluding_mixed) # I don't have any random effects here that I don't think I need
 
 summary(c13.full)
@@ -102,7 +104,7 @@ sink()
 
 Cbyfungusposthoc = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level), adjust = "tukey")
 
-Cbyfungusposthoc_withversus = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level*versus), adjust = "tukey")
+Cbyfungusposthoc_withversus = emmeans(c13.full, list(pairwise ~ compartment_fungus*N_level*competitor), adjust = "tukey")
 
 sink("stats_tables/C_by_fungus_competition_N_lme_anova_posthoc_withversus.txt")
 
